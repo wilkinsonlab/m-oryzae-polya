@@ -1,0 +1,9 @@
+args <- commandArgs(TRUE)
+setwd(".")
+a <- args[1]
+c1<-read.table(paste(a, "-1.expr", sep=""),row.names=1) 
+c2<-read.table(paste(a, "-2.expr", sep=""),row.names=1)
+c3<-read.table(paste(a, "-3.expr", sep=""),row.names=1)
+cat("1 vs 2,", paste(cor(c1,c2,method="spearman"), "\n"))
+cat("1 vs 3,", paste(cor(c1,c3,method="spearman"), "\n"))
+cat("2 vs 3,", paste(cor(c2,c3,method="spearman"), "\n"))

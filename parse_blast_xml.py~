@@ -1,0 +1,10 @@
+import sys
+
+from Bio.Blast import NCBIXML
+blast = NCBIXML.parse(open(sys.argv[1],'rU'))
+for record in blast:
+	for align in record.alignments:
+		print align
+		if (align.hsps[0].sbjct_start < align.hsps[0].sbjct_end):
+			#print align.hsps[0].sbjct_start, align.hsps[0].sbjct_end
+			print record.query, "\t", align.title, "\t", align.hsps[0].expect

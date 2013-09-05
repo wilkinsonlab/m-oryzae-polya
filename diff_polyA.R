@@ -1,0 +1,11 @@
+args <- commandArgs(TRUE)
+suppressMessages(library(DESeq))
+setwd(".")
+counts<-read.table(args[1], row.names=1)
+design <- rep (c("a","b"),each=3)
+cds  <-  newCountDataSet(counts, design)
+cds  <-  estimateSizeFactors( cds)
+cds <- estimateDispersions( cds )
+res  <-  nbinomTest(  cds,  "a",  "b")
+write.csv(res, file = args[2],  row.names=F, quote=FALSE)
+

@@ -1,0 +1,7 @@
+args <- commandArgs(TRUE)
+setwd(".")
+a <- as.numeric(args[1])
+b <- as.numeric(args[2])
+c <- as.numeric(args[3])
+d <- as.numeric(args[4])
+cat(fisher.test(cbind(c(d,c),c(b,a)))$p.value, sep="\n")
