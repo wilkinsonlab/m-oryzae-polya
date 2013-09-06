@@ -143,27 +143,33 @@ done
 
 
 # GO enrichment
-type=go_slim.csv
-for file in `ls diff_expr/WT-CM_vs_2D4-CM_expr_down.csv`
-do    
-    echo "" > "${file%%.*}".go_enrich.csv
-    cut -f 1 -d "," $file | sort | uniq > _de_list
-    grep -v -f _de_list gene_summary.txt | tail -n +2 | cut -f 1 > _nde_list
-    cat _de_list | xargs -ipat grep pat $type | cut -f 2  | sort | uniq >  _go_list
-    for go in `cat _go_list`; do grep $go $type | cut -f 1 | grep MGG | sort | uniq > "_"$go; done
-    for f in `ls _GO*`
-    do
-        a=$(cat $f _de_list | sort | uniq -d | wc -l )
-        b=$(cat $f _nde_list | sort | uniq -d | wc -l)
-        c=$(cat $f $f _de_list | sort | uniq -u | wc -l)
-        d=$(cat $f $f _nde_list | sort | uniq -u | wc -l)
-        echo ${f/_/}"," `Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d` >> "${file%%.*}".go_enrich.csv
-    done
-    cat "${file%%.*}".go_enrich.csv | awk -F "," '{if ($2 <= 0.05) print $1}' > _t
-    cat _t | xargs -ipat grep pat $type | cut -f 3  | sort | uniq
-    rm _de_list _nde_list _go_list _GO*
-done   
-
+function go_enrich {
+	type=$1
+	file="diff_expr/$2_vs_$3_expr.csv"
+	echo "" > "${file%%.*}"_go_enrich.csv
+	cat "${file%%.*}"_down.csv  "${file%%.*}"_up.csv | cut -f 1 -d "," | sort | uniq > _de_list
+	grep -v -f _de_list gene_summary.txt | tail -n +2 | cut -f 1 > _nde_list
+	cat _de_list | xargs -ipat grep pat $type | cut -f 2  | sort | uniq >  _go_list
+	for go in `cat _go_list`; do grep $go $type | cut -f 1 | grep MGG | sort | uniq > "_"$go; done
+	for f in `ls _GO*`
+	do
+	    a=$(cat $f _de_list | sort | uniq -d | wc -l )
+	    b=$(cat $f _nde_list | sort | uniq -d | wc -l)
+	    c=$(cat $f $f _de_list | sort | uniq -u | wc -l)
+	    d=$(cat $f $f _nde_list | sort | uniq -u | wc -l)
+	    echo ${f/_/}"," `Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d` >> "${file%%.*}"_go_enrich.csv
+	done
+	#cat "${file%%.*}"_go_enrich.csv | awk -F "," '{if ($2 <= 0.05) print $0}' | sed 's/,/ /'
+	#cat _t | xargs -ipat grep pat $type | cut -f 3  | sort | uniq
+	rm _de_list _nde_list _go_list _GO*
+}
+go_enrich go_terms.csv WT-CM WT-MM
+go_enrich go_terms.csv WT-CM WT--N
+go_enrich go_terms.csv WT-CM WT--C
+go_enrich go_terms.csv WT-MM WT--N
+go_enrich go_terms.csv WT-MM WT--C
+go_enrich go_terms.csv WT--N WT--C
+go_enrich go_terms.csv WT-CM 2D4-CM
 
 
 # differential polyA
@@ -428,11 +434,11 @@ function intersection {
     d=$4
     cat $a-1.expr $a-2.expr $a-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _a
     cat $b-1.expr $b-2.expr $b-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _b   
-    cat $c-1.expr $c-2.expr $c-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _c
+    #cat $c-1.expr $c-2.expr $c-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _c
     #cat $d-1.expr $d-2.expr $d-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _d
-    cat _a _b _c| sort | uniq -c | awk '{if ($1 == 3) print $0}' | wc -l
+    cat _a _b | sort | uniq -c | awk '{if ($1 == 2) print $0}' | wc -l
 }
-intersection WT-CM WT--N WT--C
+intersection WT-MM WT--N
 
 # number of genes with an recognizable generic polyA site
 for f in *X.polyA_all_m 
@@ -669,15 +675,15 @@ RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse4.maf > maf_parse4.out &
 
 
 # altered polyA  in WT vs non altered
-cond="CM"
+cond="-C"
 cat diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m WT-"$cond"-X.polyA_all_m | sort -k 1,7 | uniq -u  > _t
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m -100 -36 print _s1
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m -100 100 print _s1
 c=$(cat diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m | wc -l)
 sort -R _t > _r
 head -n $c _r > _r2
 tail -n $c _r > _r3
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r2 -100 -36  print _s2
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r3 -100 -36  print _s3
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r2 -100 100  print _s2
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r3 -100 100  print _s3
 
 # altered polyA  in WT  vs same genes in 2D4
 cond="CM"
