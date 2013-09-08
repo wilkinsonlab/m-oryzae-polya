@@ -62,20 +62,32 @@ for line in polyA_file:
         elif pos < table[transcript]["start_codon"] and pos > table[transcript]["stop_codon"]:
             location[transcript][1] += 1
 
+# where the polyA are located
 three_utr = 0
 five_utr = 0
 cds = 0
+# how many genes have each kind of APA
+apa_three_utr = 0
+apa_five_utr = 0
+apa_cds = 0
 count = 0
 for transcript, loc in location.items():
     if loc[1] == 1:
-        print transcript
+        pass
+        #print transcript
     three_utr += loc[2]
     five_utr += loc[0]
     cds += loc[1]
+    if loc[2] > 1:
+        apa_three_utr += 1
+    if loc[2] >= 1 and loc[0] >= 1:
+        apa_five_utr += 1
+    if loc[2] >= 1 and loc[1] >= 1:
+        apa_cds += 1
     count += sum(loc)
 
-
-#sys.stdout.write("%.2f%%,%.2f%%,%.2f%%\n" % (three_utr / float(count) * 100, five_utr / float(count) * 100, cds / float(count) * 100))
+#print apa_three_utr, apa_five_utr, apa_cds
+#sys.stdout.write("%d,%d,%d\n" % (three_utr, five_utr, cds ))
 
 
 gff_file.close()
