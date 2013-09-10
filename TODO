@@ -1,2 +1,6 @@
-- clustering of orphans (???)
-- scale and color in nucleotide boxes
+- pipeline, workflow, graph of filtering
+- functional analisys of 486 genes neverexpressed vs plant
+- go analisys for 3 domains
+- column for every graph with comulative of all conditions
+- orphans for all media, and comulative
+- resume sheet by gene
