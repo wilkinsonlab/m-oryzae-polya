@@ -94,12 +94,17 @@ for f in  "WT-CM" "WT-MM" "WT--N" "WT--C" "2D4-CM" "2D4-MM" "2D4--N" "2D4--C"
 do    
     cat $f"-"1.polyA_all_m $f"-"2.polyA_all_m $f"-"3.polyA_all_m |  sort -k 2,7 | uniq -f 1 -c | awk '{if ($1 >= 2) print 0,$3,$4,$5,$6,$7,$8}' > $f"-"X.polyA_all_m
 done
+cat WT*X*.polyA_all_m |  sort -k 1,7 | uniq  > WT-ALL-X.polyA_all_m
+cat 2D4*X*.polyA_all_m |  sort -k 1,7 | uniq  > 2D4-ALL-X.polyA_all_m
+
 
 # cumulate not replicates
 for f in  "WT-CM" "WT-MM" "WT--N" "WT--C" "2D4-CM" "2D4-MM" "2D4--N" "2D4--C"
 do    
     cat $f"-"1.notpolyA_all_m $f"-"2.notpolyA_all_m $f"-"3.notpolyA_all_m |  sort -k 2,7 | uniq -f 1 -c | awk '{if ($1 >= 2) print 0,$3,$4,$5,$6,$7,$8}' > $f"-"X.notpolyA_all_m
 done
+cat WT*X*notpolyA_all_m |  sort -k 1,4 | uniq  > WT-ALL-X.notpolyA_all_m
+cat 2D4*X*notpolyA_all_m | sort -k 1,4 | uniq  > 2D4-ALL-X.notpolyA_all_m
 
 
 # gff of polyA
@@ -337,17 +342,17 @@ join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 2 && arr[x] < $
 
 
 # orphans (400 or 1000 nt) search against known db
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa WT-CM-X.notpolyA_all_m  -400 0 print WT-CM-X.notpolyA_all_m_400.fa
-blastn -task dc-megablast -query WT-CM-X.notpolyA_all_m_400.fa -db nt -remote -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
-blastn -task dc-megablast -query WT-CM-X.notpolyA_all_m_400.fa -db Rfam.fasta -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
-#blastn -task dc-megablast -query WT-CM-X.notpolyA_all_m_400.fa -db fRNAdb_3.0.fasta -outfmt 5  | python ../../m-oryzae-polya/parse_blast_xml.py 
-#blastn -task dc-megablast -query WT-CM-X.notpolyA_all_m_400.fa -db hairpin.fa -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
-#blastn -task dc-megablast -query WT-CM-X.notpolyA_all_m_400.fa -db ncrna_NONCODE\[v3.0\].fasta -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py
-perl ../../m-oryzae-polya/rfam_scan.pl --nobig -blastdb Rfam.fasta Rfam.cm WT-CM-X.notpolyA_all_m_400.fa > WT-CM-X.notpolyA_all_m.rfam
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa WT-ALL-X.notpolyA_all_m  -400 0 print WT-ALL-X.notpolyA_all_m_400.fa
+blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db nt -remote -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
+blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db Rfam.fasta -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
+# blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db fRNAdb_3.0.fasta -outfmt 5  | python ../../m-oryzae-polya/parse_blast_xml.py 
+# blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db hairpin.fa -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
+# blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db ncrna_NONCODE\[v3.0\].fasta -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py
+# perl ../../m-oryzae-polya/rfam_scan.pl --nobig -blastdb Rfam.fasta Rfam.cm WT-ALL-X.notpolyA_all_m_400.fa 
 
 # ophans overlapping annotated genes
 python -c "
-for line1 in open('WT-CM-X.notpolyA_all_m', 'r'):
+for line1 in open('WT-ALL-X.notpolyA_all_m', 'r'):
  (val, pos, chrx, sense) = line1.strip().split(' ')
  pos = int(pos)
  for line2 in open('Magnaporthe_oryzae.MG8.18.gff3', 'r'):
@@ -421,16 +426,16 @@ do
     cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $0}' | wc -l
 done
 # always expressed genes 
-for sample in "2D4-CM" "2D4-MM" "2D4--N" "2D4--C" "WT-CM" "WT-MM" "WT--N" "WT--C" 
+for sample in "WT-CM" "WT-MM" "WT--N" "WT--C" 
 do
     cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > "_"$sample"_"t
 done
-cat _*_t | sort | uniq -c | awk '{if ($1 == 8) print $0}' > _all
+cat _*_t | sort | uniq -c | awk '{if ($1 == 4) print $0}' > _all
 cat _all | wc -l
 # never expressed genes
 cat gene_summary.txt _*_t | tail -n +2 | cut -f 1 | sort | uniq -u | wc -l
 rm _*
-# genes intersections (for ppt diagrams)
+# genes intersections (or disjunction, for ppt diagrams)
 function intersection {
     a=$1
     b=$2
@@ -438,11 +443,14 @@ function intersection {
     d=$4
     cat $a-1.expr $a-2.expr $a-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _a
     cat $b-1.expr $b-2.expr $b-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _b   
-    #cat $c-1.expr $c-2.expr $c-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _c
+    cat $c-1.expr $c-2.expr $c-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _c
     #cat $d-1.expr $d-2.expr $d-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _d
     cat _a _b | sort | uniq -c | awk '{if ($1 == 2) print $0}' | wc -l
+    cat _a _b _b  | sort | uniq -u | wc -l 
 }
-intersection WT-MM WT--N
+intersection WT-CM WT--N WT--C
+
+
 
 # number of genes with an recognizable generic polyA site
 for f in *X.polyA_all_m 
@@ -699,15 +707,14 @@ RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse4.maf > maf_parse4.out &
 
 
 # altered polyA  in WT vs non altered
-cond="-C"
-cat diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m WT-"$cond"-X.polyA_all_m | sort -k 1,7 | uniq -u  > _t
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m -100 0 print _s1
-c=$(cat diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m | wc -l)
-sort -R _t > _r
+cat diff_polyA/WT*2D4*down*polyA* | sort -k 1,7 | uniq > _g
+cat _g _g WT-ALL-X.polyA_all_m | sort -k 1,7 | uniq -u | sort -R > _r
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _g -100 100 print __s1
+c=$(cat _g | wc -l)
 head -n $c _r > _r2
 tail -n $c _r > _r3
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r2 -100 0  print _s2
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r3 -100 0  print _s3
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r2 -100 100   print __s2
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r3 -100 100   print __s3
 
 # altered polyA  in WT  vs same genes in 2D4
 cond="CM"
