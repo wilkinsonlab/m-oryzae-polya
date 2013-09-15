@@ -31,7 +31,7 @@ for read in infile.fetch():
         else:
             pos = read.pos - offset
             seq = str(fasta_seqs[chrx].seq[pos - oligoT: pos].reverse_complement())  
-        if (seq.count('A') + seq.count('G')) / float(oligoT) < 0.9:# and not re.search("GGG+", seq)):
+        if (seq.count('A') + seq.count('G')) / float(oligoT) < 0.75:
             tempfile.write(read)
             mapped += 1
         else:

@@ -25,7 +25,7 @@ do
     samtools index "${f%%.*}".sorted.bam
 done
 
-# filter out low quality mapping, reads with high A/T content and fake reads
+# filter out low quality mapping, reads with high A/T content and internal priming
 
 for f in `ls *.sorted.bam`
 do
