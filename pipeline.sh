@@ -146,37 +146,6 @@ do
 done
 
 
-
-# GO enrichment
-function go_enrich {
-	type=$1
-	file="diff_expr/$2_vs_$3_expr.csv"
-	echo "" > "${file%%.*}"_go_enrich.csv
-	cat "${file%%.*}"_down.csv  "${file%%.*}"_up.csv | cut -f 1 -d "," | sort | uniq > _de_list
-	grep -v -f _de_list gene_summary.txt | tail -n +2 | cut -f 1 > _nde_list
-	cat _de_list | xargs -ipat grep pat $type | cut -f 2  | sort | uniq >  _go_list
-	for go in `cat _go_list`; do grep $go $type | cut -f 1 | grep MGG | sort | uniq > "_"$go; done
-	for f in `ls _GO*`
-	do
-	    a=$(cat $f _de_list | sort | uniq -d | wc -l )
-	    b=$(cat $f _nde_list | sort | uniq -d | wc -l)
-	    c=$(cat $f $f _de_list | sort | uniq -u | wc -l)
-	    d=$(cat $f $f _nde_list | sort | uniq -u | wc -l)
-	    echo ${f/_/}"," `Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d` >> "${file%%.*}"_go_enrich.csv
-	done
-	#cat "${file%%.*}"_go_enrich.csv | awk -F "," '{if ($2 <= 0.05) print $0}' | sed 's/,/ /'
-	#cat _t | xargs -ipat grep pat $type | cut -f 3  | sort | uniq
-	rm _de_list _nde_list _go_list _GO*
-}
-go_enrich go_terms.csv WT-CM WT-MM
-go_enrich go_terms.csv WT-CM WT--N
-go_enrich go_terms.csv WT-CM WT--C
-go_enrich go_terms.csv WT-MM WT--N
-go_enrich go_terms.csv WT-MM WT--C
-go_enrich go_terms.csv WT--N WT--C
-go_enrich go_terms.csv WT-CM 2D4-CM
-
-
 # differential polyA
 
 function diff {
@@ -202,7 +171,7 @@ function diff {
  cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($8 < 0.1 && $6 > 0) print $1}' | awk -F ":" '{print 0,$2,$1,$3,$4,$5,$6}' > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
  cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($8 < 0.1 && $6 < 0) print $1}' | awk -F ":" '{print 0,$2,$1,$3,$4,$5,$6}' > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
  mv $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv diff_polyA
- #rm _*
+ rm _*
 }  
 
 diff "WT" "2D4" "CM" "CM"
@@ -263,6 +232,37 @@ notdiff "2D4" "2D4" "CM" "-C"
 notdiff "2D4" "2D4" "MM" "-N"
 notdiff "2D4" "2D4" "MM" "-C"
 notdiff "2D4" "2D4" "-N" "-C"
+
+
+
+# GO enrichment
+function go_enrich {
+	type=$1
+	file="diff_expr/$2_vs_$3_expr.csv"
+	echo "" > "${file%%.*}"_go_enrich.csv
+	cat "${file%%.*}"_down.csv  "${file%%.*}"_up.csv | cut -f 1 -d "," | sort | uniq > _de_list
+	grep -v -f _de_list gene_summary.txt | tail -n +2 | cut -f 1 > _nde_list
+	cat _de_list | xargs -ipat grep pat $type | cut -f 2  | sort | uniq >  _go_list
+	for go in `cat _go_list`; do grep $go $type | cut -f 1 | grep MGG | sort | uniq > "_"$go; done
+	for f in `ls _GO*`
+	do
+	    a=$(cat $f _de_list | sort | uniq -d | wc -l )
+	    b=$(cat $f _nde_list | sort | uniq -d | wc -l)
+	    c=$(cat $f $f _de_list | sort | uniq -u | wc -l)
+	    d=$(cat $f $f _nde_list | sort | uniq -u | wc -l)
+	    echo ${f/_/}"," `Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d` >> "${file%%.*}"_go_enrich.csv
+	done
+	#cat "${file%%.*}"_go_enrich.csv | awk -F "," '{if ($2 <= 0.05) print $0}' | sed 's/,/ /'
+	#cat _t | xargs -ipat grep pat $type | cut -f 3  | sort | uniq
+	rm _de_list _nde_list _go_list _GO*
+}
+go_enrich go_terms.csv WT-CM WT-MM
+go_enrich go_terms.csv WT-CM WT--N
+go_enrich go_terms.csv WT-CM WT--C
+go_enrich go_terms.csv WT-MM WT--N
+go_enrich go_terms.csv WT-MM WT--C
+go_enrich go_terms.csv WT--N WT--C
+go_enrich go_terms.csv WT-CM 2D4-CM
 
 
 
@@ -356,14 +356,20 @@ for line1 in open('WT-ALL-X.notpolyA_all_m', 'r'):
  (val, pos, chrx, sense) = line1.strip().split(' ')
  pos = int(pos)
  for line2 in open('Magnaporthe_oryzae.MG8.18.gff3', 'r'):
-  (Chrx, none_1, feat, start, end, none_2,none_3,none_4,none_5) = line2.strip().split('\t')
+  (Chrx, none_1, feat, start, end, none_2,none_3,none_4,infos) = line2.strip().split('\t')
   start = int(start)
   end = int(end)
   if chrx == Chrx and pos >= start and pos <= end and feat == 'gene':
-   print chrx + ':' + str(pos) + ':' + val + ':' + sense	
+   id_start = infos.index('ID=')
+   id_end = infos.index(';', id_start)
+   print chrx + ':' + str(pos) + ':' + val + ':' + sense, '\t', infos[id_start + 3: id_end]
 "
 # orphans differentially expressed
-cut -f 1,8 -d "," notdiff_polyA/WT-CM_vs_WT--C_notpolyA.csv | awk -F "," '{if ($2 < 0.05) print $1}' | wc -l
+for f in notdiff_polyA/WT*WT*.csv
+do
+	echo -ne $(basename "${f%%.*}")"," | sed 's/_notpolyA//'
+ 	cat $f | awk -F "," '{if ($8 < 0.05) print $1,$8}' | wc -l
+done
 
 
 
@@ -419,7 +425,7 @@ do
     echo -ne "${sample%%.*}"","
     cat $sample | awk '{if ($2 > 0) print $1}' |  wc -l
 done
-# number of expressed genes (comulative) 1 read in at least 2 replicates
+# number of expressed genes (by condition) 1 read in at least 2 replicates
 for sample in "2D4-CM" "2D4-MM" "2D4--N" "2D4--C" "WT-CM" "WT-MM" "WT--N" "WT--C" 
 do
     echo -ne "${sample%%.*}"","
@@ -444,11 +450,14 @@ function intersection {
     cat $a-1.expr $a-2.expr $a-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _a
     cat $b-1.expr $b-2.expr $b-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _b   
     cat $c-1.expr $c-2.expr $c-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _c
-    #cat $d-1.expr $d-2.expr $d-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _d
-    cat _a _b | sort | uniq -c | awk '{if ($1 == 2) print $0}' | wc -l
-    cat _a _b _b  | sort | uniq -u | wc -l 
+    cat $d-1.expr $d-2.expr $d-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _d
+    #cat _a | wc -l 
+    #cat _b | wc -l
+    #cat _c | wc -l
+    #cat _a _b _c| sort | uniq -c | awk '{if ($1 == 3) print $0}' | wc -l
+    #cat _a  _b | sort | uniq -d | wc -l 
 }
-intersection WT-CM WT--N WT--C
+intersection WT-CM WT-MM WT--N WT--C
 
 
 
@@ -471,7 +480,7 @@ do
     cut -f 5 -d " " $f | sort | uniq | wc -l
 done
 # number of genes with APA in WT but not in 2D4, and viceversa
-for f in "CM" "MM" "-N" "-C" 
+for f in "ALL" "CM" "MM" "-N" "-C" 
 do
     echo -ne "$f,"
     cut WT-"$f"-X.polyA_apa_m  -d " " -f 5 | sort | uniq > _a
@@ -497,7 +506,7 @@ do
 done
 
 # genes affected by rbp35 in wt (all)
-for f in diff_polyA/*down.polyA_all_m
+for f in diff_polyA/WT*2D4*down.polyA_all_m
 do
  echo -ne $(basename "${f%%.*}")"," | sed 's/_down//'
  cat $f | cut -f 5 -d " " | sort | uniq | wc -l
@@ -542,13 +551,16 @@ done
 
 
 # orphan polyA
-for f in "WT-CM" "WT-MM" "WT--N" "WT--C" "2D4-CM" "2D4-MM" "2D4--N" "2D4--C"
+for f in "WT-ALL" "WT-CM" "WT-MM" "WT--N" "WT--C" "2D4-ALL" "2D4-CM" "2D4-MM" "2D4--N" "2D4--C"
 do
     echo -ne "${f%%.*}"","
-    normal=$(cat "${f%%.*}"-1.polyA "${f%%.*}"-2.polyA "${f%%.*}"-3.polyA |  sort -k 2,7 | uniq -f 1 -c | awk '{if ($1 >= 2) print 0,$3,$4,$5,$6,$7,$8}' | wc -l)
-    orphan=$(cat "${f%%.*}"-1.notpolyA "${f%%.*}"-2.notpolyA "${f%%.*}"-3.notpolyA |  sort -k 2,7 | uniq -f 1 -c | awk '{if ($1 >= 2) print 0,$3,$4,$5,$6,$7,$8}' | wc -l)
-    echo 'scale=3;'$orphan/\($normal+$orphan\)*100 | bc | sed 's/0*$/%,/' | tr -d "\n"
-    echo 'scale=3;'$normal/\($normal+$orphan\)*100 | bc | sed 's/0*$/%/'
+    #normal=$(cat "${f%%.*}"-1.polyA "${f%%.*}"-2.polyA "${f%%.*}"-3.polyA |  sort -k 2,7 | uniq -f 1 -c | awk '{if ($1 >= 2) print 0,$3,$4,$5,$6,$7,$8}' | wc -l)
+    #orphan=$(cat "${f%%.*}"-1.notpolyA "${f%%.*}"-2.notpolyA "${f%%.*}"-3.notpolyA |  sort -k 2,7 | uniq -f 1 -c | awk '{if ($1 >= 2) print 0,$3,$4,$5,$6,$7,$8}' | wc -l)
+    #echo 'scale=3;'$orphan/\($normal+$orphan\)*100 | bc | sed 's/0*$/%,/' | tr -d "\n"
+    #echo 'scale=3;'$normal/\($normal+$orphan\)*100 | bc | sed 's/0*$/%/'
+    normal=$(cat "${f%%.*}"-X.polyA_all_m | wc -l )
+    orphan=$(cat "${f%%.*}"-X.notpolyA_all_m | wc -l )
+    echo $normal","$orphan
 done
 
 # differential polyA sites number
@@ -583,7 +595,7 @@ do
 done 
 
 # 3' UTR length (cumulative only in affected genes)
-for f in "CM" #"MM" "-N" "-C"
+for f in "CM" "MM" "-N" "-C"
 do
     echo "WT vs 2D4 "$f
     cat diff_polyA/WT"-"$f"_"vs"_"2D4"-"$f"_"down.polyA_all_m   | cut -f 5 -d " " | sort | uniq > _diff
@@ -709,12 +721,12 @@ RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse4.maf > maf_parse4.out &
 # altered polyA  in WT vs non altered
 cat diff_polyA/WT*2D4*down*polyA* | sort -k 1,7 | uniq > _g
 cat _g _g WT-ALL-X.polyA_all_m | sort -k 1,7 | uniq -u | sort -R > _r
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _g -100 100 print __s1
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _g -100 -30 print _s1
 c=$(cat _g | wc -l)
 head -n $c _r > _r2
 tail -n $c _r > _r3
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r2 -100 100   print __s2
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r3 -100 100   print __s3
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r2 -100 -30   print _s2
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r3 -100 -30   print _s3
 
 # altered polyA  in WT  vs same genes in 2D4
 cond="CM"

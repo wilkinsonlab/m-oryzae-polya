@@ -127,8 +127,8 @@ for read_copy in bam_file.fetch():
         notout_file.write("%s\t%s\t%s\t%s\t%s\n" % (read.qname, chrx, read.pos, read.pos + read.rlen, (
             '+', '-')[read.is_reverse]))
     count += 1
-    if count % 1000000 == 0:
-        print "Processed " + str(count) + " reads"
+    #if count % 1000000 == 0:
+    #    print "Processed " + str(count) + " reads"
 
 
 print "Assigned %d out of %d reads, %.2f %%" % (mapped, count, mapped / float(count) * 100)

@@ -48,6 +48,7 @@ for line in polyA_file:
 
 print "%.2f" % (dists / count)
 for x in distance:
+    pass
     print round(x / count * 100, 5)
 
 

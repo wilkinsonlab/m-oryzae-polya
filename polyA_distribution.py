@@ -108,8 +108,8 @@ for transcript, loc in location.items():
     if sum(loc.values()) > 1:
         count_apa += 1
 
-sys.stdout.write("%f,%f,%f\n" % (apa_three_utr / count_apa, apa_five_utr / count_apa, apa_cds / count_apa))
-#sys.stdout.write("%f,%f,%f,%f\n" % (three_utr / count_poly, five_utr / count_poly, exon  / count_poly, intron / count_poly))
+#sys.stdout.write("%d,%d,%d\n" % (apa_three_utr, apa_five_utr, apa_cds))
+sys.stdout.write("%d,%d,%d,%d\n" % (three_utr, five_utr, exon, intron))
 
 
 gff_file.close()

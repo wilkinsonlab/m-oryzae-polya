@@ -9,7 +9,8 @@ fasta_file = sys.argv[2]
 offset = int(sys.argv[3])
 outfile = sys.argv[4]
 
-oligoT = 16
+oligoT = 8
+priming_len = 16
 
 tempname = "_" + sys.argv[1] + ".filter.temp"
 tempfile = pysam.Samfile(tempname, "wb", template=infile)
@@ -27,11 +28,12 @@ for read in infile.fetch():
         chrx = infile.getrname(read.tid)
         if read.is_reverse:
             pos = read.pos + offset
-            seq = str(fasta_seqs[chrx].seq[pos + read.rlen: pos + read.rlen + oligoT])
+            seq = str(fasta_seqs[chrx].seq[pos + read.rlen: pos + read.rlen + priming_len])
         else:
             pos = read.pos - offset
-            seq = str(fasta_seqs[chrx].seq[pos - oligoT: pos].reverse_complement())  
-        if (seq.count('A') + seq.count('G')) / float(oligoT) < 0.75:
+            seq = str(fasta_seqs[chrx].seq[pos - priming_len: pos].reverse_complement())  
+        #if (seq.count('A') + seq.count('G')) / float(oligoT) < 0.75:
+        if seq[0:oligoT].count('A') < oligoT and (seq.count('A') / float(priming_len)) < 0.75:
             tempfile.write(read)
             mapped += 1
         else:

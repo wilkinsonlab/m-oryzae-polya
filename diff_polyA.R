@@ -5,7 +5,7 @@ counts<-read.table(args[1], row.names=1)
 design <- rep (c("a","b"),each=3)
 cds  <-  newCountDataSet(counts, design)
 cds  <-  estimateSizeFactors( cds)
-cds <- estimateDispersions( cds )
+cds <- estimateDispersions( cds, fitType="local"  )
 res  <-  nbinomTest(  cds,  "a",  "b")
 write.csv(res, file = args[2],  row.names=F, quote=FALSE)
 
