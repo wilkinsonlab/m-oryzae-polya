@@ -146,7 +146,7 @@ do
 done
 
 
-# differential polyA
+# differential polyA (p-value < 0.1)
 
 function diff {
  s1=$1
@@ -585,7 +585,11 @@ do
  echo -ne $(basename "${f%%.*}")"," | sed 's/_up//'
  cut $f -d " " -f 5 | sort | uniq | wc -l
 done
-
+for f in diff_polyA/*polyA.csv
+do
+ echo -ne $(basename "${f%%_polyA.*}")","
+ cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | wc -l
+done
 
 # 3' UTR length
 for f in *X.polyA_all_m
