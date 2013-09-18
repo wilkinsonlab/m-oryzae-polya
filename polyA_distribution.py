@@ -94,6 +94,8 @@ apa_cds = 0
 count_poly = 0.0
 count_apa = 0.0
 for transcript, loc in location.items():
+    if loc["intron"] > 0:
+        print transcript
     three_utr += loc["three_utr"]
     five_utr += loc["five_utr"]
     exon += loc["exon"]
@@ -109,7 +111,7 @@ for transcript, loc in location.items():
         count_apa += 1
 
 #sys.stdout.write("%d,%d,%d\n" % (apa_three_utr, apa_five_utr, apa_cds))
-sys.stdout.write("%d,%d,%d,%d\n" % (three_utr, five_utr, exon, intron))
+#sys.stdout.write("%d,%d,%d,%d\n" % (three_utr, five_utr, exon, intron))
 
 
 gff_file.close()
