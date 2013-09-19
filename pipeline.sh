@@ -564,32 +564,54 @@ do
 done
 
 # differential polyA sites number
+# P1
 for f in diff_polyA/*down*polyA_all_m
 do
  echo -ne $(basename "${f%%.*}")"," | sed 's/_down//'
  cat $f | wc -l
 done
+# P2
 for f in diff_polyA/*up*polyA_all_m
 do
  echo -ne $(basename "${f%%.*}")"," | sed 's/_up//'
  cat $f | wc -l
 done
 # differential polyA sites number (genes)
+# G1
 for f in diff_polyA/*down*polyA_all_m
 do
  echo -ne $(basename "${f%%.*}")"," | sed 's/_down//'
  cut $f -d " " -f 5 | sort | uniq | wc -l
 done
+# G2
 for f in diff_polyA/*up*polyA_all_m
 do
  echo -ne $(basename "${f%%.*}")"," | sed 's/_up//'
  cut $f -d " " -f 5 | sort | uniq | wc -l
 done
+# G3
 for f in diff_polyA/*polyA.csv
 do
  echo -ne $(basename "${f%%_polyA.*}")","
  cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | wc -l
 done
+# genes differentially expressed with differentially expressed polyA
+for f in diff_polyA/*polyA.csv
+do
+ echo -ne $(basename "${f%%_polyA.*}")","
+ cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | xargs -ipat grep pat _$(basename "${f%%_polyA.*}") | wc -l
+done
+# G1 sgl and APA
+for f in diff_polyA/*down*polyA_all_m
+do
+ echo -ne $(basename "${f%%.*}")"," | sed 's/_down//'
+ cut $f -d " " -f 5 | sort | uniq > _g1
+ cut $(basename "${f%%_vs_*}")"-X.polyA_apa_m" -d " " -f 5 | sort | uniq > _apa
+ cut $(basename "${f%%_vs_*}")"-X.polyA_sgl_m" -d " " -f 5 | sort | uniq > _sgl
+ echo -ne `cat _g1 _sgl | sort | uniq -d | wc -l`","
+ echo `cat _g1 _apa | sort | uniq -d | wc -l`
+done
+
 
 # 3' UTR length
 for f in *X.polyA_all_m
