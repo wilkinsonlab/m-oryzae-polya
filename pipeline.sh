@@ -601,8 +601,28 @@ do
  echo -ne $(basename "${f%%_polyA.*}")","
  cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | xargs -ipat grep pat _$(basename "${f%%_polyA.*}") | wc -l
 done
+# G1 sgl and APA
+for f in diff_polyA/*_polyA.csv
+do
+ echo -ne $(basename "${f%%_polyA.*}")","
+ cut "${f%%_polyA.*}"_down.polyA_all_m  -d " " -f 5 | sort | uniq > _g1
+ cat $(basename "${f%%_vs_*}")"-X.polyA_apa_m" | cut -d " " -f 5 | sort | uniq > _apa
+ cat $(basename "${f%%_vs_*}")"-X.polyA_sgl_m" | cut -d " " -f 5 | sort | uniq > _sgl
+ echo -ne `cat _g1 _sgl | sort | uniq -d | wc -l`","
+ echo `cat _g1 _apa | sort | uniq -d | wc -l`
+done
+# G2 sgl and APA
+for f in diff_polyA/*_polyA.csv
+do
+ echo -ne $(basename "${f%%_polyA.*}")","
+ cut "${f%%_polyA.*}"_up.polyA_all_m -d " " -f 5 | sort | uniq > _g3
+ cat $(basename "${f%%_vs_*}")"-X.polyA_apa_m" | cut -d " " -f 5 | sort | uniq > _apa
+ cat $(basename "${f%%_vs_*}")"-X.polyA_sgl_m" | cut -d " " -f 5 | sort | uniq > _sgl
+ echo -ne `cat _g3 _sgl | sort | uniq -d | wc -l`","
+ echo `cat _g3 _apa | sort | uniq -d | wc -l`
+done
 # G3 sgl and APA
-for f in diff_polyA/*polyA.csv
+for f in diff_polyA/*_polyA.csv
 do
  echo -ne $(basename "${f%%_polyA.*}")","
  cut "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m -d " " -f 5 | sort | uniq > _g3
@@ -621,15 +641,37 @@ do
 done 
 
 # 3' UTR length (cumulative only in affected genes)
-for f in "CM" "MM" "-N" "-C"
+for f in "CM" #"MM" "-N" "-C"
 do
     echo "WT vs 2D4 "$f
     cat diff_polyA/WT"-"$f"_"vs"_"2D4"-"$f"_"down.polyA_all_m   | cut -f 5 -d " " | sort | uniq > _diff
-    cat WT-$f-X.polyA_all_m | grep -f _diff > _t
+    cat _diff | xargs -ipat grep pat WT-$f-X.polyA_all_m  > _t
     python ../../m-oryzae-polya/3UTR_length.py Magnaporthe_oryzae.MG8.18.gff3 _t
-    cat 2D4-$f-X.polyA_all_m | grep -f _diff > _t
+    cat _diff | xargs -ipat grep pat 2D4-$f-X.polyA_all_m > _t
     python ../../m-oryzae-polya/3UTR_length.py Magnaporthe_oryzae.MG8.18.gff3 _t    
 done
+
+for f in "CM" #"MM" "-N" "-C"
+do
+    echo "WT vs 2D4 "$f
+    cat diff_polyA/WT"-"$f"_"vs"_"2D4"-"$f"_"up.polyA_all_m   | cut -f 5 -d " " | sort | uniq > _diff
+    cat _diff | xargs -ipat grep pat WT-$f-X.polyA_all_m  > _t
+    python ../../m-oryzae-polya/3UTR_length.py Magnaporthe_oryzae.MG8.18.gff3 _t
+    cat _diff | xargs -ipat grep pat 2D4-$f-X.polyA_all_m > _t
+    python ../../m-oryzae-polya/3UTR_length.py Magnaporthe_oryzae.MG8.18.gff3 _t    
+done
+
+for f in "CM" #"MM" "-N" "-C"
+do
+    echo "WT vs 2D4 "$f
+    cat diff_polyA/WT"-"$f"_"vs"_"2D4"-"$f"_"down.polyA_all_m diff_polyA/WT"-"$f"_"vs"_"2D4"-"$f"_"up.polyA_all_m   | cut -f 5 -d " " | sort | uniq > _diff
+    cat _diff | xargs -ipat grep pat WT-$f-X.polyA_all_m  > _t
+    python ../../m-oryzae-polya/3UTR_length.py Magnaporthe_oryzae.MG8.18.gff3 _t
+    cat _diff | xargs -ipat grep pat 2D4-$f-X.polyA_all_m > _t
+    python ../../m-oryzae-polya/3UTR_length.py Magnaporthe_oryzae.MG8.18.gff3 _t    
+done
+
+
 
 # distance from annotated gene features
 # ...
