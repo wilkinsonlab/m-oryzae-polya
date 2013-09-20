@@ -43,6 +43,7 @@ for line in gff_file:
                 table[name][feature].append((int(items[3]), int(items[4])))    
 
 location = {key: {"five_utr": 0, "exon": 0, "intron": 0, "three_utr": 0} for key in table.keys()}
+not_annotated = 0
 
 for line in polyA_file:
     items = line.strip().split(" ")
@@ -52,11 +53,12 @@ for line in polyA_file:
     transcript = items[4]
     sense = items[3]
     if transcript not in table or "stop_codon" not in table[transcript] or "start_codon" not in table[transcript]:
+            not_annotated += 1
             continue
     if sense == '-':
-        if pos > table[transcript]["stop_codon"]:
+        if pos >= table[transcript]["stop_codon"]:
             location[transcript]["three_utr"] += 1
-        elif pos < table[transcript]["start_codon"]:
+        elif pos <= table[transcript]["start_codon"]:
             location[transcript]["five_utr"] += 1
         elif pos > table[transcript]["start_codon"] and pos < table[transcript]["stop_codon"]:
             flag = False
@@ -68,9 +70,9 @@ for line in polyA_file:
             if not flag:
                 location[transcript]["intron"] += 1    
     elif sense == '+':
-        if pos < table[transcript]["stop_codon"]:
+        if pos <= table[transcript]["stop_codon"]:
             location[transcript]["three_utr"] += 1
-        elif pos > table[transcript]["start_codon"]:
+        elif pos >= table[transcript]["start_codon"]:
             location[transcript]["five_utr"] += 1
         elif pos < table[transcript]["start_codon"] and pos > table[transcript]["stop_codon"]:
             flag = False
@@ -95,7 +97,8 @@ count_poly = 0.0
 count_apa = 0.0
 for transcript, loc in location.items():
     if loc["intron"] > 0:
-        print transcript
+        pass
+        #print transcript
     three_utr += loc["three_utr"]
     five_utr += loc["five_utr"]
     exon += loc["exon"]
@@ -111,7 +114,7 @@ for transcript, loc in location.items():
         count_apa += 1
 
 #sys.stdout.write("%d,%d,%d\n" % (apa_three_utr, apa_five_utr, apa_cds))
-#sys.stdout.write("%d,%d,%d,%d\n" % (three_utr, five_utr, exon, intron))
+sys.stdout.write("%d,%d,%d,%d,%d\n" % (three_utr, five_utr, exon, intron, not_annotated))
 
 
 gff_file.close()
