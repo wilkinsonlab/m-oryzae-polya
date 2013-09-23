@@ -599,7 +599,9 @@ done
 for f in diff_polyA/*polyA.csv
 do
  echo -ne $(basename "${f%%_polyA.*}")","
- cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | xargs -ipat grep pat _$(basename "${f%%_polyA.*}") | wc -l
+ a=diff_expr/$(basename "${f%%_polyA.*}")"_expr"
+ cat $a"_down.csv"  $a"_up.csv" | cut -f 1 -d "," | sort | uniq > _t
+ cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | xargs -ipat grep pat _t | wc -l
 done
 # G1 sgl and APA
 for f in diff_polyA/*_polyA.csv
@@ -787,14 +789,14 @@ RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse4.maf > maf_parse4.out &
 
 
 # altered polyA  in WT vs non altered
-cat diff_polyA/WT*2D4*down*polyA* | sort -k 1,7 | uniq > _g
+cat diff_polyA/WT*CM*2D4*CM*down*polyA* | sort -k 1,7 | uniq > _g
 cat _g _g WT-ALL-X.polyA_all_m | sort -k 1,7 | uniq -u | sort -R > _r
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _g -100 -30 print _s1
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _g -75 20 print _s1
 c=$(cat _g | wc -l)
 head -n $c _r > _r2
 tail -n $c _r > _r3
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r2 -100 -30   print _s2
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r3 -100 -30   print _s3
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r2 -75 20  print _s2
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _r3 -75 20  print _s3
 
 # altered polyA  in WT  vs same genes in 2D4
 cond="CM"
