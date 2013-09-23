@@ -596,12 +596,12 @@ do
  cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | wc -l
 done
 # genes differentially expressed with differentially expressed polyA
-for f in diff_polyA/*polyA.csv
+for f in diff_polyA/WT*2D4*polyA.csv
 do
  echo -ne $(basename "${f%%_polyA.*}")","
  a=diff_expr/$(basename "${f%%_polyA.*}")"_expr"
  cat $a"_down.csv"  $a"_up.csv" | cut -f 1 -d "," | sort | uniq > _t
- cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | xargs -ipat grep pat _t | wc -l
+ cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | xargs -ipat grep pat _t 
 done
 # G1 sgl and APA
 for f in diff_polyA/*_polyA.csv
