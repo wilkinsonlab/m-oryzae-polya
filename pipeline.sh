@@ -43,16 +43,16 @@ done
 
 for f in `ls *.assign`
 do
-    cat  "${f%%.*}".assign | cut -f 2,3,4,5 | awk '{  if ( $4 == "-" ) print $3,$1  }' | sort -n | uniq -c | awk '{ printf "%s\t%d\t%d\t%d\n",$3,$2,$2+1,$1 }' > "${f%%.*}"_plus.bedgraph 
-    cat  "${f%%.*}".assign | cut -f 2,3,4,5 | awk '{  if ( $4 == "+" ) print $2,$1  }' | sort -n | uniq -c | awk '{ printf "%s\t%d\t%d\t%d\n",$3,$2,$2+1,$1 }' > "${f%%.*}"_minus.bedgraph
+    cat  "${f%%.*}".assign | cut -f 2,3,4,5 | awk '{  if ( $4 == "-" ) print $3,$1  }' | sort -n | uniq -c | awk '{ printf "%s\t%d\t%d\t%d\n",$3,$2-1,$2,$1 }' > "${f%%.*}"_plus.bedgraph 
+    cat  "${f%%.*}".assign | cut -f 2,3,4,5 | awk '{  if ( $4 == "+" ) print $2,$1  }' | sort -n | uniq -c | awk '{ printf "%s\t%d\t%d\t%d\n",$3,$2-1,$2,$1 }' > "${f%%.*}"_minus.bedgraph
 done
 
 # create not bedgraphs  
 
 for f in `ls *.notassign`
 do
-    cat  "${f%%.*}".notassign | cut -f 2,3,4,5 | awk '{  if ( $4 == "-" ) print $3,$1  }' | sort -n | uniq -c | awk '{ printf "%s\t%d\t%d\t%d\n",$3,$2,$2+1,$1 }' > "${f%%.*}"_not_plus.bedgraph 
-    cat  "${f%%.*}".notassign | cut -f 2,3,4,5 | awk '{  if ( $4 == "+" ) print $2,$1  }' | sort -n | uniq -c | awk '{ printf "%s\t%d\t%d\t%d\n",$3,$2,$2+1,$1 }' > "${f%%.*}"_not_minus.bedgraph
+    cat  "${f%%.*}".notassign | cut -f 2,3,4,5 | awk '{  if ( $4 == "-" ) print $3,$1  }' | sort -n | uniq -c | awk '{ printf "%s\t%d\t%d\t%d\n",$3,$2-1,$2,$1 }' > "${f%%.*}"_not_plus.bedgraph 
+    cat  "${f%%.*}".notassign | cut -f 2,3,4,5 | awk '{  if ( $4 == "+" ) print $2,$1  }' | sort -n | uniq -c | awk '{ printf "%s\t%d\t%d\t%d\n",$3,$2-1,$2,$1 }' > "${f%%.*}"_not_minus.bedgraph
 done
 
 
@@ -335,10 +335,41 @@ done
 
 # extract 3'UTR or intra-APA sequences (for miRNA search)
 grep stop_codon Magnaporthe_oryzae.MG8.18.gff3 | sed  -e 's/ID=stop_codon://' -e 's/T.*//' | cut -f 4,9| awk '{print $2,$1}' | sort > _g
-sort -k 5,5 -k 2 WT-CM-X.polyA_all_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _t
-#join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > $2  && arr[x+1] > $2 && arr[x+1] != "") || ($4 == 2 && arr[x] < $2  && arr[x+1] < $2 && arr[x+1] != "") ) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S " "\""$4"\" -L "arr[x]","arr[x+1]" ")}' > _WT-CM-X.intra
-join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 1 && arr[x] > $2+3 && arr[x]-($2+3)>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "$2+3","arr[x]" ")}' > _WT-CM-X.intra_sense
-join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 2 && arr[x] < $2-3 && ($2+3)-arr[x]>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "arr[x]","$2-3" ")}' > _WT-CM-X.intra_antisense
+sort -k 5,5 -k 2 WT-CM-X.polyA_apa_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _t
+join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > $2  && arr[x+1] > $2 && arr[x+1] != "") || ($4 == 2 && arr[x] < $2  && arr[x+1] < $2 && arr[x+1] != "") ) system("echo -n "$1"; fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S " "\""$4"\" -L "arr[x]","arr[x+1]" ")}' | awk -F ">" '{if ($2 != "") print ">"$2"@"$1; else print $0}' | sed 's/ .*@/@/' > _WT-CM-X.intra
+#join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 1 && arr[x] > $2+3 && arr[x]-($2+3)>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "$2+3","arr[x]" ")}' > _WT-CM-X.intra_sense
+#join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 2 && arr[x] < $2-3 && ($2+3)-arr[x]>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "arr[x]","$2-3" ")}' > _WT-CM-X.intra_antisense
+
+# search for matching small rna in intra-APA
+python -c "
+threshold = 10
+length = 20
+file = open('SRR643875_filtered.bedgraph', 'r')
+record_chrx = ''
+curr__stop = 0
+record_start = 0
+recording = False
+for line in file:
+    (chrx, start, stop, val) = line.strip().split('\t')
+    val = int(val)
+    start = int(start)
+    stop = int(stop)
+    if recording:
+        if chrx == record_chrx and start == curr_stop and val >= threshold:
+            curr_stop = stop
+        else:
+            if (stop - record_start) >= length:
+                print  record_chrx, record_start, curr_stop, (curr_stop - record_start) 
+            recording = False
+    else:
+        if val >= threshold:
+            record_start = start
+            record_chrx = chrx
+            curr_stop = stop
+            recording = True
+
+" | awk '{system("fastacmd -d ../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" ")}' > SRR643875_.fasta
+blastn -task blastn-short -query SRR643875_.fasta -db _WT-CM-X.intra -outfmt 6 | awk '{if ($4 >=20) print $0}'
 
 
 # orphans (400 or 1000 nt) search against known db
@@ -370,21 +401,6 @@ do
 	echo -ne $(basename "${f%%.*}")"," | sed 's/_notpolyA//'
  	cat $f | awk -F "," '{if ($8 < 0.05) print $1,$8}' 
 done
-
-
-
-# ncRNA search denovo
-mugsy --prefix magna --directory /media/marco/Elements/3Tfill/oryzae_18/ncrna/magna/out_magna/ genomes/*
-cat out_magna/magna.maf | python ../../../../m-oryzae-polya/maf_order.py Magnaporthe_oryzae > sorted.maf
-rnazWindow.pl  --min-seqs=3 sorted.maf > windows.maf
-RNAz --both-strands --no-shuffle --cutoff=0.9 windows.maf > rnaz.out
-rnazOutputSort.pl rnaz.out | rnazCluster.pl > results.dat
-#rnazIndex.pl --gff -w results.dat | sed -e 's/Magnaporthe_oryzae\.//' -e 's/\t\([+\-]\)\t/\t\1\t\.\t/' > results_w.gff
-rnazIndex.pl --gff results.dat | sed -e 's/Magnaporthe_oryzae\.//' -e 's/\t.\t/\t.\t.\t/' > results_l.gff
-cut -f 1,4,5,7 results_l.gff | awk '{if($4 == "+") S=1; else S=2; system("fastacmd -d ../../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" -S "S" ")}' > results.fa
-blastn -task dc-megablast -query results.fa -db ../../Rfam.fasta -max_target_seqs 1 -outfmt 6 
-blastn -task megablast -query results.fa -db ../../WT-CM-X.notpolyA_all_m_400.fa -max_target_seqs 1 -outfmt 6
-rnazFilter.pl "z<-3" ../results.dat | grep -e "^locus" | cut -f 2,3,4 | sed 's/Magnaporthe_oryzae\.//' | awk '{system("fastacmd -d ../../../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" ")}' | RNAfold
 
 # RL-SAGE blast with never expressed genes (sequences downloades from biomart)
 blastn -task blastn -query never_expressed.fa -db OSJNGg.fa -outfmt 6 -max_target_seqs 1  | awk '{if ($3 == 100 && $4 == 21) print $0}' | cut -f 1 | xargs -ipat grep pat ../gene_summary.txt
@@ -727,6 +743,16 @@ grep -o -e "[A-Za-z].*_.*" HRP1_webtree.txt > HRP1_order.txt
 python ../m-oryzae-polya/draw_domains.py HRP1_domains.txt HRP1_order.txt
 
 
+
+
+
+
+
+
+
+
+
+
 # basurilla
 
 
@@ -780,6 +806,20 @@ gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT-CM-3_1_trimmed.fastq WT-CM-3_2
 gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT-MM-3_1_trimmed.fastq WT-MM-3_2_trimmed.fastq > WT-MM-3.sam
 gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT--N-2_1_trimmed.fastq WT--N-2_2_trimmed.fastq > WT--N-2.sam
 gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT--N-3_1_trimmed.fastq WT--N-3_2_trimmed.fastq > WT--N-3.sam
+
+
+# ncRNA search denovo
+mugsy --prefix magna --directory /media/marco/Elements/3Tfill/oryzae_18/ncrna/magna/out_magna/ genomes/*
+cat out_magna/magna.maf | python ../../../../m-oryzae-polya/maf_order.py Magnaporthe_oryzae > sorted.maf
+rnazWindow.pl  --min-seqs=3 sorted.maf > windows.maf
+RNAz --both-strands --no-shuffle --cutoff=0.9 windows.maf > rnaz.out
+rnazOutputSort.pl rnaz.out | rnazCluster.pl > results.dat
+#rnazIndex.pl --gff -w results.dat | sed -e 's/Magnaporthe_oryzae\.//' -e 's/\t\([+\-]\)\t/\t\1\t\.\t/' > results_w.gff
+rnazIndex.pl --gff results.dat | sed -e 's/Magnaporthe_oryzae\.//' -e 's/\t.\t/\t.\t.\t/' > results_l.gff
+cut -f 1,4,5,7 results_l.gff | awk '{if($4 == "+") S=1; else S=2; system("fastacmd -d ../../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" -S "S" ")}' > results.fa
+blastn -task dc-megablast -query results.fa -db ../../Rfam.fasta -max_target_seqs 1 -outfmt 6 
+blastn -task megablast -query results.fa -db ../../WT-CM-X.notpolyA_all_m_400.fa -max_target_seqs 1 -outfmt 6
+rnazFilter.pl "z<-3" ../results.dat | grep -e "^locus" | cut -f 2,3,4 | sed 's/Magnaporthe_oryzae\.//' | awk '{system("fastacmd -d ../../../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" ")}' | RNAfold
 
 RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse1.maf > maf_parse1.out &
 RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse2.maf > maf_parse2.out &
