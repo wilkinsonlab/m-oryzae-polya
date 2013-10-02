@@ -21,9 +21,9 @@ res  <-  nbinomTest(  cds,  a,  b)
 resSig <- res[ res$padj < 0.05, ]
 
 
-summary = read.table("gene_summary.txt", sep="\t", header=TRUE)
-res = cbind(res, summary$Description)
-names(res)[names(res)=="summary$Description"] <- "desc"
+#summary = read.table("gene_summary.txt", sep="\t", header=TRUE)
+#res = cbind(res, summary$Description)
+#names(res)[names(res)=="summary$Description"] <- "desc"
 write.csv(res, file = paste("diff_expr/", a, "_vs_", b, "_expr.csv", sep=""),  row.names=F, quote=FALSE)
 write.table(counts, file = paste("diff_expr/", a, "_vs_", b, "_expr.count", sep=""),  sep="\t", col.names=F, quote=FALSE)
 

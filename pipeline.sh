@@ -856,6 +856,3 @@ python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.to
 scan _seq1 "TGTA[TCA]"
 scan _seq2 "TGTA[TCA]"
 
-# genes with both group, G3 
-cat _t1 _t2 | sort | uniq -d | wc -l
-
