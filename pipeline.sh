@@ -506,13 +506,21 @@ do
     echo $a","$b
 done
 
-
 # distribution of APA in genes (you have to change the script)
-for f in *X.polyA_all_m
+for f in *X.polyA_allhis	_m
 do
    echo -ne "${f%%??.*},"	
    python ../../m-oryzae-polya/polyA_distribution.py Magnaporthe_oryzae.MG8.18.gff3 $f 
 done
+
+# APA classification
+for f in *X.polyA_apa_m
+do
+   echo -ne "${f%%??.*},"	
+   cut -f 5 -d " " $f | sort | uniq -c | awk '{ arr[$1]++; count++; if ($1 > max) max = $1 } END { for (i=2;i<= max;i++) printf "%d,",arr[i] }'
+   echo	
+done
+
 
 # number of polyA sites per gene 
 for f in *X.polyA_all_m

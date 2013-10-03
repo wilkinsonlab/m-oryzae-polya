@@ -104,18 +104,3 @@ for transcript, polis in polyA.items():
         elif opt == 'all':
                 print table[transcript][max_curr], max_curr, lines[transcript][0], lines[transcript][1], transcript, lines[transcript][2], lines[transcript][3]
 
-
-
-python -c "
-file= open('_k', 'r')
-gff = open('../Magnaporthe_oryzae.MG8.18.gff3', 'r')
-for line in file:
-    (chrx, pos) = line.strip().split('\t')
-    pos = int(pos.strip())
-    for bah in gff:
-        items = bah.strip().split('\t')
-        if items[2] != 'gene': continue
-        if chrx == items[0] and pos >= int(items[3]) and pos <= int(items[4]):
-            print (chrx, pos),items[8][items[8].index('=')+1:items[8].index(';')]
-    gff.seek(0)        
-"
