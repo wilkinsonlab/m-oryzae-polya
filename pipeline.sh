@@ -319,19 +319,6 @@ function scan {
 }
 
  
-# extract polyA trascript sequences with fastacmd
-
-cut -f 1,2,3,4 WT_2D4_CM_polyA.diff | awk '{system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$2"\" -L "$3","$4" -o blast/"$1".fasta ")}'
-
-
-# call blast
-
-for f in `ls blast/*fasta`;
-do 
-blastall -p blastx -m 8 -a 4 -e 1e-20 -i $f -d MG8_proteome.fasta | head -n 1 | cut -f 2 | awk -v f="${f%%.*}" '{system("fastacmd -d MG8_proteome.fasta -s  " "\""$1"\" > "f".hits.fasta  ")}'
-done
-
-
 
 # extract 3'UTR or intra-APA sequences (for miRNA search)
 grep stop_codon Magnaporthe_oryzae.MG8.18.gff3 | sed  -e 's/ID=stop_codon://' -e 's/T.*//' | cut -f 4,9| awk '{print $2,$1}' | sort > _g
@@ -404,13 +391,34 @@ done
 
 # RL-SAGE blast with never expressed genes (sequences downloades from biomart)
 blastn -task blastn -query never_expressed.fa -db OSJNGg.fa -outfmt 6 -max_target_seqs 1  | awk '{if ($3 == 100 && $4 == 21) print $0}' | cut -f 1 | xargs -ipat grep pat ../gene_summary.txt
+# Group of genes based on expression with plant
+cat ../WT-CM-1.expr ../WT-CM-2.expr ../WT-CM-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _t1
+cat ../WT--N-1.expr ../WT--N-2.expr ../WT--N-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _t3
+cat ../WT--C-1.expr ../WT--C-2.expr ../WT--C-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _t4
+cat ../WT-MM-1.expr ../WT-MM-2.expr ../WT-MM-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _t2
+
+cat inplant_genes.txt _t4 _t1 _t1 _t1 _t2 _t2 _t2 _t3 _t3 _t3 | sort | uniq -c | awk '{if ($1 == 2) print $2}'  > inplant_WT--C.txt
+cat inplant_genes.txt _t3 _t1 _t1 _t1 _t2 _t2 _t2 _t4 _t4 _t4 | sort | uniq -c | awk '{if ($1 == 2) print $2}'  > inplant_WT--N.txt
+cat inplant_genes.txt _t1 _t3 _t3 _t3 _t2 _t2 _t2 _t4 _t4 _t4 | sort | uniq -c | awk '{if ($1 == 2) print $2}'  > inplant_WT-CM.txt
+cat inplant_genes.txt _t3 _t4  _t2 _t2 _t2 _t2 _t1 _t1 _t1 _t1 | sort | uniq -c | awk '{if ($1 == 3) print $2}'  > inplant_WT--N_WT--C.txt
+cat inplant_genes.txt _t1 _t2 _t3 _t4 | sort | uniq -c | awk '{if ($1 == 5) print $2}'> inplant_WT-CM_WT-MM_WT--N_WT--C.txt
+cat inplant_genes.txt _t1 _t1 _t2 _t3 _t4 _t2 _t3 _t4 | sort | uniq -u > inplant_only.txt
 
 
+# extract polyA trascript sequences with fastacmd
+cut -f 1,2,3,4 WT_2D4_CM_polyA.diff | awk '{system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$2"\" -L "$3","$4" -o blast/"$1".fasta ")}'
+# call blast
+for f in `ls blast/*fasta`;
+do 
+blastall -p blastx -m 8 -a 4 -e 1e-20 -i $f -d MG8_proteome.fasta | head -n 1 | cut -f 2 | awk -v f="${f%%.*}" '{system("fastacmd -d MG8_proteome.fasta -s  " "\""$1"\" > "f".hits.fasta  ")}'
+done
 # call interproscan
 for f in `ls *.fa`;
 do
 python ../../../m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f  --outfile=$f --outformat=out &
 done
+
+
 
 
 
@@ -731,6 +739,10 @@ for k,v in dists.items():
  if k == 500: break
 "
 done
+
+
+
+
 
 
 
