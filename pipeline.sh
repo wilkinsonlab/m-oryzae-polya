@@ -400,9 +400,8 @@ cat ../WT-MM-1.expr ../WT-MM-2.expr ../WT-MM-3.expr | awk '{if ($2 > 0) print $1
 cat inplant_genes.txt _t4 _t1 _t1 _t1 _t2 _t2 _t2 _t3 _t3 _t3 | sort | uniq -c | awk '{if ($1 == 2) print $2}'  > inplant_WT--C.txt
 cat inplant_genes.txt _t3 _t1 _t1 _t1 _t2 _t2 _t2 _t4 _t4 _t4 | sort | uniq -c | awk '{if ($1 == 2) print $2}'  > inplant_WT--N.txt
 cat inplant_genes.txt _t1 _t3 _t3 _t3 _t2 _t2 _t2 _t4 _t4 _t4 | sort | uniq -c | awk '{if ($1 == 2) print $2}'  > inplant_WT-CM.txt
-cat inplant_genes.txt _t3 _t4  _t2 _t2 _t2 _t2 _t1 _t1 _t1 _t1 | sort | uniq -c | awk '{if ($1 == 3) print $2}'  > inplant_WT--N_WT--C.txt
 cat inplant_genes.txt _t1 _t2 _t3 _t4 | sort | uniq -c | awk '{if ($1 == 5) print $2}'> inplant_WT-CM_WT-MM_WT--N_WT--C.txt
-cat inplant_genes.txt _t1 _t1 _t2 _t3 _t4 _t2 _t3 _t4 | sort | uniq -u > inplant_only.txt
+cat inplant_genes.txt _t1 _t1 _t2 _t3 _t4 _t2 _t3 _t4 | sort | uniq -u > inplant_only_notWT.txt
 
 
 # extract polyA trascript sequences with fastacmd
@@ -628,7 +627,7 @@ do
  cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | wc -l
 done
 # genes differentially expressed with differentially expressed polyA
-for f in diff_polyA/WT*2D4*polyA.csv
+for f in diff_polyA/WT-*2D4*polyA.csv
 do
  echo -ne $(basename "${f%%_polyA.*}")","
  a=diff_expr/$(basename "${f%%_polyA.*}")"_expr"
