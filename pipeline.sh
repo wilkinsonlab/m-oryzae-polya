@@ -848,25 +848,26 @@ RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse4.maf > maf_parse4.out &
 
 
 # P1 vs notP1
-cat diff_polyA/WT*CM*2D4*CM*down*polyA* | sort -k 1,7 | uniq > _p1
+cat diff_polyA/WT-CM_vs_2D4-CM_down.polyA_all_m | sort -k 1,7 | uniq > _p1
 cat _p1 _p1 WT-CM-X.polyA_all_m | sort -k 1,7 | uniq -u | sort -R > _not_p1
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1 -100 100 print _s1
-c=$(cat _g | wc -l)
+c=$(cat _p1 | wc -l)
 head -n $c _not_p1 > _not_p1_1
 tail -n $c _not_p1 > _not_p1_2
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _not_p1_1 -100 100  print _s2
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _not_p1_2 -100 100  print _s3
 
 # P1 vs P1_others
-cat diff_polyA/WT*-C*2D4*-C*down*polyA* | sort -k 1,7 | uniq > _p1
-cut -f 5 -d " " _p1 | xargs -ipat grep pat WT--C-X.polyA_all_m > _p1_all
-cat _p1 _p1_all | sort -k 1,7 | uniq -u > _p1_others
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1 -40 -10 print _s1
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1_others -40 -10 print _s1_others
+cat diff_polyA/WT-CM_vs_2D4-CM_down.polyA_all_m | sort -k 1,7 | uniq > _p1
+cat diff_polyA/WT-CM_vs_2D4-CM_up.polyA_all_m | sort -k 1,7 | uniq > _p2
+cut -f 5 -d " " _p1 | xargs -ipat grep pat WT-CM-X.polyA_all_m > _p1_all
+cat _p1 _p1 _p2 _p2 _p1_all | sort -k 1,7 | uniq -u > _p1_others
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1 -100 100 print _s1
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1_others -100 100 print _s1_others
 
 # P1 vs P2
-cat diff_polyA/WT*-C*2D4*-C*down*polyA* | sort -k 1,7 | uniq > _p1
-cat diff_polyA/WT*-C*2D4*-C*up*polyA* | sort -k 1,7 | uniq > _p2
+cat diff_polyA/WT-CM_vs_2D4-CM_down.polyA_all_m | sort -k 1,7 | uniq > _p1
+cat diff_polyA/WT-CM_vs_2D4-CM_up.polyA_all_m | sort -k 1,7 | uniq > _p2
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1 -100 100 print _s1
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p2 -100 100 print _s2
 
