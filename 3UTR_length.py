@@ -61,7 +61,7 @@ python -c "
 p1 = open('_p1', 'r')
 p2 = open('_p2', 'r')
 t1 = {}
-diffs = [0 for i in range(100)]
+diffs = [0 for i in range(500)]
 for l1 in p1:
     items = l1.strip().split(' ')
     gene = items[4]
@@ -74,10 +74,9 @@ for l2 in p2:
     sense = items[3]
     pos = int(items[1])
     if t1.has_key(gene):
-        if abs(pos - t1[gene]) < 500:
-            diffs[abs(pos - t1[gene]) / 5] += 1     
-for x in diffs:
-    print x
+        if abs(pos - t1[gene]) > 150:
+                print gene 
+
 
 "
 
