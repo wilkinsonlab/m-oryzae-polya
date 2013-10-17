@@ -104,3 +104,20 @@ for transcript, polis in polyA.items():
         elif opt == 'all':
                 print table[transcript][max_curr], max_curr, lines[transcript][0], lines[transcript][1], transcript, lines[transcript][2], lines[transcript][3]
 
+
+python -c "
+p1 = open('_s1', 'r')
+dist = [0 for x in range(0, 100)]
+count = 0.0
+for line in p1:
+    count +=1
+    if line[0] == '>': continue
+    i = line.rfind('TGTA')
+    if i != -1:
+        #i = line.rfind('TGTA', 0, i)
+        #if i != -1:
+            dist[i] +=1
+            
+       
+for x in dist: print x / count
+"
