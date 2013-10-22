@@ -58,25 +58,46 @@ polyA_file.close()
 
 python -c "
 
-p1 = open('_p1', 'r')
-p2 = open('_p2', 'r')
-t1 = {}
-diffs = [0 for i in range(500)]
-for l1 in p1:
-    items = l1.strip().split(' ')
-    gene = items[4]
-    sense = items[3]
-    pos = int(items[1])
-    t1[gene] = pos
-for l2 in p2:
-    items = l2.strip().split(' ')
-    gene = items[4]
-    sense = items[3]
-    pos = int(items[1])
-    if t1.has_key(gene):
-        if abs(pos - t1[gene]) > 150:
-                print gene 
+file = open('_n', 'r')
+prox1 = {}
+dist1 = {}
+curr1 = {}
+prox2 = {}
+dist2 = {}
+for line in file:
+    polyA, a1, a2, a3, b1, b2, b3 = line.strip().split('\t')
+    chrx, pos, sense, gene, start, end = polyA.split(':')
+    a1 = int(a1);a2 = int(a2);a3 = int(a3);b1 = int(b1);b2 = int(b2);b3 = int(b3);
+    pos = int(pos);
+    if not prox1.has_key(gene):
+        prox1[gene] = a1 + a2 + a3 
+        prox2[gene] = b1 + b2 + b3 
+        dist1[gene] = a1 + a2 + a3 
+        dist2[gene] = b1 + b2 + b3 
+        curr1[gene] = pos
+    else:
+        prox1[gene] += a1 + a2 + a3 
+        prox2[gene] += b1 + b2 + b3 
+        if sense == '-':
+            if pos > curr1[gene]:    
+                dist1[gene] = a1 + a2 + a3
+                dist2[gene] = b1 + b2 + b3
+                curr1[gene] = pos
+        else:
+            if pos < curr1[gene]:    
+                dist1[gene] = a1 + a2 + a3
+                dist2[gene] = b1 + b2 + b3
+                curr1[gene] = pos
+    
+                                 
+for gene,val in dist1.items():
+    prox1[gene] -= val
+for gene,val in dist2.items():
+    prox2[gene] -= val
 
+for k,v in prox1.items():
 
+        print prox1[k]/(dist1[k]+0.1) ,  prox2[k]/(dist2[k]+0.1)
+     
 "
 

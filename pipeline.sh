@@ -705,6 +705,17 @@ do
 done
 
 
+# polyA site usage change
+for f in "MM" "-N" "-C"
+do
+    echo -ne WT-CM_vs_WT"-"$f","
+    python ../../m-oryzae-polya/polyA_usage_ratio.py diff_polyA/WT-CM_vs_WT"-"$f"_"polyA.count
+done
+for f in "CM" "MM" "-N" "-C"
+do
+    echo -ne WT"-"$f"_"vs_2D4"-"$f","
+    python ../../m-oryzae-polya/polyA_usage_ratio.py diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.count
+done
 
 # distance from annotated gene features
 # ...
@@ -887,3 +898,28 @@ python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.to
 scan _seq1 "TGTA[TCA]"
 scan _seq2 "TGTA[TCA]"
 
+
+# extract by distance
+python -c "
+
+p1 = open('_p1', 'r')
+p2 = open('_p2', 'r')
+t1 = {}
+diffs = [0 for i in range(500)]
+for l1 in p1:
+    items = l1.strip().split(' ')
+    gene = items[4]
+    sense = items[3]
+    pos = int(items[1])
+    t1[gene] = pos
+for l2 in p2:
+    items = l2.strip().split(' ')
+    gene = items[4]
+    sense = items[3]
+    pos = int(items[1])
+    if t1.has_key(gene):
+        if abs(pos - t1[gene]) > 150:
+                print gene 
+
+
+"
