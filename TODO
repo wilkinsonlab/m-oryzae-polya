@@ -1,5 +1,10 @@
 - actualizar los datos de distribution APA
+- arreglar el grafo del huerfanos y enviar numero
+- lista RBP35 dep especifico de cada medio y global
+- tag para cada gen en que esp de planta pertenece
+- plant diff tambien para CM y MM
+- diagrama venn para los plant diff
+- lista global de genes expresados con reads
+- lista gene con APA alterados entre los medios 
 - cambiar 2d4 in deltarbp35
 - cambiar frequency in percentage of ocurrences
-- numero de genes con ugua, uaga, both...
-- resume sheet by gene

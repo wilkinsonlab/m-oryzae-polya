@@ -318,7 +318,21 @@ function scan {
     cat _count | awk -v num=`grep -c ">" $f` -F ":" '{ arr[$1]++ } END { for (i=0; i<=200; i++) print arr[i]/num*100 }'
 }
 
- 
+# motif scan 
+python -c "
+import re
+f = open('motifs/WT-CM-X_TOT_all_m.fam', 'r')
+s = r'TACA'
+d = [0 for x in range(200)]
+c = 0.0
+for line in f:
+  if line[0] == '>': continue
+  for m in re.finditer(s, line):
+    d[m.start(0)] += 1
+  c += 1		
+for v in d:
+  print v / c *100		
+" 
 
 # extract 3'UTR or intra-APA sequences (for miRNA search)
 grep stop_codon Magnaporthe_oryzae.MG8.18.gff3 | sed  -e 's/ID=stop_codon://' -e 's/T.*//' | cut -f 4,9| awk '{print $2,$1}' | sort > _g
