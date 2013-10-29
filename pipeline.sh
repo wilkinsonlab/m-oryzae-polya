@@ -320,9 +320,9 @@ function scan {
 
 # motif scan 
 python -c "
-import re
-f = open('motifs/WT-CM-X_TOT_all_m.fam', 'r')
-s = r'TACA'
+import re, sys
+f = open(sys.argv[1], 'r')
+s = sys.argv[2]
 d = [0 for x in range(200)]
 c = 0.0
 for line in f:
