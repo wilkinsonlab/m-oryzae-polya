@@ -29,7 +29,13 @@ write.table(counts, file = paste("diff_expr/", a, "_vs_", b, "_expr.count", sep=
 
 #plotDispEsts( cds )
 #plotMA(res,col = ifelse(res$padj>=0.05, "black", "red3"))
-#hist(res$pval, breaks=100, col="skyblue", border="slateblue", main="")
+png(file = paste("images/", a, "_vs_", b, "_pval.png", sep=""), width=600, height=600)
+hist(res$pval, breaks=100, col="skyblue", border="slateblue", main="")
+dev.off()
+png(file = paste("images/", a, "_vs_", b, "_padj.png", sep=""), width=600, height=600)
+hist(res$padj, breaks=100, col="skyblue", border="slateblue", main="")
+dev.off()
+
 
 cdsFullBlind = estimateDispersions( cds, method = "blind" )
 vsdFull = varianceStabilizingTransformation( cdsFullBlind )

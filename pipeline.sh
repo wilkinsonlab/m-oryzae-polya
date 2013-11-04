@@ -148,7 +148,7 @@ done
 
 # differential polyA (p-value < 0.1)
 
-function diff {
+function old_diff {
  s1=$1
  s2=$2
  c1=$3
@@ -172,6 +172,37 @@ function diff {
  cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($8 < 0.1 && $6 < 0) print $1}' | awk -F ":" '{print 0,$2,$1,$3,$4,$5,$6}' > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
  mv $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv diff_polyA
  rm _*
+}
+
+function diff {
+ s1=$1
+ s2=$2
+ c1=$3
+ c2=$4
+ cat $s1-$c1-X.polyA_all_m $s2-$c2-X.polyA_all_m | sort -k 1,7 | uniq > _k
+ cat _k $s1-$c1-1.polyA | sed s'/^ *//' | sort -k 5,5 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $5":"$3"@"$2"@"$4"@"$6"@"$7"\t"$1}' | sort -k 1,1 > _a
+ cat _k $s1-$c1-2.polyA | sed s'/^ *//' | sort -k 5,5 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $5":"$3"@"$2"@"$4"@"$6"@"$7"\t"$1}' | sort -k 1,1 > _b
+ cat _k $s1-$c1-3.polyA | sed s'/^ *//' | sort -k 5,5 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $5":"$3"@"$2"@"$4"@"$6"@"$7"\t"$1}' | sort -k 1,1 > _c
+ cat _k $s2-$c2-1.polyA | sed s'/^ *//' | sort -k 5,5 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $5":"$3"@"$2"@"$4"@"$6"@"$7"\t"$1}' | sort -k 1,1 > _d
+ cat _k $s2-$c2-2.polyA | sed s'/^ *//' | sort -k 5,5 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $5":"$3"@"$2"@"$4"@"$6"@"$7"\t"$1}' | sort -k 1,1 > _e
+ cat _k $s2-$c2-3.polyA | sed s'/^ *//' | sort -k 5,5 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $5":"$3"@"$2"@"$4"@"$6"@"$7"\t"$1}' | sort -k 1,1 > _f
+ join  _a _b -1 1 -2 1 -a 1 -a 2 -e 0  -o 0,1.2,2.2 -t $'\t' > _t1
+ join  _t1 _c -1 1 -2 1 -a 1 -a 2 -e 0  -o 0,1.2,1.3,2.2 -t $'\t'  > _t2
+ join  _t2 _d -1 1 -2 1 -a 1 -a 2 -e 0  -o 0,1.2,1.3,1.4,2.2 -t $'\t'  > _t3
+ join  _t3 _e -1 1 -2 1 -a 1 -a 2 -e 0  -o 0,1.2,1.3,1.4,1.5,2.2 -t $'\t'  > _t4
+ join  _t4 _f -1 1 -2 1 -a 1 -a 2 -e 0  -o 0,1.2,1.3,1.4,1.5,1.6,2.2 -t $'\t'  > _t5
+ cat _t5 | awk '{print $1"\t"$2}' > _out1
+ cat _t5 | awk '{print $1"\t"$3}' > _out2 
+ cat _t5 | awk '{print $1"\t"$4}' > _out3
+ cat _t5 | awk '{print $1"\t"$5}' > _out4
+ cat _t5 | awk '{print $1"\t"$6}' > _out5
+ cat _t5 | awk '{print $1"\t"$7}' > _out6
+ mv _t5 $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count
+ Rscript ../../m-oryzae-polya/diff_polyA.R $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv
+ cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 < 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
+ cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 > 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
+ mv $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv diff_polyA
+ #rm _*
 }  
 
 diff "WT" "2D4" "CM" "CM"
@@ -478,24 +509,6 @@ cat _all | wc -l
 # never expressed genes
 cat gene_summary.txt _*_t | tail -n +2 | cut -f 1 | sort | uniq -u | wc -l
 rm _*
-# genes intersections (or disjunction, for ppt diagrams)
-function intersection {
-    a=$1
-    b=$2
-    c=$3
-    d=$4
-    cat $a-1.expr $a-2.expr $a-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _a
-    cat $b-1.expr $b-2.expr $b-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _b   
-    cat $c-1.expr $c-2.expr $c-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _c
-    cat $d-1.expr $d-2.expr $d-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _d
-    #cat _a | wc -l 
-    #cat _b | wc -l
-    #cat _c | wc -l
-    #cat _a _b _c| sort | uniq -c | awk '{if ($1 == 3) print $0}' | wc -l
-    #cat _a  _b | sort | uniq -d | wc -l 
-}
-intersection WT-CM WT-MM WT--N WT--C
-
 
 
 # number of genes with an recognizable generic polyA site
@@ -646,7 +659,7 @@ do
  echo -ne $(basename "${f%%_polyA.*}")","
  a=diff_expr/$(basename "${f%%_polyA.*}")"_expr"
  cat $a"_down.csv"  $a"_up.csv" | cut -f 1 -d "," | sort | uniq > _t
- cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | xargs -ipat grep pat _t 
+ cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | xargs -ipat grep pat _t | wc -l
 done
 # G1 sgl and APA
 for f in diff_polyA/*_polyA.csv
@@ -937,3 +950,34 @@ for l2 in p2:
 
 
 "
+
+# genes 4 sets venn diagrams
+cat _c _d | sort | uniq  > _t
+cat _a _b | sort | uniq -d | cat _t _t - | sort | uniq -u > _ab
+cat _b _d | sort | uniq  > _t
+cat _a _c | sort | uniq -d | cat _t _t - | sort | uniq -u > _ac
+cat _c _b | sort | uniq  > _t
+cat _a _d | sort | uniq -d | cat _t _t - | sort | uniq -u > _ad
+cat _a _d | sort | uniq  > _t
+cat _b _c | sort | uniq -d | cat _t _t - | sort | uniq -u > _bc
+cat _a _c | sort | uniq  > _t
+cat _b _d | sort | uniq -d | cat _t _t - | sort | uniq -u > _bd
+cat _a _b | sort | uniq  > _t
+cat _c _d | sort | uniq -d | cat _t _t - | sort | uniq -u > _cd
+cat _a | sort | uniq  > _t
+cat _b _c _d | sort | uniq -c | awk '{if ($1 == 3) print $2}' | cat _t _t - | sort | uniq -u > _bcd
+cat _b | sort | uniq  > _t
+cat _a _c _d | sort | uniq -c | awk '{if ($1 == 3) print $2}' | cat _t _t - | sort | uniq -u > _acd
+cat _c | sort | uniq  > _t
+cat _a _b _d | sort | uniq -c | awk '{if ($1 == 3) print $2}' | cat _t _t - | sort | uniq -u > _abd
+cat _d | sort | uniq  > _t
+cat _a _b _c | sort | uniq -c | awk '{if ($1 == 3) print $2}' | cat _t _t - | sort | uniq -u > _abc
+cat _a _b _c | sort | uniq  > _t
+cat _d | sort | uniq  | cat _t _t - | sort | uniq -u > __d
+cat _a _b _d | sort | uniq  > _t
+cat _c | sort | uniq  | cat _t _t - | sort | uniq -u > __c
+cat _a _d _c | sort | uniq  > _t
+cat _b | sort | uniq  | cat _t _t - | sort | uniq -u > __b
+cat _d _b _c | sort | uniq  > _t
+cat _a | sort | uniq  | cat _t _t - | sort | uniq -u > __a
+cat _a _b _c _d | sort | uniq -c | awk '{if ($1 == 4) print $2}' > _abcd
