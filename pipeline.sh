@@ -202,7 +202,7 @@ function diff {
  cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 < 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
  cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 > 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
  mv $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv diff_polyA
- #rm _*
+ rm _*
 }  
 
 diff "WT" "2D4" "CM" "CM"
@@ -563,13 +563,6 @@ do
     cut -f 5 -d " " $f | sort | uniq -c | awk '{count+=1;num+=$1} END {print num/count}'
 done
 
-# genes affected by rbp35 in wt (all)
-for f in diff_polyA/WT*2D4*down.polyA_all_m
-do
- echo -ne $(basename "${f%%.*}")"," | sed 's/_down//'
- cat $f | cut -f 5 -d " " | sort | uniq | wc -l
-done
-
 # differential expressed genes number
 for f in diff_expr/*down.csv
 do
@@ -654,7 +647,7 @@ do
  cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | wc -l
 done
 # genes differentially expressed with differentially expressed polyA
-for f in diff_polyA/WT-*2D4*polyA.csv
+for f in diff_polyA/*polyA.csv
 do
  echo -ne $(basename "${f%%_polyA.*}")","
  a=diff_expr/$(basename "${f%%_polyA.*}")"_expr"
@@ -733,16 +726,30 @@ done
 
 
 # polyA site usage change
-for f in "MM" "-N" "-C"
+for f in "CM" "MM" "-N"
 do
-    echo -ne WT-CM_vs_WT"-"$f","
-    python ../../m-oryzae-polya/polyA_usage_ratio.py diff_polyA/WT-CM_vs_WT"-"$f"_"polyA.count
+    echo -ne WT-$f"_"vs_WT--C","
+    python ../../m-oryzae-polya/polyA_usage_ratio.py diff_polyA/WT-$f"_"vs_WT--C_polyA.count 
 done
 for f in "CM" "MM" "-N" "-C"
 do
     echo -ne WT"-"$f"_"vs_2D4"-"$f","
     python ../../m-oryzae-polya/polyA_usage_ratio.py diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.count
 done
+# polyA site usage change (only dependent)
+for f in "CM" "MM" "-N"
+do
+    echo -ne WT-$f"_"vs_WT--C","
+    cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT-$f"_"vs_WT--C_polyA.count > _g 
+    python ../../m-oryzae-polya/polyA_usage_ratio.py _g
+done
+for f in "CM" "MM" "-N" "-C"
+do
+    echo -ne WT"-"$f"_"vs_2D4"-"$f","
+    cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.count > _g
+    python ../../m-oryzae-polya/polyA_usage_ratio.py _g
+done
+
 
 # distance from annotated gene features
 # ...
@@ -905,25 +912,6 @@ cat _p1 _p1 _p2 _p2 _p1_all | sort -k 1,7 | uniq -u > _p1_others
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1 -100 100 print _s1
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p2 -100 100 print _s2
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1_others -100 100 print _s1_others
-
-
-# altered polyA  in WT  vs same genes in 2D4
-cond="CM"
-cut -f 5 -d " "  diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m | sort | uniq  > _t1
-grep -f _t1 2D4-"$cond"-X.polyA_all_m > _g
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa diff_polyA/WT-"$cond"_vs_2D4-"$cond"_down.polyA_all_m -100 100 print _seq1
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _g -100 100 print _seq2
-scan _seq1 "TGTA[TCA]"
-scan _seq2 "TGTA[TCA]"
-
-# altered polyA  in 2D4 vs same genes in WT
-cond="CM"
-cut -f 5 -d " "  diff_polyA/WT-"$cond"_vs_2D4-"$cond"_up.polyA_all_m | sort | uniq  > _t2
-grep -f _t2 WT-"$cond"-X.polyA_all_m > _g
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa diff_polyA/WT-"$cond"_vs_2D4-"$cond"_up.polyA_all_m -100 100 print _seq1
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _g -100 100 print _seq2
-scan _seq1 "TGTA[TCA]"
-scan _seq2 "TGTA[TCA]"
 
 
 # extract by distance
