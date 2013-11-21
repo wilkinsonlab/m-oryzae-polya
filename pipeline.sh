@@ -222,7 +222,7 @@ diff "2D4" "2D4" "MM" "-N"
 diff "2D4" "2D4" "MM" "-C"
 diff "2D4" "2D4" "-N" "-C"
 
-# differential notpolyA
+# differential notpolyA (old)
 
 function notdiff {
  s1=$1
@@ -366,22 +366,73 @@ for v in d:
   print v / c *100		
 " 
 
+# extract 3'UTR sequences
+python -c "
+import os,sys,re
+gff_file = open(sys.argv[1], 'r')
+polyA_file = open(sys.argv[2], 'r')
+
+stops = {}
+for line in gff_file:
+    if line[0] == '#' or line[0] == '\n':
+        continue
+    items = line.split('\t')
+    if items[2] == 'stop_codon':
+        chrx = items[0]
+        for x in items[8].split(';'):
+            if x.split('=')[0] == 'Parent':
+                name = x.split('=')[1].strip()
+        name = re.sub(r'T.', '', name)
+        sense = items[6]
+        if sense == '+':
+            pos = int(items[4])
+        else:
+            pos = int(items[3])
+        stops[name] = pos
+
+for line in polyA_file:
+    items = line.strip().split(' ')
+    pos = int(items[1])
+    chrx = items[2]
+    sense = items[3]
+    gene = items[4]
+    if not stops.has_key(gene): continue
+    if sense == '+':
+        sense = '2'
+        start = pos
+        end = stops[gene]
+    else:
+        sense = '1'
+        start = stops[gene]
+        end = pos
+    #if end - start < 70: continue
+    os.system('fastacmd -s \"lcl|' + chrx + '\" -S ' + sense + ' -L ' +  str(start) + ',' + str(end) + ' -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa')
+
+gff_file.close()
+polyA_file.close()
+" Magnaporthe_oryzae.MG8.18.gff3 WT-CM-X.polyA_all_m
+
+
 # extract 3'UTR or intra-APA sequences (for miRNA search)
 grep stop_codon Magnaporthe_oryzae.MG8.18.gff3 | sed  -e 's/ID=stop_codon://' -e 's/T.*//' | cut -f 4,9| awk '{print $2,$1}' | sort > _g
-sort -k 5,5 -k 2 WT-CM-X.polyA_apa_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _t
+sort -k 5,5 -k 2 WT-CM-X.polyA_apa_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _g#small/_WT-CM-X.apa
 join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > $2  && arr[x+1] > $2 && arr[x+1] != "") || ($4 == 2 && arr[x] < $2  && arr[x+1] < $2 && arr[x+1] != "") ) system("echo -n "$1"; fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S " "\""$4"\" -L "arr[x]","arr[x+1]" ")}' | awk -F ">" '{if ($2 != "") print ">"$2"@"$1; else print $0}' | sed 's/ .*@/@/' > _WT-CM-X.intra
 #join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 1 && arr[x] > $2+3 && arr[x]-($2+3)>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "$2+3","arr[x]" ")}' > _WT-CM-X.intra_sense
 #join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 2 && arr[x] < $2-3 && ($2+3)-arr[x]>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "arr[x]","$2-3" ")}' > _WT-CM-X.intra_antisense
 
 # search for matching small rna in intra-APA
 python -c "
-threshold = 10
-length = 20
-file = open('SRR643875_filtered.bedgraph', 'r')
+import sys
+threshold = 100
+length = 18
+length_max = 24
+file = open('SRR643875_nr.bedgraph', 'r')
+apa = open('_WT-CM-X.apa', 'r')
 record_chrx = ''
 curr__stop = 0
 record_start = 0
 recording = False
+hits = []
 for line in file:
     (chrx, start, stop, val) = line.strip().split('\t')
     val = int(val)
@@ -392,17 +443,31 @@ for line in file:
             curr_stop = stop
         else:
             if (stop - record_start) >= length:
-                print  record_chrx, record_start, curr_stop, (curr_stop - record_start) 
+                
+                if (stop - record_start) <= length_max:
+                    #print record_chrx, record_start, stop, (stop - record_start)
+                    hits.append((record_chrx, record_start, curr_stop, (curr_stop - record_start)))
             recording = False
     else:
         if val >= threshold:
             record_start = start
             record_chrx = chrx
             curr_stop = stop
-            recording = True
-
-" | awk '{system("fastacmd -d ../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" ")}' > SRR643875_.fasta
-blastn -task blastn-short -query SRR643875_.fasta -db _WT-CM-X.intra -outfmt 6 | awk '{if ($4 >=20) print $0}'
+            recording = True   
+#exit(0)            
+for line in apa:
+    (gene, chrx, num, pos) = line.strip().split(' ')
+    pos = pos.split(':')
+    for (record_chrx, record_start, record_stop, length) in hits:
+        if chrx == record_chrx:
+            pos = [int(p) for p in pos]
+            for i, p in enumerate(pos[:-1]):
+                if (record_start >= pos[i] and record_start <= pos[i+1]) and (record_stop >= pos[i] and record_stop <= pos[i+1]):
+                    print gene #, record_start, record_stop
+                
+" | awk '{system("fastacmd -d ../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" ")}' | fastx_collapser > _micro
+#| awk '{system("fastacmd -d ../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" ")}' > SRR643875_.fasta
+#blastn -task blastn-short -query SRR643875_.fasta -db _WT-CM-X.intra -outfmt 6 -max_target_seqs 1 | awk '{if ($4 >=20) print $0}'
 
 
 # orphans (400 or 1000 nt) search against known db
