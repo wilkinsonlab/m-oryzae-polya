@@ -86,7 +86,7 @@ for f in `ls *.polyA`; do python ../../m-oryzae-polya/polyA_extract.py Magnaport
 
 # extract notpolyA most significant sites
 
-for f in `ls *.notpolyA`; do python ../../m-oryzae-polya/polyA_extract_not.py $f 33 100 > $f"_"all_m; done 
+for f in `ls *.notpolyA`; do python ../../m-oryzae-polya/polyA_extract_not.py $f 33 1 > $f"_"all_m; done 
 
 
 # cumulate replicates
@@ -224,11 +224,12 @@ diff "2D4" "2D4" "-N" "-C"
 
 # differential notpolyA (old)
 
-function notdiff {
+function old_notdiff {
  s1=$1
  s2=$2
  c1=$3
  c2=$4
+ 
  cat $s1-$c1-X.notpolyA_all_m $s2-$c2-X.notpolyA_all_m | sort -k 1,4 | uniq > _k
  cat _k $s1-$c1-1.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3":"$2":"$4"\t"$1}' | sort -k 1,1 > _a
  cat _k $s1-$c1-2.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3":"$2":"$4"\t"$1}' | sort -k 1,1 > _b
@@ -247,6 +248,35 @@ function notdiff {
  rm _*
 }  
 
+# WE TAKE ALL THE ORPHAN, FROM 1 READ ABOVE, NOT JUST 100 READS
+function notdiff {
+ s1=$1
+ s2=$2
+ c1=$3
+ c2=$4
+ cat $s1-$c1-X.notpolyA_all_m $s2-$c2-X.notpolyA_all_m | sort -k 1,4 | uniq > _k
+ cat _k $s1-$c1-1.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _a
+ cat _k $s1-$c1-2.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _b
+ cat _k $s1-$c1-3.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _c
+ cat _k $s2-$c2-1.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _d
+ cat _k $s2-$c2-2.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _e
+ cat _k $s2-$c2-3.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _f
+ join  _a _b -1 1 -2 1 -a 1 -a 2 -e 0  -o 0,1.2,2.2 -t $'\t' > _t1
+ join  _t1 _c -1 1 -2 1 -a 1 -a 2 -e 0  -o 0,1.2,1.3,2.2 -t $'\t'  > _t2
+ join  _t2 _d -1 1 -2 1 -a 1 -a 2 -e 0  -o 0,1.2,1.3,1.4,2.2 -t $'\t'  > _t3
+ join  _t3 _e -1 1 -2 1 -a 1 -a 2 -e 0  -o 0,1.2,1.3,1.4,1.5,2.2 -t $'\t'  > _t4
+ join  _t4 _f -1 1 -2 1 -a 1 -a 2 -e 0  -o 0,1.2,1.3,1.4,1.5,1.6,2.2 -t $'\t'  > _t5
+ cat _t5 | awk '{print $1"\t"$2}' > _out1
+ cat _t5 | awk '{print $1"\t"$3}' > _out2 
+ cat _t5 | awk '{print $1"\t"$4}' > _out3
+ cat _t5 | awk '{print $1"\t"$5}' > _out4
+ cat _t5 | awk '{print $1"\t"$6}' > _out5
+ cat _t5 | awk '{print $1"\t"$7}' > _out6
+ mv _t5 $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.count
+ Rscript ../../m-oryzae-polya/notdiff_polyA.R  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.csv
+ mv  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.csv notdiff_polyA
+ rm _*
+}  
 notdiff "WT" "2D4" "CM" "CM"
 notdiff "WT" "2D4" "MM" "MM"
 notdiff "WT" "2D4" "-N" "-N"
