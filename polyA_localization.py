@@ -49,20 +49,20 @@ for line in polyA_file:
         if pos >= start and pos <= end:
             location[gene]['five_prime_UTR'] += 1
             flag = True
-            #print line.strip(), "5'UTR"
+            print line.strip()
     for start, end in table[gene]['CDS']:
        if pos >= start and pos <= end:
             location[gene]['CDS'] += 1           
             flag = True  
-            #print line.strip(), "CDS"
+            #print line.strip()
     if not flag:        
         if table[gene]["stop_codon"] != [] and table[gene]["start_codon"] != []:
             if table[gene]["sense"] == "+" and pos >= table[gene]["stop_codon"][0][0] or table[gene]["sense"] == "-" and pos <= table[gene]["stop_codon"][0][1]:
                 location[gene]['three_prime_UTR'] += 1
-                #print line.strip(), "3'UTR"
+                #print line.strip()
             elif pos >= table[gene]["gene"][0][0] and pos <= table[gene]["gene"][0][1]:
                 location[gene]['intron'] += 1
-                #print line.strip(), "intron"
+                #print line.strip()
             else:
                 location[gene]['not_annotated'] += 1
                 #print line.strip(), "not annotated"
@@ -86,7 +86,8 @@ for transcript, loc in location.items():
     not_annotated += loc["not_annotated"]
     count_poly += sum(loc.values())
 
-sys.stdout.write("%d,%d,%d,%d,%d\n" % (three_utr, five_utr, cds, intron, not_annotated))
+if __name__ == "__main__":
+    pass #sys.stdout.write("%d,%d,%d,%d,%d\n" % (three_utr, five_utr, cds, intron, not_annotated))
 
 
 gff_file.close()

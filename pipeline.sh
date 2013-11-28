@@ -535,7 +535,8 @@ for line in open('WT-ALL-X.notpolyA_all_m_low', 'r'):
  pos = int(pos)
  for gene, coord in table[chrx].items():
    if pos >= coord[0] and pos <= coord[1]:
-     print chrx + ':' + str(pos) + ':' + val + ':' + sense + '\t' + gene
+     #print chrx + ':' + str(pos) + ':' + val + ':' + sense + '\t' + gene
+     print line.strip(), gene
 "
 
 # RL-SAGE blast with never expressed genes (sequences downloades from biomart)
@@ -644,8 +645,8 @@ do
     echo $a","$b
 done
 
-# distribution of APA in genes (you have to change the script)
-for f in *X.polyA_allhis	_m
+# distribution of APA in genes 
+for f in *X.polyA_all_m
 do
    echo -ne "${f%%??.*},"	
    python ../../m-oryzae-polya/polyA_distribution.py Magnaporthe_oryzae.MG8.18.gff3 $f 
