@@ -86,8 +86,8 @@ for f in `ls *.polyA`; do python ../../m-oryzae-polya/polyA_extract.py Magnaport
 
 # extract notpolyA most significant sites
 
-for f in `ls *.notpolyA`; do python ../../m-oryzae-polya/polyA_extract_not.py $f 33 1 > $f"_"all_m; done 
-
+for f in `ls *.notpolyA`; do python ../../m-oryzae-polya/polyA_extract_not.py $f 33 100 > $f"_"all_m_high; done 
+for f in `ls *.notpolyA`; do python ../../m-oryzae-polya/polyA_extract_not.py $f 33 10 > $f"_"all_m_low; done
 
 # cumulate replicates
 for f in  "WT-CM" "WT-MM" "WT--N" "WT--C" "2D4-CM" "2D4-MM" "2D4--N" "2D4--C"
@@ -101,10 +101,17 @@ cat 2D4*X*.polyA_all_m |  sort -k 1,7 | uniq  > 2D4-ALL-X.polyA_all_m
 # cumulate not replicates
 for f in  "WT-CM" "WT-MM" "WT--N" "WT--C" "2D4-CM" "2D4-MM" "2D4--N" "2D4--C"
 do    
-    cat $f"-"1.notpolyA_all_m $f"-"2.notpolyA_all_m $f"-"3.notpolyA_all_m |  sort -k 2,7 | uniq -f 1 -c | awk '{if ($1 >= 2) print 0,$3,$4,$5,$6,$7,$8}' > $f"-"X.notpolyA_all_m
+    cat $f"-"1.notpolyA_all_m_high $f"-"2.notpolyA_all_m_high $f"-"3.notpolyA_all_m_high |  sort -k 2,7 | uniq -f 1 -c | awk '{if ($1 >= 2) print 0,$3,$4,$5,$6,$7,$8}' > $f"-"X.notpolyA_all_m_high
 done
-cat WT*X*notpolyA_all_m |  sort -k 1,4 | uniq  > WT-ALL-X.notpolyA_all_m
-cat 2D4*X*notpolyA_all_m | sort -k 1,4 | uniq  > 2D4-ALL-X.notpolyA_all_m
+cat WT*X*notpolyA_all_m_high |  sort -k 1,4 | uniq  > WT-ALL-X.notpolyA_all_m_high
+cat 2D4*X*notpolyA_all_m_high | sort -k 1,4 | uniq  > 2D4-ALL-X.notpolyA_all_m_high
+
+for f in  "WT-CM" "WT-MM" "WT--N" "WT--C" "2D4-CM" "2D4-MM" "2D4--N" "2D4--C"
+do    
+    cat $f"-"1.notpolyA_all_m_low $f"-"2.notpolyA_all_m_low $f"-"3.notpolyA_all_m_low |  sort -k 2,7 | uniq -f 1 -c | awk '{if ($1 >= 2) print 0,$3,$4,$5,$6,$7,$8}' > $f"-"X.notpolyA_all_m_low
+done
+cat WT*X*notpolyA_all_m_low |  sort -k 1,4 | uniq  > WT-ALL-X.notpolyA_all_m_low
+cat 2D4*X*notpolyA_all_m_low | sort -k 1,4 | uniq  > 2D4-ALL-X.notpolyA_all_m_low
 
 
 # gff of polyA
@@ -248,13 +255,13 @@ function old_notdiff {
  rm _*
 }  
 
-# WE TAKE ALL THE ORPHAN, FROM 1 READ ABOVE, NOT JUST 100 READS
 function notdiff {
  s1=$1
  s2=$2
  c1=$3
  c2=$4
- cat $s1-$c1-X.notpolyA_all_m $s2-$c2-X.notpolyA_all_m | sort -k 1,4 | uniq > _k
+ type="low"
+ cat $s1-$c1-X.notpolyA_all_m_high $s2-$c2-X.notpolyA_all_m_$type | sort -k 1,4 | uniq > _k
  cat _k $s1-$c1-1.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _a
  cat _k $s1-$c1-2.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _b
  cat _k $s1-$c1-3.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _c
@@ -274,7 +281,7 @@ function notdiff {
  cat _t5 | awk '{print $1"\t"$7}' > _out6
  mv _t5 $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.count
  Rscript ../../m-oryzae-polya/notdiff_polyA.R  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.csv
- mv  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.csv notdiff_polyA
+ mv  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.csv notdiff_polyA_$type
  rm _*
 }  
 notdiff "WT" "2D4" "CM" "CM"
@@ -445,7 +452,7 @@ polyA_file.close()
 
 # extract 3'UTR or intra-APA sequences (for miRNA search)
 grep stop_codon Magnaporthe_oryzae.MG8.18.gff3 | sed  -e 's/ID=stop_codon://' -e 's/T.*//' | cut -f 4,9| awk '{print $2,$1}' | sort > _g
-sort -k 5,5 -k 2 WT-CM-X.polyA_apa_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _g#small/_WT-CM-X.apa
+sort -k 5,5 -k 2 WT--C-X.polyA_apa_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _t
 join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > $2  && arr[x+1] > $2 && arr[x+1] != "") || ($4 == 2 && arr[x] < $2  && arr[x+1] < $2 && arr[x+1] != "") ) system("echo -n "$1"; fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S " "\""$4"\" -L "arr[x]","arr[x+1]" ")}' | awk -F ">" '{if ($2 != "") print ">"$2"@"$1; else print $0}' | sed 's/ .*@/@/' > _WT-CM-X.intra
 #join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 1 && arr[x] > $2+3 && arr[x]-($2+3)>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "$2+3","arr[x]" ")}' > _WT-CM-X.intra_sense
 #join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 2 && arr[x] < $2-3 && ($2+3)-arr[x]>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "arr[x]","$2-3" ")}' > _WT-CM-X.intra_antisense
@@ -501,34 +508,35 @@ for line in apa:
 
 
 # orphans (400 or 1000 nt) search against known db
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa WT-ALL-X.notpolyA_all_m  -400 0 print WT-ALL-X.notpolyA_all_m_400.fa
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa WT-ALL-X.notpolyA_all_m_high  -400 0 print WT-ALL-X.notpolyA_all_m_high_400.fa
 blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db nt -remote -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
-blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db Rfam.fasta -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
-# blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db fRNAdb_3.0.fasta -outfmt 5  | python ../../m-oryzae-polya/parse_blast_xml.py 
-# blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db hairpin.fa -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
-# blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db ncrna_NONCODE\[v3.0\].fasta -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py
+blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db Rfam.fasta -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py
+
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa WT-ALL-X.notpolyA_all_m_low  -218 0 print _t
+formatdb -i _t -p F -o
+blastn -query  small/CPA_sRNA.fa -db _t -outfmt "6 qseqid sseqid pident qlen length evalue" -max_target_seqs 1 | awk '{if ($3 >= 98 && $5/$4 >=0.8) print $0}' | cut -f 2 | sort | uniq | wc -l
 # perl ../../m-oryzae-polya/rfam_scan.pl --nobig -blastdb Rfam.fasta Rfam.cm WT-ALL-X.notpolyA_all_m_400.fa 
 
 # ophans overlapping annotated genes
 python -c "
-for line1 in open('WT-ALL-X.notpolyA_all_m', 'r'):
- (val, pos, chrx, sense) = line1.strip().split(' ')
- pos = int(pos)
- for line2 in open('Magnaporthe_oryzae.MG8.18.gff3', 'r'):
-  (Chrx, none_1, feat, start, end, none_2,none_3,none_4,infos) = line2.strip().split('\t')
+table = {}
+for line in open('Magnaporthe_oryzae.MG8.18.gff3', 'r'):
+  (chrx, none_1, feat, start, end, none_2,none_3,none_4,infos) = line.strip().split('\t')
   start = int(start)
   end = int(end)
-  if chrx == Chrx and pos >= start and pos <= end and feat == 'gene':
-   id_start = infos.index('ID=')
-   id_end = infos.index(';', id_start)
-   print chrx + ':' + str(pos) + ':' + val + ':' + sense, '\t', infos[id_start + 3: id_end]
+  if not table.has_key(chrx): table[chrx] = {}
+  if feat == 'gene':
+    id_start = infos.index('ID=')
+    id_end = infos.index(';', id_start)
+    gene = infos[id_start + 3: id_end]
+    table[chrx][gene] = (start, end)
+for line in open('WT-ALL-X.notpolyA_all_m_low', 'r'):
+ (val, pos, chrx, sense) = line.strip().split(' ')
+ pos = int(pos)
+ for gene, coord in table[chrx].items():
+   if pos >= coord[0] and pos <= coord[1]:
+     print chrx + ':' + str(pos) + ':' + val + ':' + sense + '\t' + gene
 "
-# orphans differentially expressed
-for f in notdiff_polyA/WT*WT*.csv
-do
-	echo -ne $(basename "${f%%.*}")"," | sed 's/_notpolyA//'
- 	cat $f | awk -F "," '{if ($8 < 0.05) print $1,$8}' 
-done
 
 # RL-SAGE blast with never expressed genes (sequences downloades from biomart)
 blastn -task blastn -query never_expressed.fa -db OSJNGg.fa -outfmt 6 -max_target_seqs 1  | awk '{if ($3 == 100 && $4 == 21) print $0}' | cut -f 1 | xargs -ipat grep pat ../gene_summary.txt
@@ -709,6 +717,15 @@ do
     orphan=$(cat "${f%%.*}"-X.notpolyA_all_m | wc -l )
     echo $normal","$orphan
 done
+
+# orphans differentially expressed
+for f in notdiff_polyA_low/WT*WT*.csv
+do
+	echo -ne $(basename "${f%%.*}")"," | sed 's/_notpolyA//'
+ 	#cat $f | awk -F "," '{if ($8 < 0.05) print $1,$8}'
+        wc -l < $f
+done
+
 
 # differential polyA sites number
 # P1
