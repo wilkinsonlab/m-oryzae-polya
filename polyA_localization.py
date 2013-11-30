@@ -49,7 +49,7 @@ for line in polyA_file:
         if pos >= start and pos <= end:
             location[gene]['five_prime_UTR'] += 1
             flag = True
-            print line.strip()
+            #print line.strip()
     for start, end in table[gene]['CDS']:
        if pos >= start and pos <= end:
             location[gene]['CDS'] += 1           
