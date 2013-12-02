@@ -305,11 +305,10 @@ notdiff "2D4" "2D4" "-N" "-C"
 
 # GO enrichment
 function go_enrich {
-	type=$2
-	file=$1
+	type=$1
+	file=$2
 	echo "" > "${file%%.*}"_go_enrich.csv
-	#cat "${file%%.*}"_down.csv  "${file%%.*}"_up.csv | cut -f 1 -d "," | sort | uniq > _de_list
-        cat $file > _de_list
+    cat $file > _de_list
 	grep -v -f _de_list gene_summary.txt | tail -n +2 | cut -f 1 > _nde_list
 	cat _de_list | xargs -ipat grep pat $type | cut -f 2  | sort | uniq >  _go_list
 	for go in `cat _go_list`; do grep $go $type | cut -f 1 | grep MGG | sort | uniq > "_"$go; done
@@ -325,13 +324,8 @@ function go_enrich {
 	#cat _t | xargs -ipat grep pat $type | cut -f 3  | sort | uniq
 	rm _de_list _nde_list _go_list _GO*
 }
-go_enrich go_terms.csv WT-CM WT-MM
-go_enrich go_terms.csv WT-CM WT--N
-go_enrich go_terms.csv WT-CM WT--C
-go_enrich go_terms.csv WT-MM WT--N
-go_enrich go_terms.csv WT-MM WT--C
-go_enrich go_terms.csv WT--N WT--C
-go_enrich go_terms.csv WT-CM 2D4-CM
+cat diff_polyA/WT-CM_vs_WT--C_down.polyA_all_m  diff_polyA/WT-CM_vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq > _file
+go_enrich go_terms.csv _file
 
 
 
