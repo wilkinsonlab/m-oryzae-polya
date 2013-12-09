@@ -456,8 +456,8 @@ python -c "
 import sys
 threshold = 100
 length = 18
-length_max = 24
-file = open('SRR643875_nr.bedgraph', 'r')
+length_max = 25
+file = open('SRR643875_.bedgraph', 'r')
 apa = open('_WT-CM-X.apa', 'r')
 record_chrx = ''
 curr__stop = 0
