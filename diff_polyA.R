@@ -1,5 +1,6 @@
 args <- commandArgs(TRUE)
 suppressMessages(library(DEXSeq))
+suppressMessages(library(DESeq))
 library("parallel")
 setwd(".")
 sampleTable <- data.frame(
@@ -14,4 +15,9 @@ ecs <- fitDispersionFunction( ecs )
 ecs <- testForDEU( ecs,nCores=4 )
 ecs <- estimatelog2FoldChanges( ecs,nCores=4 )
 res <- DEUresultTable(ecs)
-write.csv(res, file = args[1],  row.names=F, quote=FALSE)
+write.csv(res, file = paste(args[1], ".csv", sep=""),  row.names=F, quote=FALSE)
+colnames(res)[6] <- "baseMean"
+colnames(res)[7] <- "log2FoldChange"
+png(file = paste("images/", args[1], "_fold.png", sep=""), width=600, height=600)
+plotMA( res, FDR=0.05, ylim=c(-20,20), cex=0.8 )
+dev.off()

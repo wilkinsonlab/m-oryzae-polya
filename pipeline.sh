@@ -205,11 +205,11 @@ function diff {
  cat _t5 | awk '{print $1"\t"$6}' > _out5
  cat _t5 | awk '{print $1"\t"$7}' > _out6
  mv _t5 $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count
- Rscript ../../m-oryzae-polya/diff_polyA.R $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv
+ Rscript ../../m-oryzae-polya/diff_polyA.R $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA
  cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 < 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
  cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 > 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
  mv $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv diff_polyA
- rm _*
+ #rm _*
 }  
 
 diff "WT" "2D4" "CM" "CM"
@@ -280,7 +280,7 @@ function notdiff {
  cat _t5 | awk '{print $1"\t"$6}' > _out5
  cat _t5 | awk '{print $1"\t"$7}' > _out6
  mv _t5 $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.count
- Rscript ../../m-oryzae-polya/notdiff_polyA.R  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.csv
+ Rscript ../../m-oryzae-polya/notdiff_polyA.R  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA
  mv  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.csv notdiff_polyA_$type
  rm _*
 }  
@@ -840,11 +840,11 @@ do
     cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g 
     python ../../m-oryzae-polya/polyA_usage_ratio.py _g
 done
-for f in "CM" "MM" "-N" "-C"
+for f in "CM" #"MM" "-N" "-C"
 do
     echo -ne WT"-"$f"_"vs_2D4"-"$f","
     cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.csv > _g
-    python ../../m-oryzae-polya/polyA_usage_ratio.py _g
+    python ../../m-oryzae-polya/polyA_usage_ratio.py _g > _l
 done
 
 
