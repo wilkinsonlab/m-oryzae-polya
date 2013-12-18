@@ -1068,3 +1068,26 @@ cat _b | sort | uniq  | cat _t _t - | sort | uniq -u > __b
 cat _d _b _c | sort | uniq  > _t
 cat _a | sort | uniq  | cat _t _t - | sort | uniq -u > __a
 cat _a _b _c _d | sort | uniq -c | awk '{if ($1 == 4) print $2}' > _abcd
+
+# biomart join
+python -c "
+import sys
+arr = {}
+for line in open('_e.csv', 'r'):
+  data =  line.strip().split('\t')
+  gene = data[0]
+  all = data[1:]
+  if not arr.has_key(gene):
+    arr[gene] = [set((x,)) for x in all]
+  else:
+    for i, x in enumerate(arr[gene]):
+      arr[gene][i].add(all[i])
+
+for k,v in arr.items():
+  sys.stdout.write(k + '\t')
+  for x in v: 
+    sys.stdout.write('; '.join(x))
+    sys.stdout.write('\t')
+  print
+" > _f.csv
+
