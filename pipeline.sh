@@ -834,19 +834,20 @@ done
 
 
 # polyA site usage change (only dependent)
-for f in "CM" "MM" "-N"
+for f in "CM" # "MM" "-N"
 do
     echo -ne WT-$f"_"vs_WT--C","
     cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g 
-    python ../../m-oryzae-polya/polyA_usage_ratio.py _g #> _t
-    #Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
+    cat diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g
+    python ../../m-oryzae-polya/polyA_usage_ratio.py _g > _t
+    Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
 done
 for f in "CM" "MM" "-N" "-C"
 do
     echo -ne WT"-"$f"_"vs_2D4"-"$f","
     cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.csv > _g
-    python ../../m-oryzae-polya/polyA_usage_ratio.py _g #> _t
-    #Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
+    python ../../m-oryzae-polya/polyA_usage_ratio.py _g > _t
+    Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
 done
 
 
