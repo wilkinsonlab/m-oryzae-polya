@@ -714,7 +714,7 @@ do
 done
 
 # orphans differentially expressed
-for f in notdiff_polyA_low/WT*WT*.csv
+for f in notdiff_polyA_high/WT*WT*.csv
 do
 	echo -ne $(basename "${f%%.*}")"," | sed 's/_notpolyA//'
  	#cat $f | awk -F "," '{if ($8 < 0.05) print $1,$8}'
