@@ -87,7 +87,7 @@ for transcript, loc in location.items():
     count_poly += sum(loc.values())
 
 if __name__ == "__main__":
-    pass #sys.stdout.write("%d,%d,%d,%d,%d\n" % (three_utr, five_utr, cds, intron, not_annotated))
+    sys.stdout.write("%d,%d,%d,%d,%d\n" % (three_utr, five_utr, cds, intron, not_annotated))
 
 
 gff_file.close()

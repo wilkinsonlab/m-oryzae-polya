@@ -457,8 +457,8 @@ import sys
 threshold = 100
 length = 18
 length_max = 25
-file = open('SRR643875_.bedgraph', 'r')
-apa = open('_WT-CM-X.apa', 'r')
+file = open('SRR643875.bedgraph', 'r')
+apa = open('../_WT-CM-X.intra', 'r')
 record_chrx = ''
 curr__stop = 0
 record_start = 0
@@ -529,8 +529,8 @@ for line in open('WT-ALL-X.notpolyA_all_m_low', 'r'):
  pos = int(pos)
  for gene, coord in table[chrx].items():
    if pos >= coord[0] and pos <= coord[1]:
-     #print chrx + ':' + str(pos) + ':' + val + ':' + sense + '\t' + gene
-     print line.strip(), gene
+     print chrx + ':' + str(pos) + ':' + val + ':' + sense# + '\t' + gene
+     #print line.strip(), gene
 "
 
 # RL-SAGE blast with never expressed genes (sequences downloades from biomart)
