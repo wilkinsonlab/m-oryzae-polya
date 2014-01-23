@@ -446,8 +446,8 @@ polyA_file.close()
 
 # extract 3'UTR or intra-APA sequences (for miRNA search)
 grep stop_codon Magnaporthe_oryzae.MG8.18.gff3 | sed  -e 's/ID=stop_codon://' -e 's/T.*//' | cut -f 4,9| awk '{print $2,$1}' | sort > _g
-sort -k 5,5 -k 2 WT--C-X.polyA_apa_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _t
-join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > $2  && arr[x+1] > $2 && arr[x+1] != "") || ($4 == 2 && arr[x] < $2  && arr[x+1] < $2 && arr[x+1] != "") ) system("echo -n "$1"; fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S " "\""$4"\" -L "arr[x]","arr[x+1]" ")}' | awk -F ">" '{if ($2 != "") print ">"$2"@"$1; else print $0}' | sed 's/ .*@/@/' > _WT-CM-X.intra
+sort -k 5,5 -k 2 WT--N-X.polyA_apa_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _t
+join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > $2  && arr[x+1] > $2 && arr[x+1] != "") || ($4 == 2 && arr[x] < $2  && arr[x+1] < $2 && arr[x+1] != "") ) system("echo -n "$1"; fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S " "\""$4"\" -L "arr[x]","arr[x+1]" ")}' | awk -F ">" '{if ($2 != "") print ">"$2"@"$1; else print $0}' | sed 's/ .*@/@/' > _WT--N-X.intra
 #join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 1 && arr[x] > $2+3 && arr[x]-($2+3)>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "$2+3","arr[x]" ")}' > _WT-CM-X.intra_sense
 #join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 2 && arr[x] < $2-3 && ($2+3)-arr[x]>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "arr[x]","$2-3" ")}' > _WT-CM-X.intra_antisense
 
@@ -500,6 +500,10 @@ for line in apa:
 #| awk '{system("fastacmd -d ../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" ")}' > SRR643875_.fasta
 #blastn -task blastn-short -query SRR643875_.fasta -db _WT-CM-X.intra -outfmt 6 -max_target_seqs 1 | awk '{if ($4 >=20) print $0}'
 
+
+# mirdeep2 example
+mapper.pl SRR643875_trimmed.fastq -e -h -l 18 -m -p MG8_18 -s SRR643875_collapsed.fa -t SRR643875.arf; done
+miRDeep2.pl SRR643875_collapsed.fa ../../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa SRR643875.arf none ../mature.fa ../hairpin.fa
 
 # orphans (400 or 1000 nt) search against known db
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa WT-ALL-X.notpolyA_all_m_high  -400 0 print WT-ALL-X.notpolyA_all_m_high_400.fa
