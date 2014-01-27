@@ -115,8 +115,9 @@ cat 2D4*X*notpolyA_all_m_low | sort -k 1,4 | uniq  > 2D4-ALL-X.notpolyA_all_m_lo
 
 
 # gff of polyA
-for f in `ls *.polyA_all_m`; do cut $f -d " " -f 1,2,3,4,5 | awk '{ printf "%s\tmarco\tpolyA_site\t%d\t%d\t.\t%s\t.\ttranscript=%s;value=%d\n", $3, $2, $2, $4, $5, $1  }' > "${f%%.*}"_polyA.gff ; done
-for f in `ls *.notpolyA_all_m`; do cut $f -d " " -f 1,2,3,4,5 | awk '{ printf "%s\tmarco\tpolyA_site\t%d\t%d\t.\t%s\t.\ttranscript=%s;value=%d\n", $3, $2, $2, $4, $5, $1  }' > "${f%%.*}"_notpolyA.gff ; done
+for f in `ls *.polyA_all_m`; do cut $f -d " " -f 1,2,3,4,5 | awk '{ if ($4 == "+") sense = "-"; else sense = "+"; printf "%s\tmarco\tpolyA_site\t%d\t%d\t.\t%s\t.\ttranscript=%s;value=%d\n", $3, $2, $2, sense, $5, $1  }' > "${f%%.*}"_polyA.gff ; done
+for f in `ls *.notpolyA_all_m_high`; do cut $f -d " " -f 1,2,3,4,5 | awk '{ if ($4 == "+") sense = "-"; else sense = "+"; printf "%s\tmarco\tpolyA_site\t%d\t%d\t.\t%s\t.\ttranscript=%s;value=%d\n", $3, $2, $2, sense, $5, $1  }' > "${f%%.*}"_notpolyA_high.gff ; done
+for f in `ls *.notpolyA_all_m_low`;  do cut $f -d " " -f 1,2,3,4,5 | awk '{ if ($4 == "+") sense = "-"; else sense = "+"; printf "%s\tmarco\tpolyA_site\t%d\t%d\t.\t%s\t.\ttranscript=%s;value=%d\n", $3, $2, $2, sense, $5, $1  }' > "${f%%.*}"_notpolyA_low.gff ; done
 
 
 # extract single and apa
@@ -429,19 +430,21 @@ for line in polyA_file:
     gene = items[4]
     if not stops.has_key(gene): continue
     if sense == '+':
-        sense = '2'
+        sense = '-'
+        sense_ = '2'
         start = pos
         end = stops[gene]
     else:
-        sense = '1'
+        sense = '+'
+        sense_ = '1'
         start = stops[gene]
         end = pos
-    #if end - start < 70: continue
-    os.system('fastacmd -s \"lcl|' + chrx + '\" -S ' + sense + ' -L ' +  str(start) + ',' + str(end) + ' -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa')
+    if start > end: continue
+    os.system('fastacmd -s \"lcl|' + chrx + '\" -S ' + sense_ + ' -L ' +  str(start) + ',' + str(end) + ' -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa | sed -e \'s/ dna.*/@' + gene  + '@' + sense + '/\' -e \'s/lcl|//\'  ')
 
 gff_file.close()
 polyA_file.close()
-" Magnaporthe_oryzae.MG8.18.gff3 WT-CM-X.polyA_all_m
+" Magnaporthe_oryzae.MG8.18.gff3 WT--C-X.polyA_all_m > 3UTR_-C.fa
 
 
 # extract 3'UTR or intra-APA sequences (for miRNA search)
@@ -504,6 +507,10 @@ for line in apa:
 # mirdeep2 example
 mapper.pl SRR643875_trimmed.fastq -e -h -l 18 -m -p MG8_18 -s SRR643875_collapsed.fa -t SRR643875.arf; done
 miRDeep2.pl SRR643875_collapsed.fa ../../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa SRR643875.arf none ../mature.fa ../hairpin.fa
+
+# mirna target
+RNAhybrid -t ../3UTR_-C.fa -q _mor_mir.fa -c -f 2,7 -e -25 -s 3utr_human > _out
+    cut -d ":" -f 1,2,4,5,6,8 _out | sed -e 's/:/ /g'  -e 's/@/ /g' -e 's/-/ /' | awk '{printf $1" marco "$6" "; if($5 == "+") printf $2+$9" "$2+$9+$7" "; else printf $3-$9-$7" "$3-$9" "; print ".",$5,".","energy="$8";target="$4 }' | sed 's/ /\t/g'  > _mir.gffcut -d ":" -f 1,2,4,5,6,8 _out | sed -e 's/:/ /g'  -e 's/@/ /g' -e 's/-/ /' | awk '{printf $1" marco miRNA_target "; if($5 == "+") printf $2+$9" "$2+$9+$7" "; else printf $3-$9-$7" "$3-$9" "; print ".",$5,".","energy="$8";target="$4 }' | sed 's/ /\t/g' > _mir1.gff
 
 # orphans (400 or 1000 nt) search against known db
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa WT-ALL-X.notpolyA_all_m_high  -400 0 print WT-ALL-X.notpolyA_all_m_high_400.fa
