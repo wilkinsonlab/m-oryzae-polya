@@ -325,7 +325,7 @@ function go_enrich {
 	#cat _t | xargs -ipat grep pat $type | cut -f 3  | sort | uniq
 	rm _de_list _nde_list _go_list _GO*
 }
-cat diff_polyA/WT-CM_vs_WT--C_down.polyA_all_m  diff_polyA/WT-CM_vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq > _file
+#cat diff_polyA/WT-CM_vs_WT--C_down.polyA_all_m  diff_polyA/WT-CM_vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq > _file
 go_enrich go_terms.csv _file
 
 
@@ -544,21 +544,6 @@ for line in open('WT-ALL-X.notpolyA_all_m_low', 'r'):
      #print line.strip(), gene
 "
 
-# RL-SAGE blast with never expressed genes (sequences downloades from biomart)
-blastn -task blastn -query never_expressed.fa -db OSJNGg.fa -outfmt 6 -max_target_seqs 1  | awk '{if ($3 == 100 && $4 == 21) print $0}' | cut -f 1 | xargs -ipat grep pat ../gene_summary.txt
-# Group of genes based on expression with plant
-cat ../WT-CM-1.expr ../WT-CM-2.expr ../WT-CM-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _t1
-cat ../WT--N-1.expr ../WT--N-2.expr ../WT--N-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _t3
-cat ../WT--C-1.expr ../WT--C-2.expr ../WT--C-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _t4
-cat ../WT-MM-1.expr ../WT-MM-2.expr ../WT-MM-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > _t2
-
-cat inplant_genes.txt _t4 _t1 _t1 _t1 _t2 _t2 _t2 _t3 _t3 _t3 | sort | uniq -c | awk '{if ($1 == 2) print $2}'  > inplant_WT--C.txt
-cat inplant_genes.txt _t3 _t1 _t1 _t1 _t2 _t2 _t2 _t4 _t4 _t4 | sort | uniq -c | awk '{if ($1 == 2) print $2}'  > inplant_WT--N.txt
-cat inplant_genes.txt _t1 _t3 _t3 _t3 _t2 _t2 _t2 _t4 _t4 _t4 | sort | uniq -c | awk '{if ($1 == 2) print $2}'  > inplant_WT-CM.txt
-cat inplant_genes.txt _t1 _t2 _t3 _t4 | sort | uniq -c | awk '{if ($1 == 5) print $2}'> inplant_WT-CM_WT-MM_WT--N_WT--C.txt
-cat inplant_genes.txt _t1 _t1 _t2 _t3 _t4 _t2 _t3 _t4 | sort | uniq -u > inplant_only_notWT.txt
-
-
 # extract polyA trascript sequences with fastacmd
 cut -f 1,2,3,4 WT_2D4_CM_polyA.diff | awk '{system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$2"\" -L "$3","$4" -o blast/"$1".fasta ")}'
 # call blast
@@ -770,8 +755,10 @@ for f in diff_polyA/*polyA.csv
 do
  echo -ne $(basename "${f%%_polyA.*}")","
  a=diff_expr/$(basename "${f%%_polyA.*}")"_expr"
- cat $a"_down.csv"  $a"_up.csv" | cut -f 1 -d "," | sort | uniq > _t
- cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | xargs -ipat grep pat _t 
+ cat "${f%%_polyA.*}"_up.polyA_all_m  "${f%%_polyA.*}"_down.polyA_all_m | cut -f 5 -d " " | sort | uniq  > _t
+ up=`cat $a"_up.csv" | cut -f 1 -d "," | sort | uniq | xargs -ipat grep pat _t | wc -l ` 
+ down=`cat $a"_down.csv"  | cut -f 1 -d "," | sort | uniq | xargs -ipat grep pat _t | wc -l `
+ echo $up,$down
 done
 # G1 sgl and APA
 for f in diff_polyA/*_polyA.csv
