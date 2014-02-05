@@ -126,7 +126,7 @@ do
     cat $f | sort -k 5 | uniq -u  -f 4 > "${f%%.*}".polyA_sgl_m
     cat $f | sort -k 5 | uniq -D  -f 4 > "${f%%.*}".polyA_apa_m
 done 
-
+ 
 
 # gene differential expression
 

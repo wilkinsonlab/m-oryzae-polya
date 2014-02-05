@@ -1,0 +1,6 @@
+<rdf:RDF>
+ <mapping:fastq_file rdf:about="">
+  <foaf:name>fastq_files.fastq</foaf:name>
+ </mapping:fastq_file>
+</rdf:RDF>
+
