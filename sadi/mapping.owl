@@ -10,7 +10,7 @@
   <!-- <owl:DatatypeProperty rdf:about="#file2"/> -->
   <!-- <owl:DatatypeProperty rdf:about="#mapping"/> -->
   
-  <owl:Class rdf:ID="file">
+  <owl:Class rdf:ID="Fastq_files">
     <owl:equivalentClass>
       <owl:Restriction>
         <owl:onProperty rdf:resource="#fastq_1"/>
@@ -35,7 +35,7 @@
     </owl:equivalentClass>
   </owl:Class>
 
-  <owl:Class rdf:ID="bam_file">
+  <owl:Class rdf:ID="Bam_file">
     <owl:equivalentClass>
       <owl:Restriction>
         <owl:onProperty rdf:resource="#mapping"/>
