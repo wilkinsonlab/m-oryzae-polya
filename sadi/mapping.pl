@@ -18,8 +18,8 @@ Log::Log4perl->easy_init($WARN);
 my $config = {
     ServiceName => 'mapping', # any name you like  
     Description => 'mapping', 
-    InputClass => 'file:///media/marco/Elements/sadi/mapping.owl#file', # defines a single service input
-    OutputClass => 'file:///media/marco/Elements/sadi/mapping.owl#bam_file', # defines a single service output
+    InputClass => 'file:///media/marco/Elements/sadi/mapping.owl#Fastq_files', # defines a single service input
+    OutputClass => 'file:///media/marco/Elements/sadi/mapping.owl#Bam_file', # defines a single service output
     Authority => 'sadiframework.org', # domain of organization providing service
     Provider => 'myaddress@organization.org', # contact e-mail address of service provider
 };
@@ -80,22 +80,22 @@ sub process_it {
     my ($adapter) = $input_model->objects( @$inputs[0],$adapter_property);
     my ($genome) = $input_model->objects( @$inputs[0],$genome_property);
     my ($offset) = $input_model->objects( @$inputs[0],$offset_property);
-    #`fastq-mcf -o $fastq_1"_trimmed" -o $fastq_2"_trimmed" -0 -l 17 -u $adapter $fastq_1 $fastq_2  `;
-    #`gmap_build -d genome -D ./genome $genome`;
+    `fastq-mcf -o $fastq_1"_trimmed" -o $fastq_2"_trimmed" -0 -l 17 -u $adapter $fastq_1 $fastq_2  `;
+    `gmap_build -k 12 -d genome -D ./genome $genome`;
     my $sam_file = $fastq_1->value;
     $sam_file =~ s/_1//;
     $sam_file =~ s/fastq/sam/;
-    #`gsnap -B 5 -t 4 -A sam -d genome -D ./genome $fastq_1"_trimmed" $fastq_2"_trimmed"  > $sam_file`;
+    `gsnap -B 4 -t 4 -A sam -d genome -D ./genome $fastq_1"_trimmed" $fastq_2"_trimmed"  > $sam_file`;
     my $bam_file_1 = $sam_file;
     $bam_file_1 =~ s/.sam/_1.bam/;
     my $bam_sorted = $sam_file;
     $bam_sorted =~ s/.sam/.sorted/;
-    #`samtools view -bS -h -f 0x0040 $sam_file > $bam_file_1`;
-    #`samtools sort $bam_file_1 $bam_sorted`;
-    #`samtools index $bam_sorted".bam"`;
+    `samtools view -bS -h -f 0x0040 $sam_file > $bam_file_1`;
+    `samtools sort $bam_file_1 $bam_sorted`;
+    `samtools index $bam_sorted".bam"`;
     my $filt_file = $sam_file;
     $filt_file =~ s/.sam//;
-    #`python filter.py $bam_sorted".bam" Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $offset $filt_file`;
+    `python filter.py $bam_sorted".bam" Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $offset $filt_file`;
     my $bam_file = $filt_file . ".bam";
 
     my $mapping = sprintf("Final alignment will be available in '%s'", $bam_file);

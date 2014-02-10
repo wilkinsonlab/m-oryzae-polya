@@ -6,26 +6,15 @@
   <owl:Ontology rdf:about="">
   </owl:Ontology>
 
-  <!-- <owl:DatatypeProperty rdf:about="#file1"/> -->
-  <!-- <owl:DatatypeProperty rdf:about="#file2"/> -->
-  <!-- <owl:DatatypeProperty rdf:about="#mapping"/> -->
   
-  <owl:Class rdf:ID="Fastq_files">
+  <owl:Class rdf:ID="Bam_file">
     <owl:equivalentClass>
       <owl:Restriction>
-        <owl:onProperty rdf:resource="#fastq_1"/>
+        <owl:onProperty rdf:resource="#bam_file"/>
         <owl:cardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#int">1</owl:minCardinality>
       </owl:Restriction>
       <owl:Restriction>
-        <owl:onProperty rdf:resource="#fastq_2"/>
-        <owl:cardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#int">1</owl:minCardinality>
-      </owl:Restriction>
-      <owl:Restriction>
-        <owl:onProperty rdf:resource="#adapter"/>
-        <owl:cardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#int">1</owl:minCardinality>
-      </owl:Restriction>
-      <owl:Restriction>
-        <owl:onProperty rdf:resource="#genome"/>
+        <owl:onProperty rdf:resource="#annotation_file"/>
         <owl:cardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#int">1</owl:minCardinality>
       </owl:Restriction>
       <owl:Restriction>
@@ -35,10 +24,10 @@
     </owl:equivalentClass>
   </owl:Class>
 
-  <owl:Class rdf:ID="Bam_file">
+  <owl:Class rdf:ID="Bedgraph">
     <owl:equivalentClass>
       <owl:Restriction>
-        <owl:onProperty rdf:resource="#mapping"/>
+        <owl:onProperty rdf:resource="#identify_polyA"/>
         <owl:someValuesFrom rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
       </owl:Restriction>
     </owl:equivalentClass>

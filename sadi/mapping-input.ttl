@@ -7,9 +7,9 @@
 
 
 input:a 
-    a mapping:file;
-    mapping:fastq_1 "_WT-CM-1_1.fastq";
-    mapping:fastq_2 "_WT-CM-1_2.fastq"; 
+    a mapping:Fastq_files;
+    mapping:fastq_1 "_WT-CM-3_1.fastq";
+    mapping:fastq_2 "_WT-CM-3_2.fastq"; 
     mapping:adapter "adapter.fa" ;
-	mapping:genome "Magnaporthe_oryzae.MG8.18.dna.toplevel.fa" ;
-	mapping:offset "7".
+    mapping:genome "Magnaporthe_oryzae.MG8.18.dna.toplevel.fa" ;
+    mapping:offset "7".
