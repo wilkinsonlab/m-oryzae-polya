@@ -1,0 +1,11 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix identify_polyA: <file:///media/marco/Elements/sadi/identify_polyA.owl#> .
+@prefix input: <file:///media/marco/Elements/sadi/identify_polyA-input.ttl#> .
+
+
+
+input:a 
+    a identify_polyA:Bam_file;
+    identify_polyA:bam_file "_WT-CM-2.bam";
+    identify_polyA:annotation_file "Magnaporthe_oryzae.MG8.18.gff3" ;
+    identify_polyA:offset "7".
