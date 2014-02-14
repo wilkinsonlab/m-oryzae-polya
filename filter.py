@@ -47,3 +47,6 @@ print "Mapped " + str(mapped) + " out of " + str(total) + " reads,", round(mappe
 
 tempfile.close()
 infile.close()
+
+
+"

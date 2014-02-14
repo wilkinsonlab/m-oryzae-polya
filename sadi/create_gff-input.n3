@@ -1,5 +1,5 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix create_gff: <file:///media/marco/Elements/sadi/create_gff.owl#> .
+@prefix create_gff: <http://138.4.137.118/sadi/create_gff.owl#> .
 @prefix input: <file:///media/marco/Elements/sadi/create_gff-input.ttl#> .
 
 

@@ -1,15 +1,15 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix mapping: <file:///media/marco/Elements/sadi/mapping.owl#> .
-@prefix input: <file:///media/marco/Elements/sadi/input.tti#> .
-@prefix file1: <file:///media/marco/Elements/sadi/mapping.owl#> .
-@prefix file2: <file:///media/marco/Elements/sadi/mapping.owl#> .
+@prefix mapping: <http://138.4.137.118/sadi/mapping.owl#> .
+@prefix input: <http://138.4.137.118/sadi/input.tti#> .
+@prefix file1: <http://138.4.137.118/sadi/mapping.owl#> .
+@prefix file2: <http://138.4.137.118/sadi/mapping.owl#> .
 
 
 
 input:a 
     a mapping:Fastq_files;
-    mapping:fastq_1 "_WT-CM-3_1.fastq";
-    mapping:fastq_2 "_WT-CM-3_2.fastq"; 
+    mapping:fastq_1 "_WT-CM-1_1.fastq";
+    mapping:fastq_2 "_WT-CM-1_2.fastq"; 
     mapping:adapter "adapter.fa" ;
     mapping:genome "Magnaporthe_oryzae.MG8.18.dna.toplevel.fa" ;
     mapping:offset "7".

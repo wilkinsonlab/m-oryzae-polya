@@ -971,6 +971,7 @@ gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT--N-3_1_trimmed.fastq WT--N-3_2
 
 
 # ncRNA search denovo
+
 mugsy --prefix magna --directory /media/marco/Elements/3Tfill/oryzae_18/ncrna/magna/out_magna/ genomes/*
 cat out_magna/magna.maf | python ../../../../m-oryzae-polya/maf_order.py Magnaporthe_oryzae > sorted.maf
 rnazWindow.pl  --min-seqs=3 sorted.maf > windows.maf
@@ -1036,6 +1037,51 @@ for l2 in p2:
 
 
 "
+
+# extract conserved orphans from blast
+python -c "
+from Bio import SeqIO
+
+g = {}
+for line in open('_g', 'r'):
+    items = line.strip().split('\t')
+    orphan = items[0]
+    chrx = items[1]
+    start = items[8]
+    end = items[9]
+    g[orphan] = (chrx, int(start), int(end))
+m = {}
+for line in open('_m', 'r'):
+    items = line.strip().split('\t')
+    orphan = items[0]
+    chrx = items[1]
+    start = items[8]
+    end = items[9]
+    m[orphan] = (chrx, int(start), int(end))
+import sys    
+for line in open('_c', 'r'):
+     l = line.strip()
+     f = open(l + '.fa', 'w')
+     record_ophans = SeqIO.index('../WT-ALL-X.notpolyA_all_m_low_200.fa', 'fasta')
+     record_gae = SeqIO.index('../others/Gaeumannomyces_graminis.Gae_graminis_V2.21.dna.genome.fa', 'fasta')
+     record_poae = SeqIO.index('../others/Magnaporthe_poae.Mag_poae_ATCC_64411_V1.21.dna.genome.fa', 'fasta') 
+     f.write('> oryzae_' + l + '\n') 
+     f.write( str(record_ophans[l].seq) + '\n') 
+     f.write( '> gae_' + l+ '\n') 
+     if g[l][1] < g[l][2]:
+         f.write( str(record_gae[g[l][0]].seq[g[l][1]:g[l][2]])+ '\n') 
+     else:
+        g[l][1] > g[l][2]
+        f.write( str(record_gae[g[l][0]].seq[g[l][2]:g[l][1]].reverse_complement())+ '\n') 
+     f.write( '> poae_' + l+ '\n') 
+     if m[l][1] < m[l][2]:
+         f.write( str(record_poae[m[l][0]].seq[m[l][1]:m[l][2]])+ '\n') 
+     else:
+        m[l][1] > m[l][2]
+        f.write( str(record_poae[m[l][0]].seq[m[l][2]:m[l][1]].reverse_complement())+ '\n') 
+"
+
+
 
 # genes 4 sets venn diagrams
 cat _c _d | sort | uniq  > _t
