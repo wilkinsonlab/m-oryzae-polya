@@ -552,9 +552,9 @@ do
 blastall -p blastx -m 8 -a 4 -e 1e-20 -i $f -d MG8_proteome.fasta | head -n 1 | cut -f 2 | awk -v f="${f%%.*}" '{system("fastacmd -d MG8_proteome.fasta -s  " "\""$1"\" > "f".hits.fasta  ")}'
 done
 # call interproscan
-for f in `ls *.fa`;
+for f in `ls *.fasta`;
 do
-python ../../../m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f  --outfile=$f --outformat=out &
+python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f  --outfile=$f --outformat=out &
 done
 
 
