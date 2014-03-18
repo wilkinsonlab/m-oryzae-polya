@@ -449,8 +449,8 @@ polyA_file.close()
 
 # extract 3'UTR or intra-APA sequences (for miRNA search)
 grep stop_codon Magnaporthe_oryzae.MG8.18.gff3 | sed  -e 's/ID=stop_codon://' -e 's/T.*//' | cut -f 4,9| awk '{print $2,$1}' | sort > _g
-sort -k 5,5 -k 2 WT--N-X.polyA_apa_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _t
-join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > $2  && arr[x+1] > $2 && arr[x+1] != "") || ($4 == 2 && arr[x] < $2  && arr[x+1] < $2 && arr[x+1] != "") ) system("echo -n "$1"; fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S " "\""$4"\" -L "arr[x]","arr[x+1]" ")}' | awk -F ">" '{if ($2 != "") print ">"$2"@"$1; else print $0}' | sed 's/ .*@/@/' > _WT--N-X.intra
+sort -k 5,5 -k 2 WT--C-X.polyA_apa_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _t
+join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > $2  && arr[x+1] > $2 && arr[x+1] != "") || ($4 == 2 && arr[x] < $2  && arr[x+1] < $2 && arr[x+1] != "") ) system("echo -n "$1"; fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S " "\""$4"\" -L "arr[x]","arr[x+1]" ")}' | awk -F ">" '{if ($2 != "") print ">"$2"@"$1; else print $0}' | sed 's/ .*@/@/' > _WT--C-X.intra
 #join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 1 && arr[x] > $2+3 && arr[x]-($2+3)>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "$2+3","arr[x]" ")}' > _WT-CM-X.intra_sense
 #join _g _t | awk '{split($5, arr, ":"); for (x in arr) if ($4 == 2 && arr[x] < $2-3 && ($2+3)-arr[x]>8) system("fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S "$4" -L "arr[x]","$2-3" ")}' > _WT-CM-X.intra_antisense
 
@@ -832,21 +832,22 @@ done
 
 
 # polyA site usage change (only dependent)
-for f in "CM" # "MM" "-N"
+for f in "CM" "MM" "-N"
 do
     echo -ne WT-$f"_"vs_WT--C","
     cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g 
-    cat diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g
-    python ../../m-oryzae-polya/polyA_usage_ratio.py _g > _t
-    Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > "_"$f"_"t
+    #Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
 done
 for f in "CM" "MM" "-N" "-C"
 do
     echo -ne WT"-"$f"_"vs_2D4"-"$f","
     cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.csv > _g
-    python ../../m-oryzae-polya/polyA_usage_ratio.py _g > _t
-    Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
+    #Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
 done
+
+
 
 
 # distance from annotated gene features

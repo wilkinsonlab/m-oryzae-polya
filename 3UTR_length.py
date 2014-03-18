@@ -46,10 +46,9 @@ for line in polyA_file:
     dists += dist
     count += 1
 
-print "%.2f" % (dists / count)
+#print "%.2f" % (dists / count)
 for x in distance:
-    pass
-    #print round(x / count * 100, 5)
+    print round(x / count * 100, 5)
 
 
 gff_file.close()
