@@ -210,7 +210,7 @@ function diff {
  cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 < 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
  cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 > 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
  mv $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv diff_polyA
- #rm _*
+ rm _*
 }  
 
 diff "WT" "2D4" "CM" "CM"
@@ -590,7 +590,7 @@ done
 for sample in "2D4-CM" "2D4-MM" "2D4--N" "2D4--C" "WT-CM" "WT-MM" "WT--N" "WT--C" 
 do
     echo -ne "${sample%%.*}"","
-    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $0}' | wc -l
+    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 >= 10) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $0}' | wc -l
 done
 # always expressed genes 
 for sample in "WT-CM" "WT-MM" "WT--N" "WT--C" 
@@ -830,19 +830,19 @@ done
 
 
 # polyA site usage change (only dependent)
-for f in "CM" #"MM" "-N"
+for f in "CM" "MM" "-N"
 do
     echo -ne WT-$f"_"vs_WT--C","
     cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g 
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > "_"$f"_"t
-    #Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
+    Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
 done
-for f in "CM" #"MM" "-N" "-C"
+for f in "CM" "MM" "-N" "-C"
 do
     echo -ne WT"-"$f"_"vs_2D4"-"$f","
     cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.csv > _g
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > "_"$f"_"t
-    #Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
+    Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
 done
 
 
@@ -992,7 +992,7 @@ RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse4.maf > maf_parse4.out &
 
 # P1 vs notP1
 cat diff_polyA/WT-CM_vs_2D4-CM_down.polyA_all_m diff_polyA/WT-MM_vs_2D4-MM_down.polyA_all_m diff_polyA/WT--N_vs_2D4--N_down.polyA_all_m diff_polyA/WT--C_vs_2D4--C_down.polyA_all_m | sort -k 1,7 | uniq > _p1
-cat WT-CM-X.polyA_all_m WT-MM-X.polyA_all_m WT--N-X.polyA_all_m WT--C-X.polyA_all_m | sort -k 1,7 | uniq > _t
+w
 cat _p1 _p1 _t | sort -k 1,7 | uniq -u | sort -R > _not_p1
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1 -100 100 print _s1
 c=$(cat _p1 | wc -l)
