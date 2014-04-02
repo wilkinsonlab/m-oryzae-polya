@@ -23,7 +23,7 @@ for line in gff_file:
         continue
     items = line.split('\t')
 
-    if items[2] == "gene":
+    if items[2] == "gene" or items[2] == "protein_coding_gene" and item[1] != "snoRNA" :
         for x in items[8].split(';'):
             if x.split('=')[0] == "ID":
                 transcript = x.split('=')[1].strip()

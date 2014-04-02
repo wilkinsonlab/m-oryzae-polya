@@ -590,7 +590,7 @@ done
 for sample in "2D4-CM" "2D4-MM" "2D4--N" "2D4--C" "WT-CM" "WT-MM" "WT--N" "WT--C" 
 do
     echo -ne "${sample%%.*}"","
-    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 >= 10) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $0}' | wc -l
+    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $0}' | wc -l
 done
 # always expressed genes 
 for sample in "WT-CM" "WT-MM" "WT--N" "WT--C" 
@@ -917,56 +917,56 @@ python ../m-oryzae-polya/draw_domains.py HRP1_domains.txt HRP1_order.txt
 # basurilla
 
 
-fastq-mcf -o 2D4--C-1_1_trimmed.fastq -o 2D4--C-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--C-11.fastq 2D4--C-12.fastq 
-fastq-mcf -o 2D4-CM-1_1_trimmed.fastq -o 2D4-CM-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-CM-11.fastq 2D4-CM-12.fastq 
-fastq-mcf -o 2D4-CM-2_1_trimmed.fastq -o 2D4-CM-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-CM-21.fastq 2D4-CM-22.fastq 
-fastq-mcf -o 2D4-MM-1_1_trimmed.fastq -o 2D4-MM-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-MM-11.fastq 2D4-MM-12.fastq 
-fastq-mcf -o 2D4-MM-2_1_trimmed.fastq -o 2D4-MM-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-MM-21.fastq 2D4-MM-22.fastq 
-fastq-mcf -o 2D4--N-1_1_trimmed.fastq -o 2D4--N-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--N-11.fastq 2D4--N-12.fastq 
-fastq-mcf -o WT--C-1_1_trimmed.fastq -o WT--C-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--C-11.fastq WT--C-12.fastq 
-fastq-mcf -o WT-CM-1_1_trimmed.fastq -o WT-CM-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-CM-11.fastq WT-CM-12.fastq
-fastq-mcf -o WT-CM-2_1_trimmed.fastq -o WT-CM-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-CM-21.fastq WT-CM-22.fastq 
-fastq-mcf -o WT-MM-1_1_trimmed.fastq -o WT-MM-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-MM-11.fastq WT-MM-12.fastq 
-fastq-mcf -o WT-MM-2_1_trimmed.fastq -o WT-MM-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-MM-21.fastq WT-MM-22.fastq 
-fastq-mcf -o WT--N-1_1_trimmed.fastq -o WT--N-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--N-11.fastq WT--N-12.fastq
-fastq-mcf -o 2D4--C-2_1_trimmed.fastq -o 2D4--C-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--C-21.fastq 2D4--C-22.fastq
-fastq-mcf -o 2D4--C-3_1_trimmed.fastq -o 2D4--C-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--C-31.fastq 2D4--C-32.fastq 
-fastq-mcf -o 2D4-CM-3_1_trimmed.fastq -o 2D4-CM-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-CM-31.fastq 2D4-CM-32.fastq 
-fastq-mcf -o 2D4-MM-3_1_trimmed.fastq -o 2D4-MM-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-MM-31.fastq 2D4-MM-32.fastq
-fastq-mcf -o 2D4--N-2_1_trimmed.fastq -o 2D4--N-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--N-21.fastq 2D4--N-22.fastq
-fastq-mcf -o 2D4--N-3_1_trimmed.fastq -o 2D4--N-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--N-31.fastq 2D4--N-32.fastq 
-fastq-mcf -o WT--C-2_1_trimmed.fastq -o WT--C-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--C-21.fastq WT--C-22.fastq
-fastq-mcf -o WT--C-3_1_trimmed.fastq -o WT--C-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--C-31.fastq WT--C-32.fastq
-fastq-mcf -o WT-CM-3_1_trimmed.fastq -o WT-CM-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-CM-31.fastq WT-CM-32.fastq 
-fastq-mcf -o WT-MM-3_1_trimmed.fastq -o WT-MM-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-MM-31.fastq WT-MM-32.fastq 
-fastq-mcf -o WT--N-2_1_trimmed.fastq -o WT--N-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--N-21.fastq WT--N-22.fastq
-fastq-mcf -o WT--N-3_1_trimmed.fastq -o WT--N-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--N-31.fastq WT--N-32.fastq
+fastq-mcf -o 2D4--C-1_1_trimmed.fastq -o 2D4--C-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--C-1_1.fastq 2D4--C-1_2.fastq 
+fastq-mcf -o 2D4-CM-1_1_trimmed.fastq -o 2D4-CM-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-CM-1_1.fastq 2D4-CM-1_2.fastq 
+fastq-mcf -o 2D4-CM-2_1_trimmed.fastq -o 2D4-CM-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-CM-2_1.fastq 2D4-CM-2_2.fastq 
+fastq-mcf -o 2D4-MM-1_1_trimmed.fastq -o 2D4-MM-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-MM-1_1.fastq 2D4-MM-1_2.fastq 
+fastq-mcf -o 2D4-MM-2_1_trimmed.fastq -o 2D4-MM-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-MM-2_1.fastq 2D4-MM-2_2.fastq 
+fastq-mcf -o 2D4--N-1_1_trimmed.fastq -o 2D4--N-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--N-1_1.fastq 2D4--N-1_2.fastq 
+fastq-mcf -o WT--C-1_1_trimmed.fastq -o WT--C-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--C-1_1.fastq WT--C-1_2.fastq 
+fastq-mcf -o WT-CM-1_1_trimmed.fastq -o WT-CM-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-CM-1_1.fastq WT-CM-1_2.fastq
+fastq-mcf -o WT-CM-2_1_trimmed.fastq -o WT-CM-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-CM-2_1.fastq WT-CM-2_2.fastq 
+fastq-mcf -o WT-MM-1_1_trimmed.fastq -o WT-MM-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-MM-1_1.fastq WT-MM-1_2.fastq 
+fastq-mcf -o WT-MM-2_1_trimmed.fastq -o WT-MM-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-MM-2_1.fastq WT-MM-2_2.fastq 
+fastq-mcf -o WT--N-1_1_trimmed.fastq -o WT--N-1_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--N-1_1.fastq WT--N-1_2.fastq
+fastq-mcf -o 2D4--C-2_1_trimmed.fastq -o 2D4--C-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--C-2_1.fastq 2D4--C-2_2.fastq
+fastq-mcf -o 2D4--C-3_1_trimmed.fastq -o 2D4--C-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--C-3_1.fastq 2D4--C-3_2.fastq 
+fastq-mcf -o 2D4-CM-3_1_trimmed.fastq -o 2D4-CM-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-CM-3_1.fastq 2D4-CM-3_2.fastq 
+fastq-mcf -o 2D4-MM-3_1_trimmed.fastq -o 2D4-MM-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4-MM-3_1.fastq 2D4-MM-3_2.fastq
+fastq-mcf -o 2D4--N-2_1_trimmed.fastq -o 2D4--N-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--N-2_1.fastq 2D4--N-2_2.fastq
+fastq-mcf -o 2D4--N-3_1_trimmed.fastq -o 2D4--N-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa 2D4--N-3_1.fastq 2D4--N-3_2.fastq 
+fastq-mcf -o WT--C-2_1_trimmed.fastq -o WT--C-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--C-2_1.fastq WT--C-2_2.fastq
+fastq-mcf -o WT--C-3_1_trimmed.fastq -o WT--C-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--C-3_1.fastq WT--C-3_2.fastq
+fastq-mcf -o WT-CM-3_1_trimmed.fastq -o WT-CM-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-CM-3_1.fastq WT-CM-3_2.fastq 
+fastq-mcf -o WT-MM-3_1_trimmed.fastq -o WT-MM-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT-MM-3_1.fastq WT-MM-3_2.fastq 
+fastq-mcf -o WT--N-2_1_trimmed.fastq -o WT--N-2_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--N-2_1.fastq WT--N-2_2.fastq
+fastq-mcf -o WT--N-3_1_trimmed.fastq -o WT--N-3_2_trimmed.fastq -0 -l 17 -u ../../m-oryzae-polya/adaptor.fa WT--N-3_1.fastq WT--N-3_2.fastq
 
 
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4--C-1_1_trimmed.fastq 2D4--C-1_2_trimmed.fastq > 2D4--C-1.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4-CM-1_1_trimmed.fastq 2D4-CM-1_2_trimmed.fastq > 2D4-CM-1.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4-CM-2_1_trimmed.fastq 2D4-CM-2_2_trimmed.fastq > 2D4-CM-2.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4-MM-1_1_trimmed.fastq 2D4-MM-1_2_trimmed.fastq > 2D4-MM-1.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4-MM-2_1_trimmed.fastq 2D4-MM-2_2_trimmed.fastq > 2D4-MM-2.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4--N-1_1_trimmed.fastq 2D4--N-1_2_trimmed.fastq > 2D4--N-1.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT--C-1_1_trimmed.fastq WT--C-1_2_trimmed.fastq > WT--C-1.sam 
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT-CM-1_1_trimmed.fastq WT-CM-1_2_trimmed.fastq > WT-CM-1.sam 
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT-CM-2_1_trimmed.fastq WT-CM-2_2_trimmed.fastq > WT-CM-2.sam 
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT-MM-1_1_trimmed.fastq WT-MM-1_2_trimmed.fastq > WT-MM-1.sam 
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT-MM-2_1_trimmed.fastq WT-MM-2_2_trimmed.fastq > WT-MM-2.sam 
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT--N-1_1_trimmed.fastq WT--N-1_2_trimmed.fastq > WT--N-1.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4--C-2_1_trimmed.fastq 2D4--C-2_2_trimmed.fastq > 2D4--C-2.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4--C-3_1_trimmed.fastq 2D4--C-3_2_trimmed.fastq > 2D4--C-3.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4-CM-3_1_trimmed.fastq 2D4-CM-3_2_trimmed.fastq > 2D4-CM-3.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4-MM-3_1_trimmed.fastq 2D4-MM-3_2_trimmed.fastq > 2D4-MM-3.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4--N-2_1_trimmed.fastq 2D4--N-2_2_trimmed.fastq > 2D4--N-2.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  2D4--N-3_1_trimmed.fastq 2D4--N-3_2_trimmed.fastq > 2D4--N-3.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT--C-2_1_trimmed.fastq WT--C-2_2_trimmed.fastq > WT--C-2.sam 
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT--C-3_1_trimmed.fastq WT--C-3_2_trimmed.fastq > WT--C-3.sam 
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT-CM-3_1_trimmed.fastq WT-CM-3_2_trimmed.fastq > WT-CM-3.sam 
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT-MM-3_1_trimmed.fastq WT-MM-3_2_trimmed.fastq > WT-MM-3.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT--N-2_1_trimmed.fastq WT--N-2_2_trimmed.fastq > WT--N-2.sam
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  WT--N-3_1_trimmed.fastq WT--N-3_2_trimmed.fastq > WT--N-3.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4--C-1_1_trimmed.fastq 2D4--C-1_2_trimmed.fastq > 2D4--C-1.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4-CM-1_1_trimmed.fastq 2D4-CM-1_2_trimmed.fastq > 2D4-CM-1.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4-CM-2_1_trimmed.fastq 2D4-CM-2_2_trimmed.fastq > 2D4-CM-2.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4-MM-1_1_trimmed.fastq 2D4-MM-1_2_trimmed.fastq > 2D4-MM-1.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4-MM-2_1_trimmed.fastq 2D4-MM-2_2_trimmed.fastq > 2D4-MM-2.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4--N-1_1_trimmed.fastq 2D4--N-1_2_trimmed.fastq > 2D4--N-1.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT--C-1_1_trimmed.fastq WT--C-1_2_trimmed.fastq > WT--C-1.sam 
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT-CM-1_1_trimmed.fastq WT-CM-1_2_trimmed.fastq > WT-CM-1.sam 
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT-CM-2_1_trimmed.fastq WT-CM-2_2_trimmed.fastq > WT-CM-2.sam 
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT-MM-1_1_trimmed.fastq WT-MM-1_2_trimmed.fastq > WT-MM-1.sam 
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT-MM-2_1_trimmed.fastq WT-MM-2_2_trimmed.fastq > WT-MM-2.sam 
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT--N-1_1_trimmed.fastq WT--N-1_2_trimmed.fastq > WT--N-1.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4--C-2_1_trimmed.fastq 2D4--C-2_2_trimmed.fastq > 2D4--C-2.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4--C-3_1_trimmed.fastq 2D4--C-3_2_trimmed.fastq > 2D4--C-3.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4-CM-3_1_trimmed.fastq 2D4-CM-3_2_trimmed.fastq > 2D4-CM-3.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4-MM-3_1_trimmed.fastq 2D4-MM-3_2_trimmed.fastq > 2D4-MM-3.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4--N-2_1_trimmed.fastq 2D4--N-2_2_trimmed.fastq > 2D4--N-2.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails 2D4--N-3_1_trimmed.fastq 2D4--N-3_2_trimmed.fastq > 2D4--N-3.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT--C-2_1_trimmed.fastq WT--C-2_2_trimmed.fastq > WT--C-2.sam 
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT--C-3_1_trimmed.fastq WT--C-3_2_trimmed.fastq > WT--C-3.sam 
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT-CM-3_1_trimmed.fastq WT-CM-3_2_trimmed.fastq > WT-CM-3.sam 
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT-MM-3_1_trimmed.fastq WT-MM-3_2_trimmed.fastq > WT-MM-3.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT--N-2_1_trimmed.fastq WT--N-2_2_trimmed.fastq > WT--N-2.sam
+gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT--N-3_1_trimmed.fastq WT--N-3_2_trimmed.fastq > WT--N-3.sam
 
 
 # ncRNA search denovo

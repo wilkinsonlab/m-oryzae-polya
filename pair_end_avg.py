@@ -4,7 +4,7 @@ infile = open(sys.argv[1], "r")
 table = {}
 num = 0
 count = 0
-dists = dict.fromkeys(range(500), 0)
+dists = dict.fromkeys(range(1000), 0)
 
 for line in infile:
     if line[0] == '@':
@@ -23,7 +23,7 @@ for line in infile:
             dist = table[name][0] - (pos + len(seq))
         else:
             dist = pos - (table[name][0] + table[name][1])
-        if dist < 500 and dist > 0:
+        if dist < 1000 and dist > 0:
             dists[dist] += 1
         del table[name]
         # num += dist

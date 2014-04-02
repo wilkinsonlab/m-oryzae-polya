@@ -22,9 +22,18 @@ for seq_record in SeqIO.parse(fasta_file, "fasta"):
 total = 0
 mapped = 0
 fake = 0
+unmapped = 0
+low_quality = 0
+AT_high = 0
 for read in infile.fetch():
     total += 1
-    if not read.is_unmapped and read.mapq >= 30 and ((read.seq.count('A') + read.seq.count('T')) / float(len(read.seq)) < 0.80):
+    if read.is_unmapped: 
+        unmapped += 1
+    elif read.mapq < 30: 
+        low_quality += 1
+    elif ((read.seq.count('A') + read.seq.count('T')) / float(len(read.seq)) >= 0.80): 
+        AT_high += 1
+    else:
         chrx = infile.getrname(read.tid)
         if read.is_reverse:
             pos = read.pos + offset
@@ -42,11 +51,11 @@ for read in infile.fetch():
 pysam.sort(tempname, outfile)
 pysam.index(outfile + ".bam")
 os.remove(tempname)
-print "Mapped " + str(mapped) + " out of " + str(total) + " reads,", round(mapped / float(total) * 100, 2), "%", "fakes:", round(fake / float(total) * 100, 2), "%"
+ 
+print "Mapped " + str(mapped) + " out of " + str(total) + " reads,", round(mapped / float(total) * 100, 2), "%", "low quality:", round(low_quality / float(total) * 100, 2), "%", "AT_high:", round(AT_high / float(total) * 100, 2), "%", "fakes:", round(fake / float(total) * 100, 2), "%"
 
 
 tempfile.close()
 infile.close()
 
 
-"

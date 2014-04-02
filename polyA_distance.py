@@ -5,12 +5,13 @@ import matplotlib
 
 gff_file = open(sys.argv[1], 'r')
 bam_file = pysam.Samfile(sys.argv[2], 'rb')
-feature = sys.argv[3] # start, stop, init, term
+feature = sys.argv[3] # start, stop, init, term, 3utr
 
 starts = {}
 stops = {}
 inits = {}
 terms = {}
+utr = {}
 for line in gff_file:
     if line[0] == '#' or line[0] == '\n':
         continue
@@ -51,7 +52,18 @@ for line in gff_file:
         else:
             inits[name] = int(items[4])
             terms[name] = int(items[3])
-
+    elif items[2] == "three_prime_UTR":
+        chrx = items[0]
+        for x in items[8].split(';'):
+            if x.split('=')[0] == "Parent":
+                name = x.split('=')[1].strip()
+        sense = items[6]
+        if sense == '+':
+            utr[name] = int(items[3])
+        else:
+            utr[name] = int(items[4])
+    
+         
 if feature == "start":
     select = starts        
 elif feature == "stop":
@@ -60,9 +72,10 @@ elif feature == "init":
     select = inits
 elif feature == "term":
     select = terms
-    
+elif feature == "3utr":
+    select = utr   
 
-
+offset = 7
 distance = [0] * 1000
 dists = 0
 count = 0.0
