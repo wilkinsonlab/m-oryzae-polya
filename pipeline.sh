@@ -72,7 +72,8 @@ done
 
 # gene expression count
 
-cat Magnaporthe_oryzae.MG8.18.gff3 | awk '{if($3 == "gene") print $0}' | grep  "ID=.*;"  -o | sed -e 's/ID=//' -e 's/;//' > _t
+#cat Magnaporthe_oryzae.MG8.18.gff3 | awk '{if($3 == "gene") print $0}' | grep  "ID=.*;"  -o | sed -e 's/ID=//' -e 's/;//' > _t
+cut -f 1 gene_summary.txt  > _t
 for f in `ls *.assign`
 do
     cut -f 6 $f | cat - _t | sort | uniq -c | awk '{print $2"\t"$1-1}' > "${f%%.*}".expr
@@ -146,12 +147,19 @@ Rscript ../../m-oryzae-polya/diff_expr.R 2D4-CM 2D4--C
 Rscript ../../m-oryzae-polya/diff_expr.R 2D4-MM 2D4--N    
 Rscript ../../m-oryzae-polya/diff_expr.R 2D4-MM 2D4--C    
 Rscript ../../m-oryzae-polya/diff_expr.R 2D4--N 2D4--C   
-wait
+# version 18
+#for f in diff_expr/*expr.csv
+#do
+# cat $f | awk -F "," '{if ($8 < 0.05 && $6 > 0) print $0}' > "${f%%.*}"_up.csv
+# cat $f | awk -F "," '{if ($8 < 0.05 && $6 < 0) print $0}' > "${f%%.*}"_down.csv
+#done
+# version 21
 for f in diff_expr/*expr.csv
 do
- cat $f | awk -F "," '{if ($8 < 0.05 && $6 > 0) print $0}' > "${f%%.*}"_up.csv
- cat $f | awk -F "," '{if ($8 < 0.05 && $6 < 0) print $0}' > "${f%%.*}"_down.csv
+ cat $f | awk -F "," '{if ($7 < 0.05 && $3 > 0) print $0}' > "${f%%.*}"_up.csv
+ cat $f | awk -F "," '{if ($7 < 0.05 && $3 < 0) print $0}' > "${f%%.*}"_down.csv
 done
+
 
 
 # differential polyA (p-value < 0.1)

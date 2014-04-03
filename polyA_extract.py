@@ -21,7 +21,12 @@ for line in gff_file:
         continue
     items = line.split('\t')
     sense = items[6]
-    if items[2] == "gene":
+    # version 18
+    #if items[2] == "gene":
+    # version 21
+    if items[2] in ("gene", "protein_coding_gene", "pseudogene", "pseudogenic_tRNA", "rRNA_gene", "RNA", "snoRNA_gene", "snRNA_gene", "tRNA_gene"):
+        # version 21
+        if items[8].find("Parent") != -1: continue
         chrx = items[0]
         start = int(items[3])
         end = int(items[4])

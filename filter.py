@@ -1,4 +1,4 @@
-import sys, re
+import sys, re, sets
 import os
 from Bio import SeqIO
 import pysam
@@ -25,8 +25,11 @@ fake = 0
 unmapped = 0
 low_quality = 0
 AT_high = 0
+total_reads = sets.Set()
+mapped_reads = sets.Set()
 for read in infile.fetch():
     total += 1
+    total_reads.add(read.qname)
     if read.is_unmapped: 
         unmapped += 1
     elif read.mapq < 30: 
@@ -45,6 +48,7 @@ for read in infile.fetch():
         if seq[0:oligoT].count('A') < oligoT and (seq.count('A') / float(priming_len)) < 0.75:
             tempfile.write(read)
             mapped += 1
+            mapped_reads.add(read.qname)
         else:
             fake += 1
             
@@ -52,7 +56,7 @@ pysam.sort(tempname, outfile)
 pysam.index(outfile + ".bam")
 os.remove(tempname)
  
-print "Mapped " + str(mapped) + " out of " + str(total) + " reads,", round(mapped / float(total) * 100, 2), "%", "low quality:", round(low_quality / float(total) * 100, 2), "%", "AT_high:", round(AT_high / float(total) * 100, 2), "%", "fakes:", round(fake / float(total) * 100, 2), "%"
+print"Total reads: " + str(len(total_reads)), "Mapped reads: " + str(len(mapped_reads)), "Total mappings: " + str(total), "Final mappings: " + str(mapped), "low quality mappings: " + str(low_quality), "AT_high mappings: " +  str(AT_high), "fakes alignment: " +  str(fake) 
 
 
 tempfile.close()

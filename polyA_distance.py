@@ -105,6 +105,7 @@ for read_copy in bam_file.fetch():
         
     dists += dist
     count += 1
+    if count > 100000: break
 
 print "%.2f" % (dists / count)
 for x in distance:
@@ -112,4 +113,4 @@ for x in distance:
 
 
 gff_file.close()
-polyA_file.close()
+bam_file.close()
