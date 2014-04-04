@@ -1,4 +1,4 @@
-import sys
+import sys, re
 import math
 import pysam
 
@@ -18,6 +18,8 @@ span = 400
 table = {}
 genes_sense = {}
 genes_antisense = {}
+utr = {}
+
 for line in gff_file:
     if line[0] == '#' or line[0] == '\n':
         continue
@@ -53,26 +55,34 @@ for line in gff_file:
             genes_sense[chrx].append((transcript, start, end))
         elif sense == '-':
             genes_antisense[chrx].append((transcript, start, end))
-
-
+       
 def goo(sorted_list, i, sense):
     (transcript, start, end) = sorted_list[i]
     if sense == '+':
-        dist = sorted_list[i + 1][1] - end
-        if dist > span:
-            table[chrx][transcript] = [start, end + span, sense]
-        elif dist <= span and dist >= 0:
-            table[chrx][transcript] = [start, sorted_list[i + 1][1] - 1, sense]
-        elif dist < 0:
-            table[chrx][transcript] = [start, end, sense]
+        # version 18
+#         dist = sorted_list[i + 1][1] - end
+#         if dist > span:
+#             table[chrx][transcript] = [start, end + span, sense]
+#         elif dist <= span and dist >= 0:
+#             table[chrx][transcript] = [start, sorted_list[i + 1][1] - 1, sense]
+#         elif dist < 0:
+#             table[chrx][transcript] = [start, end, sense]        
+        # version 21
+        table[chrx][transcript] = [start, end + span, sense] 
     elif sense == '-':
-        dist = start - sorted_list[i - 1][2]
-        if dist > span:
-            table[chrx][transcript] = [start - span, end, sense]
-        elif dist <= span and dist >= 0:
-            table[chrx][transcript] = [sorted_list[i - 1][2] + 1, end, sense]
-        elif dist < 0:
-            table[chrx][transcript] = [start, end, sense]
+        # version 18
+#         dist = start - sorted_list[i - 1][2]
+#         if dist > span:
+#             table[chrx][transcript] = [start - span, end, sense]
+#         elif dist <= span and dist >= 0:
+#             table[chrx][transcript] = [sorted_list[i - 1][2] + 1, end, sense]
+#         elif dist < 0:
+#             table[chrx][transcript] = [start, end, sense]
+        # version 21
+        if start - span < 0: 
+            table[chrx][transcript] = [0, end, sense]
+        else:
+            table[chrx][transcript] = [start - span, end, sense]    
 
 for chrx, v in genes_sense.items():
     sorted_list_sense = sorted(v, key=lambda x: x[2])

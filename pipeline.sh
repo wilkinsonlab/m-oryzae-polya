@@ -36,7 +36,7 @@ done
 
 for f in `ls *.filtered.bam`
 do
-    python ../../m-oryzae-polya/assign.py Magnaporthe_oryzae.MG8.18.gff3 "${f%%.*}".filtered.bam "${f%%.*}".assign "${f%%.*}".notassign 7
+    python ../../m-oryzae-polya/assign.py Magnaporthe_oryzae.MG8.21.gff3 "${f%%.*}".filtered.bam "${f%%.*}".assign "${f%%.*}".notassign 7
 done
 
 # create bedgraphs  
@@ -83,7 +83,7 @@ rm _t
 
 # extract polyA most significant sites
 
-for f in `ls *.polyA`; do python ../../m-oryzae-polya/polyA_extract.py Magnaporthe_oryzae.MG8.18.gff3 $f "${f%%.*}".expr 33 0.05 all > $f"_"all_m; done 
+for f in `ls *.polyA`; do python ../../m-oryzae-polya/polyA_extract.py Magnaporthe_oryzae.MG8.21.gff3 $f "${f%%.*}".expr 33 0.05 all > $f"_"all_m; done 
 
 # extract notpolyA most significant sites
 
@@ -190,7 +190,7 @@ function old_diff {
  rm _*
 }
 
-function diff {
+function calc_diff {
  s1=$1
  s2=$2
  c1=$3
@@ -215,28 +215,32 @@ function diff {
  cat _t5 | awk '{print $1"\t"$7}' > _out6
  mv _t5 $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count
  Rscript ../../m-oryzae-polya/diff_polyA.R $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA
- cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 < 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
- cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 > 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
+ # version 18
+ #cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 < 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
+ #cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 > 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
+ # version 21
+ cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 < 0) print $1,$2}' | sed -e 's/@/ /g' -e 's/ E\(.*\)/ \1/'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
+ cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 > 0) print $1,$2}' | sed -e 's/@/ /g' -e 's/ E\(.*\)/ \1/'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
  mv $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv diff_polyA
  rm _*
 }  
 
-diff "WT" "2D4" "CM" "CM"
-diff "WT" "2D4" "MM" "MM"
-diff "WT" "2D4" "-N" "-N"
-diff "WT" "2D4" "-C" "-C"
-diff "WT" "WT" "CM" "MM"
-diff "WT" "WT" "CM" "-N"
-diff "WT" "WT" "CM" "-C"
-diff "WT" "WT" "MM" "-N"
-diff "WT" "WT" "MM" "-C"
-diff "WT" "WT" "-N" "-C"
-diff "2D4" "2D4" "CM" "MM"
-diff "2D4" "2D4" "CM" "-N"
-diff "2D4" "2D4" "CM" "-C"
-diff "2D4" "2D4" "MM" "-N"
-diff "2D4" "2D4" "MM" "-C"
-diff "2D4" "2D4" "-N" "-C"
+calc_diff "WT" "2D4" "CM" "CM"
+calc_diff "WT" "2D4" "MM" "MM"
+calc_diff "WT" "2D4" "-N" "-N"
+calc_diff "WT" "2D4" "-C" "-C"
+calc_diff "WT" "WT" "CM" "MM"
+calc_diff "WT" "WT" "CM" "-N"
+calc_diff "WT" "WT" "CM" "-C"
+calc_diff "WT" "WT" "MM" "-N"
+calc_diff "WT" "WT" "MM" "-C"
+calc_diff "WT" "WT" "-N" "-C"
+calc_diff "2D4" "2D4" "CM" "MM"
+calc_diff "2D4" "2D4" "CM" "-N"
+calc_diff "2D4" "2D4" "CM" "-C"
+calc_diff "2D4" "2D4" "MM" "-N"
+calc_diff "2D4" "2D4" "MM" "-C"
+calc_diff "2D4" "2D4" "-N" "-C"
 
 # differential notpolyA (old)
 
@@ -264,7 +268,7 @@ function old_notdiff {
  rm _*
 }  
 
-function notdiff {
+function calc_notdiff {
  s1=$1
  s2=$2
  c1=$3
@@ -293,22 +297,23 @@ function notdiff {
  mv  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.csv notdiff_polyA_$type
  rm _*
 }  
-notdiff "WT" "2D4" "CM" "CM"
-notdiff "WT" "2D4" "MM" "MM"
-notdiff "WT" "2D4" "-N" "-N"
-notdiff "WT" "2D4" "-C" "-C"
-notdiff "WT" "WT" "CM" "MM"
-notdiff "WT" "WT" "CM" "-N"
-notdiff "WT" "WT" "CM" "-C"
-notdiff "WT" "WT" "MM" "-N"
-notdiff "WT" "WT" "MM" "-C"
-notdiff "WT" "WT" "-N" "-C"
-notdiff "2D4" "2D4" "CM" "MM"
-notdiff "2D4" "2D4" "CM" "-N"
-notdiff "2D4" "2D4" "CM" "-C"
-notdiff "2D4" "2D4" "MM" "-N"
-notdiff "2D4" "2D4" "MM" "-C"
-notdiff "2D4" "2D4" "-N" "-C"
+
+calc_notdiff "WT" "2D4" "CM" "CM"
+calc_notdiff "WT" "2D4" "MM" "MM"
+calc_notdiff "WT" "2D4" "-N" "-N"
+calc_notdiff "WT" "2D4" "-C" "-C"
+calc_notdiff "WT" "WT" "CM" "MM"
+calc_notdiff "WT" "WT" "CM" "-N"
+calc_notdiff "WT" "WT" "CM" "-C"
+calc_notdiff "WT" "WT" "MM" "-N"
+calc_notdiff "WT" "WT" "MM" "-C"
+calc_notdiff "WT" "WT" "-N" "-C"
+calc_notdiff "2D4" "2D4" "CM" "MM"
+calc_notdiff "2D4" "2D4" "CM" "-N"
+calc_notdiff "2D4" "2D4" "CM" "-C"
+calc_notdiff "2D4" "2D4" "MM" "-N"
+calc_notdiff "2D4" "2D4" "MM" "-C"
+calc_notdiff "2D4" "2D4" "-N" "-C"
 
 
 
@@ -509,14 +514,6 @@ for line in apa:
 #| awk '{system("fastacmd -d ../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" ")}' > SRR643875_.fasta
 #blastn -task blastn-short -query SRR643875_.fasta -db _WT-CM-X.intra -outfmt 6 -max_target_seqs 1 | awk '{if ($4 >=20) print $0}'
 
-
-# mirdeep2 example
-mapper.pl SRR643875_trimmed.fastq -e -h -l 18 -m -p MG8_18 -s SRR643875_collapsed.fa -t SRR643875.arf; done
-miRDeep2.pl SRR643875_collapsed.fa ../../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa SRR643875.arf none ../mature.fa ../hairpin.fa
-
-# mirna target
-RNAhybrid -t ../3UTR_-C.fa -q _mor_mir.fa -c -f 2,7 -e -25 -s 3utr_human > _out
-    cut -d ":" -f 1,2,4,5,6,8 _out | sed -e 's/:/ /g'  -e 's/@/ /g' -e 's/-/ /' | awk '{printf $1" marco "$6" "; if($5 == "+") printf $2+$9" "$2+$9+$7" "; else printf $3-$9-$7" "$3-$9" "; print ".",$5,".","energy="$8";target="$4 }' | sed 's/ /\t/g'  > _mir.gffcut -d ":" -f 1,2,4,5,6,8 _out | sed -e 's/:/ /g'  -e 's/@/ /g' -e 's/-/ /' | awk '{printf $1" marco miRNA_target "; if($5 == "+") printf $2+$9" "$2+$9+$7" "; else printf $3-$9-$7" "$3-$9" "; print ".",$5,".","energy="$8";target="$4 }' | sed 's/ /\t/g' > _mir1.gff
 
 # orphans (400 or 1000 nt) search against known db
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa WT-ALL-X.notpolyA_all_m_high  -400 0 print WT-ALL-X.notpolyA_all_m_high_400.fa
@@ -1000,7 +997,7 @@ RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse4.maf > maf_parse4.out &
 
 # P1 vs notP1
 cat diff_polyA/WT-CM_vs_2D4-CM_down.polyA_all_m diff_polyA/WT-MM_vs_2D4-MM_down.polyA_all_m diff_polyA/WT--N_vs_2D4--N_down.polyA_all_m diff_polyA/WT--C_vs_2D4--C_down.polyA_all_m | sort -k 1,7 | uniq > _p1
-w
+cat WT-CM-X.polyA_all_m WT-MM-X.polyA_all_m WT--N-X.polyA_all_m WT--C-X.polyA_all_m | sort -k 1,7 | uniq > _t
 cat _p1 _p1 _t | sort -k 1,7 | uniq -u | sort -R > _not_p1
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1 -100 100 print _s1
 c=$(cat _p1 | wc -l)
