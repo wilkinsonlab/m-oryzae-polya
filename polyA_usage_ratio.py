@@ -4,6 +4,7 @@ import sys
 distal = {}
 curr = {}
 for line in sys.stdin:
+    #print line
     gene, exon, disp, pvalue, padjust, meanBase, fold = line.strip().split(',')
     chrx, pos, sense, start, end = exon.split("@")
     pos = int(pos);
@@ -24,11 +25,11 @@ for line in sys.stdin:
 todistal  = 0
 toproximal = 0
 count = 0.0
-for gene, fold in distal.items():
-    print gene, fold[1], fold[0]
+for gene, (fold, meanBase) in distal.items():
+    #qprint gene, fold[1], fold[0]
     if fold > 0:
         todistal += 1 
     else:
         toproximal += 1
     count += 1
-#print   toproximal/count, todistal/count            
+print   toproximal/count, todistal/count            

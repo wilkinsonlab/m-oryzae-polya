@@ -20,7 +20,7 @@ dds<-DESeq(ddsHTSeq)
 res<-results(dds)
 res<-data.frame(rownames(res),res)
 colnames(res)[1] <- "gene"
-write.csv(res, file = paste("diff_expr/", a, "_vs_", b, "_expr.csv", sep=""), row.names=F)
+write.csv(res, file = paste("diff_expr/", a, "_vs_", b, "_expr.csv", sep=""), row.names=F, quote=F)
 
 png(file = paste("images/", a, "_vs_", b, "_MA.png", sep=""), width=600, height=600)
 plotMA(dds,ylim=c(-10,10),main=paste(a, "_vs_", b, sep=""))

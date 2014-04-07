@@ -83,7 +83,7 @@ rm _t
 
 # extract polyA most significant sites
 
-for f in `ls *.polyA`; do python ../../m-oryzae-polya/polyA_extract.py Magnaporthe_oryzae.MG8.21.gff3 $f "${f%%.*}".expr 33 0.05 all > $f"_"all_m; done 
+for f in `ls *.polyA`; do python ../../m-oryzae-polya/polyA_extract.py Magnaporthe_oryzae.MG8.21.gff3 $f "${f%%.*}".expr 33 0.05 5 all > $f"_"all_m; done 
 
 # extract notpolyA most significant sites
 
@@ -162,7 +162,7 @@ done
 
 
 
-# differential polyA (p-value < 0.1)
+# OLD differential polyA (p-value < 0.1)
 
 function old_diff {
  s1=$1
@@ -273,7 +273,7 @@ function calc_notdiff {
  s2=$2
  c1=$3
  c2=$4
- type="low"
+ type="high"
  cat $s1-$c1-X.notpolyA_all_m_high $s2-$c2-X.notpolyA_all_m_$type | sort -k 1,4 | uniq > _k
  cat _k $s1-$c1-1.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _a
  cat _k $s1-$c1-2.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _b
@@ -293,7 +293,7 @@ function calc_notdiff {
  cat _t5 | awk '{print $1"\t"$6}' > _out5
  cat _t5 | awk '{print $1"\t"$7}' > _out6
  mv _t5 $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.count
- Rscript ../../m-oryzae-polya/notdiff_polyA.R  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA
+ Rscript ../../m-oryzae-polya/notdiff_polyA.R  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA".csv"
  mv  $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"notpolyA.csv notdiff_polyA_$type
  rm _*
 }  
@@ -589,18 +589,18 @@ done
 for sample in *.expr
 do
     echo -ne "${sample%%.*}"","
-    cat $sample | awk '{if ($2 > 0) print $1}' |  wc -l
+    cat $sample | awk '{if ($2 >= 10) print $1}' |  wc -l
 done
 # number of expressed genes (by condition) 1 read in at least 2 replicates
 for sample in "2D4-CM" "2D4-MM" "2D4--N" "2D4--C" "WT-CM" "WT-MM" "WT--N" "WT--C" 
 do
     echo -ne "${sample%%.*}"","
-    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $0}' | wc -l
+    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 >= 10) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $0}' | wc -l
 done
 # always expressed genes 
 for sample in "WT-CM" "WT-MM" "WT--N" "WT--C" 
 do
-    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 > 0) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > "_"$sample"_"t
+    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 >= 10) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > "_"$sample"_"t
 done
 cat _*_t | sort | uniq -c | awk '{if ($1 == 4) print $0}' > _all
 cat _all | wc -l
@@ -708,7 +708,7 @@ do
     #echo 'scale=3;'$orphan/\($normal+$orphan\)*100 | bc | sed 's/0*$/%,/' | tr -d "\n"
     #echo 'scale=3;'$normal/\($normal+$orphan\)*100 | bc | sed 's/0*$/%/'
     normal=$(cat "${f%%.*}"-X.polyA_all_m | wc -l )
-    orphan=$(cat "${f%%.*}"-X.notpolyA_all_m | wc -l )
+    orphan=$(cat "${f%%.*}"-X.notpolyA_all_m_low | wc -l )
     echo $normal","$orphan
 done
 
@@ -716,8 +716,7 @@ done
 for f in notdiff_polyA_high/WT*WT*.csv
 do
 	echo -ne $(basename "${f%%.*}")"," | sed 's/_notpolyA//'
- 	#cat $f | awk -F "," '{if ($8 < 0.05) print $1,$8}'
-        wc -l < $f
+ 	cat $f | awk -F "," '{if ($8 < 0.05) print $1,$8}' | wc -l
 done
 
 
@@ -835,19 +834,19 @@ done
 
 
 # polyA site usage change (only dependent)
-for f in "CM" "MM" "-N"
+for f in "CM"  "MM" "-N"
 do
     echo -ne WT-$f"_"vs_WT--C","
     cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g 
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
-    Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py 
+    #Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
 done
 for f in "CM" "MM" "-N" "-C"
 do
     echo -ne WT"-"$f"_"vs_2D4"-"$f","
     cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.csv > _g
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
-    Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py 
+    #Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
 done
 
 
