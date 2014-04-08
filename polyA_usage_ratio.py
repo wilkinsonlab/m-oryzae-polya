@@ -26,10 +26,10 @@ todistal  = 0
 toproximal = 0
 count = 0.0
 for gene, (fold, meanBase) in distal.items():
-    #qprint gene, fold[1], fold[0]
+    print gene, meanBase, fold
     if fold > 0:
         todistal += 1 
     else:
         toproximal += 1
     count += 1
-print   toproximal/count, todistal/count            
+#print   toproximal/count, todistal/count            

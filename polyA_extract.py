@@ -8,7 +8,7 @@ polyA_file = open(sys.argv[2], 'r')
 expr_file = open(sys.argv[3], "r")
 gap = int(sys.argv[4])
 p_val_sites = float(sys.argv[5])
-min_expr = float(sys.argv[6])
+min_expr = int(sys.argv[6])
 opt = sys.argv[7]
 
 table = {}
@@ -53,12 +53,14 @@ for line in polyA_file:
 
 for transcript, array in table.items():
     if not lines.has_key(transcript):
+        table[transcript] = {}
         continue
     chrx, sense, start, end = lines[transcript]
     arr = np.array(array.values())
     mean = np.mean(arr)
     std = np.std(arr)
     if std == 0.0:
+        table[transcript] = {}
         continue
     for pos, val in array.items():
         if scipy.special.ndtr(-((val - mean) / std)) >= p_val_sites or val < min_expr:

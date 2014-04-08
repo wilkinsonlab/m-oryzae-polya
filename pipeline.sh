@@ -273,7 +273,7 @@ function calc_notdiff {
  s2=$2
  c1=$3
  c2=$4
- type="high"
+ type="low"
  cat $s1-$c1-X.notpolyA_all_m_high $s2-$c2-X.notpolyA_all_m_$type | sort -k 1,4 | uniq > _k
  cat _k $s1-$c1-1.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _a
  cat _k $s1-$c1-2.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _b
@@ -525,26 +525,26 @@ formatdb -i _t -p F -o
 blastn -query  small/CPA_sRNA.fa -db _t -outfmt "6 qseqid sseqid pident qlen length evalue" -max_target_seqs 1 | awk '{if ($3 >= 98 && $5/$4 >=0.8) print $0}' | cut -f 2 | sort | uniq | wc -l
 # perl ../../m-oryzae-polya/rfam_scan.pl --nobig -blastdb Rfam.fasta Rfam.cm WT-ALL-X.notpolyA_all_m_400.fa 
 
-# ophans overlapping annotated genes
+# ophans overlapping annotated genes (antisense)
 python -c "
 table = {}
-for line in open('Magnaporthe_oryzae.MG8.18.gff3', 'r'):
+for line in open('Magnaporthe_oryzae.MG8.21.gff3', 'r'):
   (chrx, none_1, feat, start, end, none_2,none_3,none_4,infos) = line.strip().split('\t')
   start = int(start)
   end = int(end)
   if not table.has_key(chrx): table[chrx] = {}
-  if feat == 'gene':
+  if feat in ('gene', 'protein_coding_gene', 'pseudogene', 'pseudogenic_tRNA', 'rRNA_gene', 'RNA', 'snoRNA_gene', 'snRNA_gene', 'tRNA_gene'):
     id_start = infos.index('ID=')
     id_end = infos.index(';', id_start)
     gene = infos[id_start + 3: id_end]
     table[chrx][gene] = (start, end)
-for line in open('WT-ALL-X.notpolyA_all_m_low', 'r'):
+for line in open('WT-ALL-X.notpolyA_all_m_high', 'r'):
  (val, pos, chrx, sense) = line.strip().split(' ')
  pos = int(pos)
  for gene, coord in table[chrx].items():
    if pos >= coord[0] and pos <= coord[1]:
-     print chrx + ':' + str(pos) + ':' + val + ':' + sense# + '\t' + gene
-     #print line.strip(), gene
+     #print chrx + ':' + str(pos) + ':' + val + ':' + sense# + '\t' + gene
+     print line.strip(), gene
 "
 
 # extract polyA trascript sequences with fastacmd
@@ -597,7 +597,7 @@ do
     echo -ne "${sample%%.*}"","
     cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 >= 10) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $0}' | wc -l
 done
-# always expressed genes 
+# always expressed genes (WT)
 for sample in "WT-CM" "WT-MM" "WT--N" "WT--C" 
 do
     cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 >= 10) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > "_"$sample"_"t
@@ -607,7 +607,16 @@ cat _all | wc -l
 # never expressed genes
 cat gene_summary.txt _*_t | tail -n +2 | cut -f 1 | sort | uniq -u | wc -l
 rm _*
-
+# always expressed genes (2D4)
+for sample in "2D4-CM" "2D4-MM" "2D4--N" "2D4--C" 
+do
+    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 >= 10) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > "_"$sample"_"t
+done
+cat _*_t | sort | uniq -c | awk '{if ($1 == 4) print $0}' > _all
+cat _all | wc -l
+# never expressed genes
+cat gene_summary.txt _*_t | tail -n +2 | cut -f 1 | sort | uniq -u | wc -l
+rm _*
 
 # number of genes with an recognizable generic polyA site
 for f in *X.polyA_all_m 
@@ -642,7 +651,7 @@ done
 for f in *X.polyA_all_m
 do
    echo -ne "${f%%??.*},"	
-   python ../../m-oryzae-polya/polyA_distribution.py Magnaporthe_oryzae.MG8.18.gff3 $f 
+   python ../../m-oryzae-polya/polyA_distribution.py Magnaporthe_oryzae.MG8.21.gff3 $f 
 done
 
 # APA classification
@@ -695,7 +704,7 @@ done
 for f in *X.polyA_all_m
 do
    echo -ne "${f%%??.*},"	
-   python ../../m-oryzae-polya/polyA_localization.py Magnaporthe_oryzae.MG8.18.gff3 $f 
+   python ../../m-oryzae-polya/polyA_localization.py Magnaporthe_oryzae.MG8.21.gff3 $f 
 done
 
 
@@ -708,7 +717,7 @@ do
     #echo 'scale=3;'$orphan/\($normal+$orphan\)*100 | bc | sed 's/0*$/%,/' | tr -d "\n"
     #echo 'scale=3;'$normal/\($normal+$orphan\)*100 | bc | sed 's/0*$/%/'
     normal=$(cat "${f%%.*}"-X.polyA_all_m | wc -l )
-    orphan=$(cat "${f%%.*}"-X.notpolyA_all_m_low | wc -l )
+    orphan=$(cat "${f%%.*}"-X.notpolyA_all_m_high | wc -l )
     echo $normal","$orphan
 done
 
@@ -718,6 +727,26 @@ do
 	echo -ne $(basename "${f%%.*}")"," | sed 's/_notpolyA//'
  	cat $f | awk -F "," '{if ($8 < 0.05) print $1,$8}' | wc -l
 done
+
+
+# polyA site usage change (only dependent)
+for f in "CM"  "MM" "-N"
+do
+    echo -ne WT-$f"_"vs_WT--C","
+    cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g 
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
+    Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
+done
+for f in "CM" "MM" "-N" "-C"
+do
+    echo -ne WT"-"$f"_"vs_2D4"-"$f","
+    cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.csv > _g
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
+    Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
+done
+
+
+
 
 
 # differential polyA sites number
@@ -750,7 +779,7 @@ done
 for f in diff_polyA/*polyA.csv
 do
  echo -ne $(basename "${f%%_polyA.*}")","
- cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | wc -l
+ cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq # | wc -l
 done
 # genes differentially expressed with differentially expressed polyA
 for f in diff_polyA/*polyA.csv
@@ -831,24 +860,6 @@ do
     cat _diff | xargs -ipat grep pat 2D4-$f-X.polyA_all_m > _t
     python ../../m-oryzae-polya/3UTR_length.py Magnaporthe_oryzae.MG8.18.gff3 _t    
 done
-
-
-# polyA site usage change (only dependent)
-for f in "CM"  "MM" "-N"
-do
-    echo -ne WT-$f"_"vs_WT--C","
-    cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g 
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py 
-    #Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
-done
-for f in "CM" "MM" "-N" "-C"
-do
-    echo -ne WT"-"$f"_"vs_2D4"-"$f","
-    cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.csv > _g
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py 
-    #Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
-done
-
 
 
 
@@ -998,12 +1009,12 @@ RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse4.maf > maf_parse4.out &
 cat diff_polyA/WT-CM_vs_2D4-CM_down.polyA_all_m diff_polyA/WT-MM_vs_2D4-MM_down.polyA_all_m diff_polyA/WT--N_vs_2D4--N_down.polyA_all_m diff_polyA/WT--C_vs_2D4--C_down.polyA_all_m | sort -k 1,7 | uniq > _p1
 cat WT-CM-X.polyA_all_m WT-MM-X.polyA_all_m WT--N-X.polyA_all_m WT--C-X.polyA_all_m | sort -k 1,7 | uniq > _t
 cat _p1 _p1 _t | sort -k 1,7 | uniq -u | sort -R > _not_p1
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1 -100 100 print _s1
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _p1 -100 100 print _s1
 c=$(cat _p1 | wc -l)
 head -n $c _not_p1 > _not_p1_1
 tail -n $c _not_p1 > _not_p1_2
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _not_p1_1 -100 100  print _s2
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _not_p1_2 -100 100  print _s3
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _not_p1_1 -100 100  print _s2
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _not_p1_2 -100 100  print _s3
 
 # P1 vs P2 vs P1_others
 cat diff_polyA/WT-CM_vs_2D4-CM_down.polyA_all_m diff_polyA/WT-MM_vs_2D4-MM_down.polyA_all_m diff_polyA/WT--N_vs_2D4--N_down.polyA_all_m diff_polyA/WT--C_vs_2D4--C_down.polyA_all_m | sort -k 1,7 | uniq > _p1
@@ -1011,9 +1022,9 @@ cat diff_polyA/WT-CM_vs_2D4-CM_up.polyA_all_m diff_polyA/WT-MM_vs_2D4-MM_up.poly
 cat WT-CM-X.polyA_all_m WT-MM-X.polyA_all_m WT--N-X.polyA_all_m WT--C-X.polyA_all_m | sort -k 1,7 | uniq > _t
 cut -f 5 -d " " _p1 | xargs -ipat grep pat _t > _p1_all
 cat _p1 _p1 _p2 _p2 _p1_all | sort -k 1,7 | uniq -u > _p1_others
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1 -100 100 print _s1
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p2 -100 100 print _s2
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa _p1_others -100 100 print _s1_others
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _p1 -100 100 print _s1
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _p2 -100 100 print _s2
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _p1_others -100 100 print _s1_others
 
 
 # extract by distance
