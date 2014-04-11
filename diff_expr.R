@@ -23,7 +23,9 @@ colnames(res)[1] <- "gene"
 write.csv(res, file = paste("diff_expr/", a, "_vs_", b, "_expr.csv", sep=""), row.names=F, quote=F)
 
 png(file = paste("images/", a, "_vs_", b, "_MA.png", sep=""), width=600, height=600)
-plotMA(dds,ylim=c(-10,10),main=paste(a, "_vs_", b, sep=""))
+mar.default <- c(5,4,4,2) + 0.1
+par(mar = mar.default + c(0, 1, 0, 0))
+plotMA(dds,ylim=c(-10,10),main=paste(a, " -> ", b, sep=""), cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
 dev.off()
 
 png(file = paste("images/", a, "_vs_", b, "_DE.png", sep=""), width=600, height=600)

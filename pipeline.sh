@@ -136,7 +136,6 @@ Rscript ../../m-oryzae-polya/diff_expr.R WT-CM WT--N
 Rscript ../../m-oryzae-polya/diff_expr.R WT-CM WT--C    
 Rscript ../../m-oryzae-polya/diff_expr.R WT-MM WT--N    
 Rscript ../../m-oryzae-polya/diff_expr.R WT-MM WT--C   
-Rscript ../../m-oryzae-polya/diff_expr.R WT--N WT--C    
 Rscript ../../m-oryzae-polya/diff_expr.R WT-CM 2D4-CM    
 Rscript ../../m-oryzae-polya/diff_expr.R WT-MM 2D4-MM    
 Rscript ../../m-oryzae-polya/diff_expr.R WT--N 2D4--N    
@@ -146,7 +145,6 @@ Rscript ../../m-oryzae-polya/diff_expr.R 2D4-CM 2D4--N
 Rscript ../../m-oryzae-polya/diff_expr.R 2D4-CM 2D4--C    
 Rscript ../../m-oryzae-polya/diff_expr.R 2D4-MM 2D4--N    
 Rscript ../../m-oryzae-polya/diff_expr.R 2D4-MM 2D4--C    
-Rscript ../../m-oryzae-polya/diff_expr.R 2D4--N 2D4--C   
 # version 18
 #for f in diff_expr/*expr.csv
 #do
@@ -234,13 +232,11 @@ calc_diff "WT" "WT" "CM" "-N"
 calc_diff "WT" "WT" "CM" "-C"
 calc_diff "WT" "WT" "MM" "-N"
 calc_diff "WT" "WT" "MM" "-C"
-calc_diff "WT" "WT" "-N" "-C"
 calc_diff "2D4" "2D4" "CM" "MM"
 calc_diff "2D4" "2D4" "CM" "-N"
 calc_diff "2D4" "2D4" "CM" "-C"
 calc_diff "2D4" "2D4" "MM" "-N"
 calc_diff "2D4" "2D4" "MM" "-C"
-calc_diff "2D4" "2D4" "-N" "-C"
 
 # differential notpolyA (old)
 
@@ -307,13 +303,11 @@ calc_notdiff "WT" "WT" "CM" "-N"
 calc_notdiff "WT" "WT" "CM" "-C"
 calc_notdiff "WT" "WT" "MM" "-N"
 calc_notdiff "WT" "WT" "MM" "-C"
-calc_notdiff "WT" "WT" "-N" "-C"
 calc_notdiff "2D4" "2D4" "CM" "MM"
 calc_notdiff "2D4" "2D4" "CM" "-N"
 calc_notdiff "2D4" "2D4" "CM" "-C"
 calc_notdiff "2D4" "2D4" "MM" "-N"
 calc_notdiff "2D4" "2D4" "MM" "-C"
-calc_notdiff "2D4" "2D4" "-N" "-C"
 
 
 
@@ -674,7 +668,7 @@ done
 for f in diff_expr/*down.csv
 do
  echo -ne $(basename "${f%%.*}")"," | sed 's/_expr_down//'
- cat $f | wc -l
+ cat $f > "_"$(basename "${f%%.*}")  #| wc -l
 done
 for f in diff_expr/*up.csv
 do
@@ -744,7 +738,13 @@ do
     cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
     Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
 done
-
+for f in "CM"  "MM" "-N"
+do
+    echo -ne 2D4-$f"_"vs_2D4--C","
+    cat diff_polyA/2D4-$f"_"vs_2D4--C_down.polyA_all_m  diff_polyA/2D4-$f"_"vs_2D4--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/2D4-$f"_"vs_2D4--C_polyA.csv > _g 
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
+    Rscript ../../m-oryzae-polya/plot_fold.R 2D4-$f"_"vs_2D4--C
+done
 
 
 
@@ -779,7 +779,7 @@ done
 for f in diff_polyA/*polyA.csv
 do
  echo -ne $(basename "${f%%_polyA.*}")","
- cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq # | wc -l
+ cat "${f%%_polyA.*}"_down.polyA_all_m  "${f%%_polyA.*}"_up.polyA_all_m | cut -f 5 -d " " | sort | uniq  | wc -l
 done
 # genes differentially expressed with differentially expressed polyA
 for f in diff_polyA/*polyA.csv
