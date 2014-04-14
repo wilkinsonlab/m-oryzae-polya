@@ -29,7 +29,7 @@ done
 
 for f in `ls *.sorted.bam`
 do
-    python ../../m-oryzae-polya/filter.py "${f%%.*}".sorted.bam Magnaporthe_oryzae.MG8.18.dna.toplevel.fa 7 "${f%%.*}".filtered
+    python ../../m-oryzae-polya/filter.py "${f%%.*}".sorted.bam Magnaporthe_oryzae.MG8.21.dna.toplevel.fa 7 "${f%%.*}".filtered
 done
 
 # assign reads to transcripts
@@ -528,6 +528,7 @@ for line in open('Magnaporthe_oryzae.MG8.21.gff3', 'r'):
   end = int(end)
   if not table.has_key(chrx): table[chrx] = {}
   if feat in ('gene', 'protein_coding_gene', 'pseudogene', 'pseudogenic_tRNA', 'rRNA_gene', 'RNA', 'snoRNA_gene', 'snRNA_gene', 'tRNA_gene'):
+    if infos.find('Parent') != -1: continue
     id_start = infos.index('ID=')
     id_end = infos.index(';', id_start)
     gene = infos[id_start + 3: id_end]

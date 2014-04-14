@@ -17,6 +17,7 @@ for line in gff_file:
     feature = items[2]
     if feature in features:
         if feature in ("gene", "protein_coding_gene", "pseudogene", "pseudogenic_tRNA", "rRNA_gene", "RNA", "snoRNA_gene", "snRNA_gene", "tRNA_gene"):
+            if items[8].find("Parent") != -1: continue
             for x in items[8].split(';'):
                 if x.split('=')[0] == "ID":
                     name = x.split('=')[1].strip()    
@@ -67,10 +68,10 @@ for line in polyA_file:
                 print line.strip(), "intron"
             else:
                 location[gene]['not_annotated'] += 1
-                print line.strip(), "not annotated"
+                print line.strip(), "not_annotated"
         else:
                 location[gene]['not_annotated'] += 1
-                print line.strip(), "not annotated"
+                print line.strip(), "not_annotated"
          
            
 # where the polyA are located
