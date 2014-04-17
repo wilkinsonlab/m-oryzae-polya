@@ -63,9 +63,9 @@ for transcript, array in table.items():
         table[transcript] = {}
         continue
     for pos, val in array.items():
-        if scipy.special.ndtr(-((val - mean) / std)) >= p_val_sites or val < min_expr:
-            del table[transcript][pos]
-
+	if scipy.special.ndtr(-((val - mean) / std)) >= p_val_sites or val < min_expr:
+	#if float(val) / np.sum(arr) < 0.1 or val < 5:
+	        del table[transcript][pos]
 
 for transcript, array in table.items():
     if array == {}:
