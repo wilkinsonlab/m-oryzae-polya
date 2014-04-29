@@ -315,58 +315,27 @@ calc_notdiff "2D4" "2D4" "MM" "-C"
 function go_enrich {
 	type=$1
 	file=$2
-	echo "" > "${file%%.*}"_go_enrich.csv
+	echo "GO_term"$'\t'"p_value"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"description" > "${file%%.*}"_go_enrich.csv
     cat $file > _de_list
-	grep -v -f _de_list gene_summary.txt | tail -n +2 | cut -f 1 > _nde_list
+	grep -v -f _de_list gene_summary.txt | cut -f 1 > _nde_list
 	cat _de_list | xargs -ipat grep pat $type | cut -f 2  | sort | uniq >  _go_list
 	for go in `cat _go_list`; do grep $go $type | cut -f 1 | grep MGG | sort | uniq > "_"$go; done
 	for f in `ls _GO*`
 	do
 	    a=$(cat $f _de_list | sort | uniq -d | wc -l )
-	    b=$(cat $f _nde_list | sort | uniq -d | wc -l)
-	    c=$(cat $f $f _de_list | sort | uniq -u | wc -l)
+	    c=$(cat $f _nde_list | sort | uniq -d | wc -l)
+	    b=$(cat $f $f _de_list | sort | uniq -u | wc -l)
 	    d=$(cat $f $f _nde_list | sort | uniq -u | wc -l)
-	    echo ${f/_/}"," `Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d` >> "${file%%.*}"_go_enrich.csv
+	    res=$(Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d )
+	    echo ${f/_/}$'\t'"$res"$'\t'`grep -m 1 "${f/_/}" $type | cut -f 3` >> "${file%%.*}"_go_enrich.csv
 	done
-	#cat "${file%%.*}"_go_enrich.csv | awk -F "," '{if ($2 <= 0.05) print $0}' | sed 's/,/ /'
-	#cat _t | xargs -ipat grep pat $type | cut -f 3  | sort | uniq
+    
 	rm _de_list _nde_list _go_list _GO*
 }
-#cat diff_polyA/WT-CM_vs_WT--C_down.polyA_all_m  diff_polyA/WT-CM_vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq > _file
 go_enrich go_terms.csv _file
 
 
 
-# extract regions and nucleotide composition
-rm motifs/*fam
-for f in `ls *X.polyA_sgl_m`
-do
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -100 -36 print "${f%%.*}"_GURICH_sgl_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -35 -5 print "${f%%.*}"_ARICH_sgl_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -15 -3 print "${f%%.*}"_URICH_sgl_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -3 3 print "${f%%.*}"_CUTSITE_sgl_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  4 30 print "${f%%.*}"_LONGURICH_sgl_m.fam 
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -100 100 print "${f%%.*}"_TOT_sgl_m.fam
-done
-for f in `ls *X.polyA_apa_m`
-do
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -100 -36 print "${f%%.*}"_GURICH_apa_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -35 -5 print "${f%%.*}"_ARICH_apa_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -15 -3 print "${f%%.*}"_URICH_apa_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -3 3 print "${f%%.*}"_CUTSITE_apa_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  4 30 print "${f%%.*}"_LONGURICH_apa_m.fam 
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -100 100 print "${f%%.*}"_TOT_apa_m.fam
-done
-for f in `ls *X.polyA_all_m`
-do
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -100 -36 print "${f%%.*}"_GURICH_all_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -35 -5 print "${f%%.*}"_ARICH_all_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -15 -3 print "${f%%.*}"_URICH_all_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -3 3 print "${f%%.*}"_CUTSITE_all_m.fam &
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  4 30 print "${f%%.*}"_LONGURICH_all_m.fam 
-    python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa $f  -100 100 print "${f%%.*}"_TOT_all_m.fam
-done
-mv *.fam motifs
 
 # glam alignment
 glam2 n WT-CM-X_ARICH_sgl_m.fam -n 40000 -w 6 -O glam2_ARICH_sgl

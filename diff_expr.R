@@ -2,6 +2,8 @@ args <- commandArgs(TRUE)
 suppressMessages(library("RColorBrewer"))
 suppressMessages(library("gplots"))
 suppressMessages(library(DESeq2))
+suppressMessages(library( "genefilter" ))
+
 directory<-"."
 a <- args[1]
 b <- args[2]
@@ -25,7 +27,7 @@ write.csv(res, file = paste("diff_expr/", a, "_vs_", b, "_expr.csv", sep=""), ro
 png(file = paste("images/", a, "_vs_", b, "_MA.png", sep=""), width=600, height=600)
 mar.default <- c(5,4,4,2) + 0.1
 par(mar = mar.default + c(0, 1, 0, 0))
-plotMA(dds,ylim=c(-10,10),main=paste(a, " -> ", b, sep=""), cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
+plotMA(dds,ylim=c(-6,6),main=paste(a, " -> ", b, sep=""), cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
 dev.off()
 
 png(file = paste("images/", a, "_vs_", b, "_DE.png", sep=""), width=600, height=600)
@@ -44,8 +46,17 @@ heatmap.2(mat, trace="none", margin=c(13, 13))
 dev.off()
 
 # heatmap 30 most expressed genes
-select = order(rowMeans(counts(dds)), decreasing=TRUE)[1:30]
-png(file = paste("images/", a, "_vs_", b, "_top30_heatmap.png", sep=""), width=600, height=600)
-heatmap.2(assay(vsd)[select,],  trace="none", margin=c(10, 6))
+topVarGenes <- head( order( rowVars( assay(rld) ), decreasing=TRUE ), 30 )
+png(file = paste("images/", a, "_vs_", b, "_top30_heatmap.png", sep=""), width=1024, height=768)
+assay_table<-assay(rld)[ topVarGenes, ]
+summary_table <- read.table("gene_summary.txt", sep="\t", quote="\"", row.names=1)
+merge_table<-merge(assay_table,summary_table,by=0)
+merge_table$Row.names<-paste(merge_table$Row.names,merge_table$V2)
+merge_table$V2=NULL
+rownames(merge_table) <- merge_table[,1]
+merge_table$Row.names<-NULL
+rownames(merge_table)<-sub(" \\[Source.*", "", rownames(merge_table))
+heatmap.2( as.matrix(merge_table), scale="row",trace="none", dendrogram="column",col = colorRampPalette( rev(brewer.pal(9, "RdBu")) )(255),margin=c(10,25))
 dev.off()
+
 
