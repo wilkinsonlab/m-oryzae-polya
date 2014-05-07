@@ -315,7 +315,8 @@ calc_notdiff "2D4" "2D4" "MM" "-C"
 function go_enrich {
 	type=$1
 	file=$2
-	echo "GO_term"$'\t'"p_value"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"description" > "${file%%.*}"_go_enrich.csv
+	echo $file
+	echo "GO_term"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"p_value"$'\t'"description"$'\t'"domain" > "${file%%.*}"_go_enrich.tsv
     cat $file > _de_list
 	grep -v -f _de_list gene_summary.txt | cut -f 1 > _nde_list
 	cat _de_list | xargs -ipat grep pat $type | cut -f 2  | sort | uniq >  _go_list
@@ -327,15 +328,22 @@ function go_enrich {
 	    b=$(cat $f $f _de_list | sort | uniq -u | wc -l)
 	    d=$(cat $f $f _nde_list | sort | uniq -u | wc -l)
 	    res=$(Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d )
-	    echo ${f/_/}$'\t'"$res"$'\t'`grep -m 1 "${f/_/}" $type | cut -f 3` >> "${file%%.*}"_go_enrich.csv
+	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file%%.*}"_go_enrich.tsv
+	    grep -m 1 "${f/_/}" $type | cut -f 3,4 >> "${file%%.*}"_go_enrich.tsv
 	done
     
 	rm _de_list _nde_list _go_list _GO*
 }
 go_enrich go_terms.csv _file
 
-
-
+# extract significant GO terms and create plots
+for f in `ls *short*`; do n=${f/short_go_enrich.tsv/polyA_polyA_go_plot_BP.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "biological_process") print $7"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
+for f in `ls *long*`; do n=${f/long_go_enrich.tsv/polyA_go_plot_BP.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "biological_process") print $7"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
+for f in `ls *short*`; do n=${f/short_go_enrich.tsv/polyA_go_plot_CC.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "cellular_component") print $7"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
+for f in `ls *long*`; do n=${f/long_go_enrich.tsv/polyA_go_plot_CC.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "cellular_component") print $7"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
+for f in `ls *short*`; do n=${f/short_go_enrich.tsv/polyA_go_plot_MF.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "molecular_function") print $7"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
+for f in `ls *long*`; do n=${f/long_go_enrich.tsv/polyA_go_plot_MF.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "molecular_function") print $7"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
+for f in `ls *txt*`; do  python ../../../m-oryzae-polya/plot_go.py $f; done
 
 # glam alignment
 glam2 n WT-CM-X_ARICH_sgl_m.fam -n 40000 -w 6 -O glam2_ARICH_sgl
@@ -361,17 +369,17 @@ function scan {
 # motif scan 
 python -c "
 import re, sys
+from Bio import SeqIO
 f = open(sys.argv[1], 'r')
 s = sys.argv[2]
-d = [0 for x in range(200)]
+d = [0 for x in range(500)]
 c = 0.0
-for line in f:
-  if line[0] == '>': continue
-  for m in re.finditer(s, line):
+for record in SeqIO.parse(f, 'fasta'):
+  for m in re.finditer(s, str(record.seq)):
     d[m.start(0)] += 1
   c += 1		
 for v in d:
-  print v / c *100		
+  print v / c * 100		
 " 
 
 # extract 3'UTR sequences
@@ -694,26 +702,26 @@ done
 
 
 # polyA site usage change (only dependent)
-for f in "CM"  "MM" "-N"
+for f in "CM"  "MM" 
 do
     echo -ne WT-$f"_"vs_WT--C","
     cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g 
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
-    Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py 
+    #Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
 done
 for f in "CM" "MM" "-N" "-C"
 do
     echo -ne WT"-"$f"_"vs_2D4"-"$f","
     cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.csv > _g
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
-    Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py 
+    #Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
 done
-for f in "CM"  "MM" "-N"
+for f in "CM"  "MM" 
 do
     echo -ne 2D4-$f"_"vs_2D4--C","
     cat diff_polyA/2D4-$f"_"vs_2D4--C_down.polyA_all_m  diff_polyA/2D4-$f"_"vs_2D4--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/2D4-$f"_"vs_2D4--C_polyA.csv > _g 
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py > _t
-    Rscript ../../m-oryzae-polya/plot_fold.R 2D4-$f"_"vs_2D4--C
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py 
+    #Rscript ../../m-oryzae-polya/plot_fold.R 2D4-$f"_"vs_2D4--C
 done
 
 
@@ -1119,4 +1127,46 @@ for k,v in arr.items():
     sys.stdout.write('\t')
   print
 " > _f.csv
+
+# extract start codon
+python -c "
+import re
+table = {}
+for line in open('Magnaporthe_oryzae.MG8.21.gff3', 'r'):
+    if line[0] == '#' or line[0] == '\n':
+        continue
+    items = line.split('\t')
+    sense = items[6]
+    if items[2]  == 'protein_coding_gene':
+        chrx = items[0]
+        start = int(items[3])
+        end = int(items[4])
+        sense = items[6]
+        for x in items[8].split(';'):
+            if x.split('=')[0] == 'ID':
+                gene = x.split('=')[1].strip()
+        table[gene] = None
+    elif items[2] == 'CDS':
+        chrx = items[0]
+        start = int(items[3])
+        end = int(items[4])
+        sense = items[6]
+        for x in items[8].split(';'):
+            if x.split('=')[0] == 'Parent':
+                gene = x.split('=')[1].strip()
+                gene= re.sub('T.', '', gene)
+        if  sense == '+' and table.has_key(gene):
+            if table[gene] == None:
+                table[gene] = (chrx, start, sense)
+        elif  sense == '-' and table.has_key(gene):
+             table[gene] = (chrx, end, sense)
+for gene, (chrx, pos, sense) in table.items():
+ if  sense == '+': 
+  start = pos
+  end = pos + 3
+ elif  sense == '-':
+  start = pos - 3
+  end = pos  
+ print chrx, '\t', '.', '\t', 'start_codon', start, '\t', end, '\t', '.', '\t', sense, '\t', '.', '\t', 'ID='+gene+';Parent='+gene+';'
+"
 

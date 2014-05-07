@@ -111,3 +111,8 @@ for transcript, polis in polyA.items():
         elif opt == 'all':
                 print table[transcript][max_curr], max_curr, lines[transcript][0], lines[transcript][1], transcript, lines[transcript][2], lines[transcript][3]
 
+
+
+
+
+    
