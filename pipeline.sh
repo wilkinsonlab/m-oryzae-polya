@@ -337,13 +337,19 @@ function go_enrich {
 go_enrich go_terms.csv _file
 
 # extract significant GO terms and create plots
-for f in `ls *short*`; do n=${f/short_go_enrich.tsv/polyA_polyA_go_plot_BP.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "biological_process") print $7"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
-for f in `ls *long*`; do n=${f/long_go_enrich.tsv/polyA_go_plot_BP.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "biological_process") print $7"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
-for f in `ls *short*`; do n=${f/short_go_enrich.tsv/polyA_go_plot_CC.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "cellular_component") print $7"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
-for f in `ls *long*`; do n=${f/long_go_enrich.tsv/polyA_go_plot_CC.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "cellular_component") print $7"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
-for f in `ls *short*`; do n=${f/short_go_enrich.tsv/polyA_go_plot_MF.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "molecular_function") print $7"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
-for f in `ls *long*`; do n=${f/long_go_enrich.tsv/polyA_go_plot_MF.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "molecular_function") print $7"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
-for f in `ls *txt*`; do  python ../../../m-oryzae-polya/plot_go.py $f; done
+for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "biological_process") print $7"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
+for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "biological_process") print $7"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
+for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "cellular_component") print $7"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
+for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "cellular_component") print $7"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
+for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "molecular_function") print $7"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
+for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "molecular_function") print $7"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
+for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "biological_process") print $7"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
+for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "biological_process") print $7"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
+for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "cellular_component") print $7"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
+for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "cellular_component") print $7"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
+for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "molecular_function") print $7"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
+for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($6<0.05 && $8 == "molecular_function") print $7"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
+for f in `ls *expr*txt*`; do  python ../../../m-oryzae-polya/plot_go.py $f; done
 
 # glam alignment
 glam2 n WT-CM-X_ARICH_sgl_m.fam -n 40000 -w 6 -O glam2_ARICH_sgl
