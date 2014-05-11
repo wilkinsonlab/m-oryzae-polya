@@ -331,7 +331,7 @@ function go_enrich {
 	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file%%.*}"_go_enrich.tsv
 	    grep -m 1 "${f/_/}" $type | cut -f 3,4 >> "${file%%.*}"_go_enrich.tsv
 	done
-        Rscript ../../../m-oryzae-polya/FDR.R "${file%%.*}"_go_enrich.tsv
+        Rscript ../../m-oryzae-polya/FDR.R "${file%%.*}"_go_enrich.tsv
 	rm _de_list _nde_list _go_list _GO*
 }
 go_enrich go_terms.csv _file
