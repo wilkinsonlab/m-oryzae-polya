@@ -1009,6 +1009,19 @@ python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.to
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _p1_others -100 100 print _s1_others
 
 
+# extract short and long polyA changed genes
+for f in ls `ls diff_polyA/*.csv`
+do
+    n=${f/polyA.csv/}
+    cat $n"down.polyA_all_m"  $n"up.polyA_all_m" > _a
+     python ../../m-oryzae-polya/polyA_localization.py Magnaporthe_oryzae.MG8.21.gff3 _a | grep "3'UTR" | awk '{print $5",E"$3"@"$2}' | grep -f - $f > _g
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py | awk '{if ($3 < 0) print $1}' > "_"$(basename $n)"short" 
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py | awk '{if ($3 > 0) print $1}' > "_"$(basename $n)"long" 
+done
+
+
+
+
 # extract by distance
 python -c "
 
