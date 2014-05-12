@@ -217,8 +217,8 @@ function calc_diff {
  #cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 < 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
  #cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 > 0) print $1,$2}' | sed -e 's/EChromosome/Chromosome/' -e 's/@/ /g'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
  # version 21
- cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 < 0) print $1,$2}' | sed -e 's/@/ /g' -e 's/ E\(.*\)/ \1/'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
- cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($5 < 0.05 && $7 > 0) print $1,$2}' | sed -e 's/@/ /g' -e 's/ E\(.*\)/ \1/'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
+ cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($7 < 0.05 && $10 < 0) print $1,$2}' | sed -e 's/@/ /g' -e 's/ E\(.*\)/ \1/'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m
+ cat $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv | awk -F "," '{if ($7 < 0.05 && $10 > 0) print $1,$2}' | sed -e 's/@/ /g' -e 's/ E\(.*\)/ \1/'  | awk '{print 0,$3,$2,$4,$1,$5,$6}' | sed 's/  / /' | sort -k 1,7 > $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m
  mv $s1"-"$c1"_"vs"_"$s2"-"$c2"_"up.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"down.polyA_all_m $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.count $s1"-"$c1"_"vs"_"$s2"-"$c2"_"polyA.csv diff_polyA
  rm _*
 }  
@@ -706,33 +706,6 @@ do
  	cat $f | awk -F "," '{if ($8 < 0.05) print $1,$8}' | wc -l
 done
 
-
-# polyA site usage change (only dependent)
-for f in "CM"  "MM" 
-do
-    echo -ne WT-$f"_"vs_WT--C","
-    cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g 
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py 
-    #Rscript ../../m-oryzae-polya/plot_fold.R WT-$f"_"vs_WT--C
-done
-for f in "CM" "MM" "-N" "-C"
-do
-    echo -ne WT"-"$f"_"vs_2D4"-"$f","
-    cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.csv > _g
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py 
-    #Rscript ../../m-oryzae-polya/plot_fold.R  WT"-"$f"_"vs_2D4"-"$f
-done
-for f in "CM"  "MM" 
-do
-    echo -ne 2D4-$f"_"vs_2D4--C","
-    cat diff_polyA/2D4-$f"_"vs_2D4--C_down.polyA_all_m  diff_polyA/2D4-$f"_"vs_2D4--C_up.polyA_all_m | cut -f 5 -d " " | sort | uniq | grep -f -  diff_polyA/2D4-$f"_"vs_2D4--C_polyA.csv > _g 
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py 
-    #Rscript ../../m-oryzae-polya/plot_fold.R 2D4-$f"_"vs_2D4--C
-done
-
-
-
-
 # differential polyA sites number
 # P1
 for f in diff_polyA/*down*polyA_all_m
@@ -804,6 +777,31 @@ do
  cat $(basename "${f%%_vs_*}")"-X.polyA_sgl_m" | cut -d " " -f 5 | sort | uniq > _sgl
  echo -ne `cat _g3 _sgl | sort | uniq -d | wc -l`","
  echo `cat _g3 _apa | sort | uniq -d | wc -l`
+done
+
+
+# polyA site usage change (only dependent)
+for f in "CM"  "MM" 
+do
+    echo -ne WT-$f"_"vs_WT--C","
+    cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m > _a
+    python ../../m-oryzae-polya/polyA_localization.py Magnaporthe_oryzae.MG8.21.gff3 _a | grep "3'UTR" | awk '{print $5",E"$3"@"$2}' | grep -f - diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py # | awk '{x=($2-$4); print x < 0 ? -x : x , $5 }' 
+done
+for f in "CM" "MM" "-N" "-C"
+do
+    echo -ne WT"-"$f"_"vs_2D4"-"$f","
+    cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m > _a
+    python ../../m-oryzae-polya/polyA_localization.py Magnaporthe_oryzae.MG8.21.gff3 _a | grep "3'UTR" | awk '{print $5",E"$3"@"$2}' | grep -f - diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"polyA.csv > _g
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py #| awk '{x=($2-$4); print x < 0 ? -x : x , $5 }' > _t
+    #Rscript ../../m-oryzae-polya/plot_fold.R  _t
+done
+for f in "CM"  "MM" 
+do
+    echo -ne 2D4-$f"_"vs_2D4--C","
+    cat diff_polyA/2D4-$f"_"vs_2D4--C_down.polyA_all_m  diff_polyA/2D4-$f"_"vs_2D4--C_up.polyA_all_m > _a
+    python ../../m-oryzae-polya/polyA_localization.py Magnaporthe_oryzae.MG8.21.gff3 _a | grep "3'UTR" | awk '{print $5",E"$3"@"$2}' | grep -f - diff_polyA/2D4-$f"_"vs_2D4--C_polyA.csv > _g
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py | awk '{x=($2-$4); print x < 0 ? -x : x , $5 }' > _t
 done
 
 
