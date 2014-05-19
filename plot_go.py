@@ -24,10 +24,10 @@ ind = np.arange(len(ylabels))
 barlist=plt.bar(ind, ylabels)
 plt.xticks(ind+0.5, xlabels, ha='right',rotation=70)
 for i, type in enumerate(types):
-    if type == "BP":
-        barlist[i].set_color('g')
-    elif type == "CC":
-        barlist[i].set_color('c')    
+    if type == "up":
+        barlist[i].set_color('r')
+    elif type == "down":
+        barlist[i].set_color('b')    
     elif type == "MF":
         barlist[i].set_color('b')
         
@@ -36,10 +36,10 @@ fig.set_size_inches(18.5,10.5)
 fd = {'fontsize':20}
 title = re.sub("_go_plot_", " ", os.path.basename((filename)))
 title = re.sub("\.txt", "", title)
-title = "Plant-only expressed genes GO ontologies"
+#title = "Plant-only expressed genes GO ontologies"
 plt.title(title, y=1.08,fontdict=fd)
-l1 = Line2D([], [], linewidth=3, color="g") 
-l2 = Line2D([], [], linewidth=3, color="c") 
+l1 = Line2D([], [], linewidth=3, color="r") 
+l2 = Line2D([], [], linewidth=3, color="b") 
 l3 = Line2D([], [], linewidth=3, color="b") 
-legend([l1, l2, l3], ["Biological process", "Cellular component", "Molecular function"]) 
+legend([l1, l2], ["Up-regulated genes", "Down-regulated genes"]) 
 plt.savefig(filename.replace("txt", "pdf"))

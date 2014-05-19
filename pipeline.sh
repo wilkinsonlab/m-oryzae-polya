@@ -652,7 +652,7 @@ done
 for f in diff_expr/*down.csv
 do
  echo -ne $(basename "${f%%.*}")"," | sed 's/_expr_down//'
- cat $f > "_"$(basename "${f%%.*}")  #| wc -l
+ cat $f | wc -l
 done
 for f in diff_expr/*up.csv
 do
@@ -1019,6 +1019,15 @@ do
     cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py | awk '{if ($3 > 0) print $1}' > "_"$(basename $n)"long" 
 done
 
+# extract up and down expr changed genes
+for f in `ls diff_expr/*down.csv`
+do
+    cat $f | cut -f 1 -d "," > "_"$(basename ${f/.csv/}) 
+done
+for f in `ls diff_expr/*up.csv`
+do
+    cat $f | cut -f 1 -d "," > "_"$(basename ${f/.csv/}) 
+done
 
 
 

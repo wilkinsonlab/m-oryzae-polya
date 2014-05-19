@@ -27,7 +27,7 @@ write.csv(res, file = paste("diff_expr/", a, "_vs_", b, "_expr.csv", sep=""), ro
 png(file = paste("images/", a, "_vs_", b, "_MA.png", sep=""), width=600, height=600)
 mar.default <- c(5,4,4,2) + 0.1
 par(mar = mar.default + c(0, 1, 0, 0))
-plotMA(dds,ylim=c(-6,6),main=paste(a, " -> ", b, sep=""), cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
+plotMA(dds,alpha=.05,ylim=c(-6,6),main=paste(a, " -> ", b, sep=""))
 dev.off()
 
 png(file = paste("images/", a, "_vs_", b, "_DE.png", sep=""), width=600, height=600)
