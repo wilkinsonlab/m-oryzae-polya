@@ -270,7 +270,7 @@ function calc_notdiff {
  c1=$3
  c2=$4
  type="low"
- cat $s1-$c1-X.notpolyA_all_m_high $s2-$c2-X.notpolyA_all_m_$type | sort -k 1,4 | uniq > _k
+ cat $s1-$c1-X.notpolyA_all_m_$type $s2-$c2-X.notpolyA_all_m_$type | sort -k 1,4 | uniq > _k
  cat _k $s1-$c1-1.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _a
  cat _k $s1-$c1-2.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _b
  cat _k $s1-$c1-3.notpolyA | sed s'/^ *//' | sort -k 3,3 -k 2 | uniq -f 1 -D | awk '{if ($1 > 0) print $3"@"$2"@"$4"\t"$1}' | sort -k 1,1 > _c
@@ -378,7 +378,7 @@ import re, sys
 from Bio import SeqIO
 f = open(sys.argv[1], 'r')
 s = sys.argv[2]
-d = [0 for x in range(500)]
+d = [0 for x in range(200)]
 c = 0.0
 for record in SeqIO.parse(f, 'fasta'):
   for m in re.finditer(s, str(record.seq)):
@@ -703,7 +703,7 @@ done
 for f in notdiff_polyA_high/WT*WT*.csv
 do
 	echo -ne $(basename "${f%%.*}")"," | sed 's/_notpolyA//'
- 	cat $f | awk -F "," '{if ($8 < 0.05) print $1,$8}' | wc -l
+ 	cat $f | awk -F "," '{if ($7 < 0.05) print $1}' | wc -l
 done
 
 # differential polyA sites number
@@ -991,12 +991,12 @@ RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse4.maf > maf_parse4.out &
 cat diff_polyA/WT-CM_vs_2D4-CM_down.polyA_all_m diff_polyA/WT-MM_vs_2D4-MM_down.polyA_all_m diff_polyA/WT--N_vs_2D4--N_down.polyA_all_m diff_polyA/WT--C_vs_2D4--C_down.polyA_all_m | sort -k 1,7 | uniq > _p1
 cat WT-CM-X.polyA_all_m WT-MM-X.polyA_all_m WT--N-X.polyA_all_m WT--C-X.polyA_all_m | sort -k 1,7 | uniq > _t
 cat _p1 _p1 _t | sort -k 1,7 | uniq -u | sort -R > _not_p1
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _p1 -100 100 print _s1
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _p1 -100 -30 print _s1
 c=$(cat _p1 | wc -l)
 head -n $c _not_p1 > _not_p1_1
 tail -n $c _not_p1 > _not_p1_2
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _not_p1_1 -100 100  print _s2
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _not_p1_2 -100 100  print _s3
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _not_p1_1 -100 -30  print _s2
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _not_p1_2 -100 -30  print _s3
 
 # P1 vs P2 vs P1_others
 cat diff_polyA/WT-CM_vs_2D4-CM_down.polyA_all_m diff_polyA/WT-MM_vs_2D4-MM_down.polyA_all_m diff_polyA/WT--N_vs_2D4--N_down.polyA_all_m diff_polyA/WT--C_vs_2D4--C_down.polyA_all_m | sort -k 1,7 | uniq > _p1

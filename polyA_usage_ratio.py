@@ -46,7 +46,7 @@ for line in sys.stdin:
 todistal  = 0
 toproximal = 0
 count = 0.0
-for gene, (fold_d, pos_d) in distal.items():
+for gene, (fold_d, pos_d) in proximal.items():
     print gene, pos_d, fold_d
     if fold_d > 0:
         for (fold_p, pos_p) in all[gene]:

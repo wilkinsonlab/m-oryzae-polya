@@ -1,18 +1,20 @@
 args <- commandArgs(TRUE)
-suppressMessages(library(DESeq))
-setwd(".")
-c1<-read.table( "_out1",row.names=1) 
-c2<-read.table( "_out2",row.names=1)
-c3<-read.table( "_out3",row.names=1)
-c4<-read.table( "_out4",row.names=1)
-c5<-read.table( "_out5",row.names=1)
-c6<-read.table( "_out6",row.names=1)
-counts<-cbind(c1,c2,c3,c4,c5,c6)
-colnames(counts)<-c("a1", "a2", "a3", "b1", "b2", "b3")
-design <- rep (c("a","b"),each=3)
-cds  <-  newCountDataSet(counts, design)
-cds  <-  estimateSizeFactors( cds)
-cds <- estimateDispersions( cds,fitType="local" )
-res  <-  nbinomTest(  cds,  "a",  "b")
-resSig <- res[ res$pval < 0.05, ]
-write.csv(resSig, file = args[1],  row.names=F, quote=FALSE)
+suppressMessages(library(DESeq2))
+directory<-"."
+c1<-"_out1" 
+c2<-"_out2"
+c3<-"_out3"
+c4<-"_out4"
+c5<-"_out5"
+c6<-"_out6"
+sampleFiles<-c(c1,c2,c3,c4,c5,c6)
+sampleCondition<-c("a","a","a","b","b","b")
+sampleTable<-data.frame(sampleName=sampleFiles, fileName=sampleFiles, condition=sampleCondition)
+ddsHTSeq<-DESeqDataSetFromHTSeqCount(sampleTable=sampleTable, directory=directory, design=~condition)
+colData(ddsHTSeq)$condition<-factor(colData(ddsHTSeq)$condition, levels=c("a","b"))
+dds<-DESeq(ddsHTSeq, fitType="local")
+res<-results(dds)
+res<-data.frame(rownames(res),res)
+colnames(res)[1] <- "gene"
+write.csv(res, file = args[1],  row.names=F, quote=FALSE)
+
