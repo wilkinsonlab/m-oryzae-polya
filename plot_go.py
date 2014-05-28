@@ -22,24 +22,24 @@ fig = plt.figure()
 width = 0
 ind = np.arange(len(ylabels))
 barlist=plt.bar(ind, ylabels)
-plt.xticks(ind+0.5, xlabels, ha='right',rotation=70)
+plt.xticks(ind+0.5, xlabels, ha='right',rotation=70, fontsize=14)
 for i, type in enumerate(types):
-    if type == "up":
-        barlist[i].set_color('r')
-    elif type == "down":
-        barlist[i].set_color('b')    
+    if type == "short":
+        barlist[i].set_color('g')
+    elif type == "long":
+        barlist[i].set_color('c')    
     elif type == "MF":
         barlist[i].set_color('b')
         
 fig = matplotlib.pyplot.gcf()
 fig.set_size_inches(18.5,10.5)
-fd = {'fontsize':20}
+fd = {'fontsize':24}
 title = re.sub("_go_plot_", " ", os.path.basename((filename)))
 title = re.sub("\.txt", "", title)
 #title = "Plant-only expressed genes GO ontologies"
 plt.title(title, y=1.08,fontdict=fd)
-l1 = Line2D([], [], linewidth=3, color="r") 
-l2 = Line2D([], [], linewidth=3, color="b") 
+l1 = Line2D([], [], linewidth=3, color="g") 
+l2 = Line2D([], [], linewidth=3, color="c") 
 l3 = Line2D([], [], linewidth=3, color="b") 
-legend([l1, l2], ["Up-regulated genes", "Down-regulated genes"]) 
+legend([l1, l2], ["Shorter 3'UTR", "Longer 3'UTR"], fontsize=20) 
 plt.savefig(filename.replace("txt", "pdf"))

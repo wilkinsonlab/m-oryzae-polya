@@ -337,18 +337,18 @@ function go_enrich {
 go_enrich go_terms.csv _file
 
 # extract significant GO terms and create plots
-for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
-for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
-for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
-for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
-for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
-for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
-for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
-for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
-for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
-for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
-for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 > $n; done
-for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 15 >> $n; done
+for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
+for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
+for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
+for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
+for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
+for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
+for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
+for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
+for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
+for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
+for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
+for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
 for f in `ls *expr*txt*`; do  python ../../../m-oryzae-polya/plot_go.py $f; done
 
 # glam alignment
@@ -493,9 +493,9 @@ for line in apa:
 
 
 # orphans (400 or 1000 nt) search against known db
-python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa WT-ALL-X.notpolyA_all_m_high  -400 0 print WT-ALL-X.notpolyA_all_m_high_400.fa
-blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db nt -remote -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
-blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_400.fa -db Rfam.fasta -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py
+python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa WT-ALL-X.notpolyA_all_m_high  -400 0 print WT-ALL-X.notpolyA_all_m_high_400.fa
+blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_high_400.fa -db nt -remote -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py 
+blastn -task dc-megablast -query WT-ALL-X.notpolyA_all_m_high_400.fa -db Rfam.fasta -outfmt 5 | python ../../m-oryzae-polya/parse_blast_xml.py
 
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.18.dna.toplevel.fa WT-ALL-X.notpolyA_all_m_low  -218 0 print _t
 formatdb -i _t -p F -o
@@ -809,7 +809,7 @@ done
 for f in *X.polyA_all_m
 do
     echo -ne "${f%%??.*}"","
-    python ../../m-oryzae-polya/3UTR_length.py Magnaporthe_oryzae.MG8.18.gff3 $f
+    python ../../m-oryzae-polya/3UTR_length.py Magnaporthe_oryzae.MG8.21.gff3 $f
 done 
 
 # 3' UTR length (cumulative only in affected genes)
@@ -1195,4 +1195,21 @@ for gene, (chrx, pos, sense) in table.items():
   end = pos  
  print chrx, '\t', '.', '\t', 'start_codon', start, '\t', end, '\t', '.', '\t', sense, '\t', '.', '\t', 'ID='+gene+';Parent='+gene+';'
 "
+# orphan matching retrotransposons
+
+python -c "
+for line in open('WT-ALL-X.notpolyA_all_m_low', 'r'):
+    val, pos, chr, sense = line.strip().split(' ')
+    for line2 in open('_retro', 'r'):
+        chr2, marco, mobile, start, end, p1, sense2, p2, info = line2.strip().split('\t')
+        if chr == chr2:
+            if sense == '-' and sense2 == '+':
+                if int(pos) > int(start) and int(pos) < int(end) + 400:
+                    print line.strip(), line2.strip()
+                    break
+            if sense == '+' and sense2 == '-':
+                if int(pos) > int(start) - 400 and int(pos) < int(end):
+                    print line.strip(), line2.strip()
+                    break
+" 
 
