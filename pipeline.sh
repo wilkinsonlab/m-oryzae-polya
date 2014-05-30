@@ -845,8 +845,6 @@ done
 
 
 
-# distance from annotated gene features
-# ...
 
 
 # APA average distance

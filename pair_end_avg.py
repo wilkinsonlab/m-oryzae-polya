@@ -25,12 +25,13 @@ for line in infile:
             dist = pos - (table[name][0] + table[name][1])
         if dist < 1000 and dist > 0:
             dists[dist] += 1
+            num += dist
+            count += 1
+
         del table[name]
-        # num += dist
-        # count += 1
 
-# print num / float(count)
-for i, x in dists.items():
-    print i, x
 
+#for i, x in dists.items():
+#    print i, x
+print num / float(count)
 infile.close()

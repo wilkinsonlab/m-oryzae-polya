@@ -27,7 +27,7 @@ for line in gff_file:
             pos = int(items[4])
         else:
             pos = int(items[3])
-        stops[name] = pos
+        stops[name] = (pos, sense)
     elif items[2] == "start_codon":
         chrx = items[0]
         for x in items[8].split(';'):
@@ -39,7 +39,7 @@ for line in gff_file:
             pos = int(items[4])
         else:
             pos = int(items[3])
-        starts[name] = pos    
+        starts[name] = (pos, sense)
     elif items[2] == "gene":
         chrx = items[0]
         for x in items[8].split(';'):
@@ -47,11 +47,11 @@ for line in gff_file:
                 name = x.split('=')[1].strip()
         sense = items[6]
         if sense == '+':
-            inits[name] = int(items[3])
-            terms[name] = int(items[4])
+            inits[name] = (int(items[3]), sense)
+            terms[name] = (int(items[4]), sense)
         else:
-            inits[name] = int(items[4])
-            terms[name] = int(items[3])
+            inits[name] = (int(items[4]), sense)
+            terms[name] = (int(items[3]), sense)
     elif items[2] == "three_prime_UTR":
         chrx = items[0]
         for x in items[8].split(';'):
@@ -59,10 +59,11 @@ for line in gff_file:
                 name = x.split('=')[1].strip()
         sense = items[6]
         if sense == '+':
-            utr[name] = int(items[3])
+            utr[name] = (int(items[3]), sense)
         else:
-            utr[name] = int(items[4])
+            utr[name] = (int(items[4]), sense)
     
+
          
 if feature == "start":
     select = starts        
@@ -76,7 +77,7 @@ elif feature == "3utr":
     select = utr   
 
 offset = 7
-distance = [0] * 1000
+distance = [0] * 500
 dists = 0
 count = 0.0
 already = {}
@@ -93,19 +94,21 @@ for read_copy in bam_file.fetch():
         continue
     else:
         already[(chrx, pos)] = True    
-    sense = ('+', '-')[read.is_reverse]
+    sense = ('-', '+')[read.is_reverse]
     
     dist = 10000000
-    for gene, loc in select.items():
-        if abs(pos - loc) < dist:
-            dist = abs(pos - loc)
-
-    if dist < 1000 and dist >= 0:
-        distance[dist] += 1
+    for gene, (loc, g_sense) in select.items():
+        if sense == g_sense:
+            if abs(pos - loc) < dist:
+                dist = abs(pos - loc)
+                if dist < 500 and dist >= 0:
+                    distance[dist] += 1
+                    dists += dist
+                    count += 1
+                    break
+    if count > 100000: 
+        break
         
-    dists += dist
-    count += 1
-    if count > 100000: break
 
 print "%.2f" % (dists / count)
 for x in distance:
