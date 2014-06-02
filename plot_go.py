@@ -10,6 +10,7 @@ ylabels = []
 types= []
 fich = open(filename, "r")
 for line in fich:
+    if line == "": continue
     desc, val, type = line.strip().split("\t")
     if len(desc) > 40:
         desc = desc[0:39] + "..."        
@@ -24,10 +25,10 @@ ind = np.arange(len(ylabels))
 barlist=plt.bar(ind, ylabels)
 plt.xticks(ind+0.5, xlabels, ha='right',rotation=70, fontsize=14)
 for i, type in enumerate(types):
-    if type == "short":
-        barlist[i].set_color('g')
-    elif type == "long":
-        barlist[i].set_color('c')    
+    if type == "sgl":
+        barlist[i].set_color('orange')
+    elif type == "apa":
+        barlist[i].set_color('violet')    
     elif type == "MF":
         barlist[i].set_color('b')
         
@@ -38,8 +39,8 @@ title = re.sub("_go_plot_", " ", os.path.basename((filename)))
 title = re.sub("\.txt", "", title)
 #title = "Plant-only expressed genes GO ontologies"
 plt.title(title, y=1.08,fontdict=fd)
-l1 = Line2D([], [], linewidth=3, color="g") 
-l2 = Line2D([], [], linewidth=3, color="c") 
+l1 = Line2D([], [], linewidth=3, color="orange") 
+l2 = Line2D([], [], linewidth=3, color="violet") 
 l3 = Line2D([], [], linewidth=3, color="b") 
-legend([l1, l2], ["Shorter 3'UTR", "Longer 3'UTR"], fontsize=20) 
+legend([l1, l2], ["Single cut", "APA"], fontsize=20) 
 plt.savefig(filename.replace("txt", "pdf"))

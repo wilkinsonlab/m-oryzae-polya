@@ -101,14 +101,14 @@ for read_copy in bam_file.fetch():
         if sense == g_sense:
             if abs(pos - loc) < dist:
                 dist = abs(pos - loc)
-                if dist < 500 and dist >= 0:
-                    distance[dist] += 1
-                    dists += dist
-                    count += 1
-                    break
-    if count > 100000: 
-        break
-        
+                
+
+    if dist < 500 and dist >= 0:
+        distance[dist] += 1
+        dists += dist
+        count += 1
+        if count > 100000: 
+            break
 
 print "%.2f" % (dists / count)
 for x in distance:

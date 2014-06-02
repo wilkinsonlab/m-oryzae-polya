@@ -15,6 +15,8 @@ priming_len = 16
 tempname = "_" + sys.argv[1] + ".filter.temp"
 tempfile = pysam.Samfile(tempname, "wb", template=infile)
 
+internals = pysam.Samfile("_internals", "wb", template=infile)
+
 fasta_seqs = {}
 for seq_record in SeqIO.parse(fasta_file, "fasta"):
     fasta_seqs[seq_record.id] = seq_record
@@ -43,7 +45,8 @@ for read in infile.fetch():
             seq = str(fasta_seqs[chrx].seq[pos + read.rlen: pos + read.rlen + priming_len])
         else:
             pos = read.pos - offset
-            seq = str(fasta_seqs[chrx].seq[pos - priming_len: pos].reverse_complement())  
+            seq = str(fasta_seqs[chrx].seq[pos - priming_len: pos].reverse_complement())
+        sense = ["+", "-"][read.is_reverse]     
         #if (seq.count('A') + seq.count('G')) / float(oligoT) < 0.75:
         if seq[0:oligoT].count('A') < oligoT and (seq.count('A') / float(priming_len)) < 0.75:
             tempfile.write(read)
@@ -51,9 +54,10 @@ for read in infile.fetch():
             mapped_reads.add(read.qname)
         else:
             fake += 1
+            internals.write(read)
             
-pysam.sort(tempname, outfile)
-pysam.index(outfile + ".bam")
+#pysam.sort(tempname, outfile)
+#pysam.index(outfile + ".bam")
 os.remove(tempname)
  
 print"Total reads: " + str(len(total_reads)), "Mapped reads: " + str(len(mapped_reads)), "Total mappings: " + str(total), "Final mappings: " + str(mapped), "low quality mappings: " + str(low_quality), "AT_high mappings: " +  str(AT_high), "fakes alignment: " +  str(fake) 

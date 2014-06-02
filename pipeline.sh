@@ -314,24 +314,25 @@ calc_notdiff "2D4" "2D4" "MM" "-C"
 # GO enrichment
 function go_enrich {
 	type=$1
-	file=$2
-	echo $file
-	echo "GO_term"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"p_value"$'\t'"description"$'\t'"domain" > "${file%%.*}"_go_enrich.tsv
-    cat $file > _de_list
-	grep -v -f _de_list gene_summary.txt | cut -f 1 > _nde_list
+	file_p=$2
+    file_t=$3
+	echo $file_p
+	echo "GO_term"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"p_value"$'\t'"description"$'\t'"domain" > "${file_p%%.*}"_go_enrich.tsv
+    grep -f $file_p $type | awk '{if ($2 != "") print $1}' | sort | uniq > _de_list
+	cat $file_p $file_p $file_t | sort | uniq -u | grep -f - $type | awk '{if ($2 != "") print $1}' | sort | uniq > _nde_list
 	cat _de_list | xargs -ipat grep pat $type | cut -f 2  | sort | uniq >  _go_list
 	for go in `cat _go_list`; do grep $go $type | cut -f 1 | grep MGG | sort | uniq > "_"$go; done
 	for f in `ls _GO*`
 	do
-	    a=$(cat $f _de_list | sort | uniq -d | wc -l )
-	    c=$(cat $f _nde_list | sort | uniq -d | wc -l)
-	    b=$(cat $f $f _de_list | sort | uniq -u | wc -l)
-	    d=$(cat $f $f _nde_list | sort | uniq -u | wc -l)
+	    a=$(cat _de_list $f | sort | uniq -d | wc -l )
+	    c=$(cat _de_list $f $f | sort | uniq -u | wc -l)
+	    b=$(cat _nde_list $f | sort | uniq -d | wc -l)
+	    d=$(cat _nde_list $f $f | sort | uniq -u | wc -l)
 	    res=$(Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d )
-	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file%%.*}"_go_enrich.tsv
-	    grep -m 1 "${f/_/}" $type | cut -f 3,4 >> "${file%%.*}"_go_enrich.tsv
+	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file_p%%.*}"_go_enrich.tsv
+	    grep -m 1 "${f/_/}" $type | cut -f 3,4 >> "${file_p%%.*}"_go_enrich.tsv
 	done
-        Rscript ../../m-oryzae-polya/FDR.R "${file%%.*}"_go_enrich.tsv
+        Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_go_enrich.tsv
 	rm _de_list _nde_list _go_list _GO*
 }
 go_enrich go_terms.csv _file
@@ -559,7 +560,7 @@ for f in *filtered.bam; do sam-stats $f | grep "len mean"; done
 
 for f in "WT-CM" "WT-MM" "WT--N" "WT--C" "2D4-CM" "2D4-MM" "2D4--N" "2D4--C"
 do
-   echo $f
+   echo -ne $f
    Rscript ../../m-oryzae-polya/correlation.R $f
 done
 
@@ -1008,7 +1009,7 @@ python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.to
 
 
 # extract short and long polyA changed genes
-for f in ls `ls diff_polyA/*.csv`
+for f in `ls diff_polyA/*.csv`
 do
     n=${f/polyA.csv/}
     cat $n"down.polyA_all_m"  $n"up.polyA_all_m" > _a
