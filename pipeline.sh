@@ -319,7 +319,8 @@ function go_enrich {
 	echo $file_p
 	echo "GO_term"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"p_value"$'\t'"description"$'\t'"domain" > "${file_p%%.*}"_go_enrich.tsv
     grep -f $file_p $type | awk '{if ($2 != "") print $1}' | sort | uniq > _de_list
-	cat $file_p $file_p $file_t | sort | uniq -u | grep -f - $type | awk '{if ($2 != "") print $1}' | sort | uniq > _nde_list
+    awk '{if ($2 != "") print $1}' < $type | sort | uniq > _go
+	cat $file_p $file_p $file_t | sort | uniq -u | cat - _go | sort | uniq -d > _nde_list
 	cat _de_list | xargs -ipat grep pat $type | cut -f 2  | sort | uniq >  _go_list
 	for go in `cat _go_list`; do grep $go $type | cut -f 1 | grep MGG | sort | uniq > "_"$go; done
 	for f in `ls _GO*`
@@ -328,14 +329,14 @@ function go_enrich {
 	    c=$(cat _de_list $f $f | sort | uniq -u | wc -l)
 	    b=$(cat _nde_list $f | sort | uniq -d | wc -l)
 	    d=$(cat _nde_list $f $f | sort | uniq -u | wc -l)
-	    res=$(Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d )
+	    res=$(Rscript ../../../m-oryzae-polya/fisher_test.R $a $b $c $d )
 	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file_p%%.*}"_go_enrich.tsv
 	    grep -m 1 "${f/_/}" $type | cut -f 3,4 >> "${file_p%%.*}"_go_enrich.tsv
 	done
-        Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_go_enrich.tsv
-	rm _de_list _nde_list _go_list _GO*
+    Rscript ../../../m-oryzae-polya/FDR.R "${file_p%%.*}"_go_enrich.tsv
+	rm _go _de_list _nde_list _go_list _GO*
 }
-go_enrich go_terms.csv _file
+
 
 # extract significant GO terms and create plots
 for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
@@ -344,12 +345,9 @@ for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{
 for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
 for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
 for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
-for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
-for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
-for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
-for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
-for f in `ls *short*tsv`; do n=${f/short_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tshort"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
-for f in `ls *long*tsv`; do n=${f/long_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tlong"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
+for f in `ls *polyA*tsv`; do n=${f/polyA_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tpolyA"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
+for f in `ls *polyA*tsv`; do n=${f/polyA_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tpolyA}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
+for f in `ls *polyA*tsv`; do n=${f/polyA_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tpolyA}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
 for f in `ls *expr*txt*`; do  python ../../../m-oryzae-polya/plot_go.py $f; done
 
 # glam alignment

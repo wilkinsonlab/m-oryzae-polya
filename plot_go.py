@@ -25,10 +25,10 @@ ind = np.arange(len(ylabels))
 barlist=plt.bar(ind, ylabels)
 plt.xticks(ind+0.5, xlabels, ha='right',rotation=70, fontsize=14)
 for i, type in enumerate(types):
-    if type == "sgl":
-        barlist[i].set_color('orange')
-    elif type == "apa":
-        barlist[i].set_color('violet')    
+    if type == "BP":
+        barlist[i].set_color('c')
+    elif type == "CC":
+        barlist[i].set_color('g')    
     elif type == "MF":
         barlist[i].set_color('b')
         
@@ -39,8 +39,8 @@ title = re.sub("_go_plot_", " ", os.path.basename((filename)))
 title = re.sub("\.txt", "", title)
 #title = "Plant-only expressed genes GO ontologies"
 plt.title(title, y=1.08,fontdict=fd)
-l1 = Line2D([], [], linewidth=3, color="orange") 
-l2 = Line2D([], [], linewidth=3, color="violet") 
+l1 = Line2D([], [], linewidth=3, color="c") 
+l2 = Line2D([], [], linewidth=3, color="g") 
 l3 = Line2D([], [], linewidth=3, color="b") 
-legend([l1, l2], ["Single cut", "APA"], fontsize=20) 
+legend([l1, l2, l3], ["Biological process", "Cellular component", "Molecular function"], fontsize=20) 
 plt.savefig(filename.replace("txt", "pdf"))
