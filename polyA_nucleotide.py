@@ -43,6 +43,10 @@ for line in polyA_file:
     chrx = items[2]
     value = int(items[0])
     sense = items[3]
+    if len(items) >= 5:
+        gene = items[4]
+    else:
+        gene = ""    
 
     # if value < 10: continue
 
@@ -63,15 +67,14 @@ for line in polyA_file:
 
     if opt == "print":
         # for x in range(value):
-        out.write(">" + chrx + ":" + str(
-            pos) + ":" + str(value) + ":" + sense + "\n")
+        out.write(">" + chrx + ":" + str(pos) + ":" + str(value) + ":" + sense + ":" + gene + "\n")
         out.write(stream + "\n")
 
 if opt == "view":
     A = list((N['A'] / L / A_genome / 4).astype(numpy.float16))
-    T = list((N['T'] / L / T_genome / 4).astype(numpy.float16))  
-    G = list((N['G'] / L / G_genome / 4).astype(numpy.float16)) 
-    C = list((N['C'] / L / C_genome / 4).astype(numpy.float16)) 
+    T = list((N['T'] / L / T_genome / 4).astype(numpy.float16))
+    G = list((N['G'] / L / G_genome / 4).astype(numpy.float16))
+    C = list((N['C'] / L / C_genome / 4).astype(numpy.float16))
     r = range(start, end + 1)
     print "%s,%s,%s,%s,%s" % ("pos", "A", "T", "G", "C")
     for i, a, t, g, c in zip(r, A, T, G, C):

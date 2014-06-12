@@ -13,7 +13,7 @@ offset = int(sys.argv[5])
 # FEATURE END, DISCARD IF IT HAS A "PARENT" FIELD
 # WE ADD ADDITIONAL 400BP TO THE END OF THE FEATURE
 
-span = 400
+span = 200
 
 table = {}
 genes_sense = {}

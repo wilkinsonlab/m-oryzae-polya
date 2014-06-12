@@ -329,11 +329,11 @@ function go_enrich {
 	    c=$(cat _de_list $f $f | sort | uniq -u | wc -l)
 	    b=$(cat _nde_list $f | sort | uniq -d | wc -l)
 	    d=$(cat _nde_list $f $f | sort | uniq -u | wc -l)
-	    res=$(Rscript ../../../m-oryzae-polya/fisher_test.R $a $b $c $d )
+	    res=$(Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d )
 	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file_p%%.*}"_go_enrich.tsv
 	    grep -m 1 "${f/_/}" $type | cut -f 3,4 >> "${file_p%%.*}"_go_enrich.tsv
 	done
-    Rscript ../../../m-oryzae-polya/FDR.R "${file_p%%.*}"_go_enrich.tsv
+    Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_go_enrich.tsv
 	rm _go _de_list _nde_list _go_list _GO*
 }
 

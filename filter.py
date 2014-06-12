@@ -15,7 +15,6 @@ priming_len = 16
 tempname = "_" + sys.argv[1] + ".filter.temp"
 tempfile = pysam.Samfile(tempname, "wb", template=infile)
 
-internals = pysam.Samfile("_internals", "wb", template=infile)
 
 fasta_seqs = {}
 for seq_record in SeqIO.parse(fasta_file, "fasta"):
@@ -54,10 +53,10 @@ for read in infile.fetch():
             mapped_reads.add(read.qname)
         else:
             fake += 1
-            internals.write(read)
+            #internals.write(read)
             
-#pysam.sort(tempname, outfile)
-#pysam.index(outfile + ".bam")
+pysam.sort(tempname, outfile)
+pysam.index(outfile + ".bam")
 os.remove(tempname)
  
 print"Total reads: " + str(len(total_reads)), "Mapped reads: " + str(len(mapped_reads)), "Total mappings: " + str(total), "Final mappings: " + str(mapped), "low quality mappings: " + str(low_quality), "AT_high mappings: " +  str(AT_high), "fakes alignment: " +  str(fake) 
