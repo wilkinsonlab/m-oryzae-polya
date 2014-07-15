@@ -55,3 +55,40 @@ print "%.2f" % (dists / count)
 
 gff_file.close()
 polyA_file.close()
+
+
+
+python -c "
+import sys
+
+class Thing:
+    name=''
+    seq=''
+    struct=''
+    
+file='_res_WT-CM_100'
+l = []
+for line in open(file, 'r'):
+    if line[0] == '>':
+        t = Thing()
+        t.name = line
+    if line[0] in ['A', 'U', 'G', 'C']:
+        t.seq = line
+    if line[0] in ['.', '(', ')']:
+        t.struct = line    
+        l.append(t)
+for x in l:
+    print x.name.strip()
+    for i, e in enumerate(x.struct):
+        if e == '.':
+            sys.stdout.write(x.seq[i])
+        elif e == ' ':
+            break    
+    print            
+
+"
+
+
+
+
+

@@ -1016,14 +1016,16 @@ do
     cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py | awk '{if ($3 > 0) print $1}' > "_"$(basename $n)"long" 
 done
 
+
+
 # extract up and down expr changed genes
 for f in `ls diff_expr/*down.csv`
 do
-    cat $f | cut -f 1 -d "," > "_"$(basename ${f/.csv/}) 
+    cat $f | cut -f 1,3 -d "," | sed 's/,/\t/' | sort -k2 -n | cut -f 1 > "_"$(basename ${f/.csv/}) 
 done
 for f in `ls diff_expr/*up.csv`
 do
-    cat $f | cut -f 1 -d "," > "_"$(basename ${f/.csv/}) 
+    cat $f | cut -f 1,3 -d "," | sed 's/,/\t/' | sort -k2 -rn | cut -f 1 > "_"$(basename ${f/.csv/}) 
 done
 
 
