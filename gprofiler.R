@@ -1,0 +1,5 @@
+source("/home/marco/Downloads/gProfileR/R/gProfileR.R")
+args <- commandArgs(TRUE)
+t<-read.table(args[1])
+r<-gprofiler(t, organism="moryzae", ordered_query=args[2])
+write.csv(r, file=paste(file=args[1], "_go_enrich.csv", sep=""))
