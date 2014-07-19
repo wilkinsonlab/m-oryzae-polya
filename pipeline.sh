@@ -1006,18 +1006,21 @@ python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.to
 python ../../m-oryzae-polya/polyA_nucleotide.py Magnaporthe_oryzae.MG8.21.dna.toplevel.fa _p1_others -100 100 print _s1_others
 
 
-# extract short and long polyA changed genes
 for f in `ls diff_polyA/*.csv`
 do
     n=${f/polyA.csv/}
     cat $n"down.polyA_all_m"  $n"up.polyA_all_m" > _a
      python ../../m-oryzae-polya/polyA_localization.py Magnaporthe_oryzae.MG8.21.gff3 _a | grep "3'UTR" | awk '{print $5",E"$3"@"$2}' | grep -f - $f > _g
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py | awk '{if ($3 < 0) print $1}' > "_"$(basename $n)"short" 
-    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py | awk '{if ($3 > 0) print $1}' > "_"$(basename $n)"long" 
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py | awk '{if ($3 < 0) print $1}' > "_"$(basename $n)"_polyA_short" 
+    cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py | awk '{if ($3 > 0) print $1}' > "_"$(basename $n)"_polyA_long" 
+    n=$(sed  -e 's/diff_polyA\///' -e 's/_polyA.*//' <<< $f)
+    arrIN=(${n//_vs_/ })
+    cut -f 5 -d " " ${arrIN[0]}"-X.polyA_all_m" ${arrIN[1]}"-X.polyA_all_m" | sort | uniq > "_"$(basename $n)"_polyA_back"
+
 done
 
 
-
+	
 # extract up and down expr changed genes
 for f in `ls diff_expr/*down.csv`
 do
@@ -1026,6 +1029,10 @@ done
 for f in `ls diff_expr/*up.csv`
 do
     cat $f | cut -f 1,3 -d "," | sed 's/,/\t/' | sort -k2 -rn | cut -f 1 > "_"$(basename ${f/.csv/}) 
+done
+for f in `ls diff_expr/*_expr.csv`
+do
+    awk -F "," '{if($2!="0") print $1}' < $f > "_"$(basename ${f/.csv/})"_back"
 done
 
 
