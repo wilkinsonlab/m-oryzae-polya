@@ -81,6 +81,7 @@ if opt == "view":
         print "%d,%f,%f,%f,%f" % (i, a, t, g, c)
     # print 'A: %.6f %%, T: %.6f %%, G: %.6f %%, C: %.6f %%, ' %
     # (sum(A)/len(A), sum(T)/len(T),sum(G)/len(G),sum(C)/len(C))
+    print "CG content:", C_genome + G_genome, "%"
 
     plt.plot(r, A, label='A', color='red', marker='+')
     plt.plot(r, T, label='T', color='orange', marker='*')
@@ -92,4 +93,3 @@ if opt == "view":
     plt.xlabel('Position relative to polyA site')
     plt.ylabel('Percentage')
     plt.show()
-    print "CG content:", C_genome + G_genome, "%"

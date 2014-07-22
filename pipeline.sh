@@ -338,17 +338,19 @@ function go_enrich {
 }
 
 
-# extract significant GO terms and create plots
-for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
-for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
-for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
-for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
-for f in `ls *up*tsv`; do n=${f/up_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tup"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
-for f in `ls *down*tsv`; do n=${f/down_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tdown"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 >> $n; done
-for f in `ls *polyA*tsv`; do n=${f/polyA_go_enrich.tsv/go_plot_BP.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "biological_process") print $8"\t"$2"\tpolyA"}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
-for f in `ls *polyA*tsv`; do n=${f/polyA_go_enrich.tsv/go_plot_CC.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "cellular_component") print $8"\t"$2"\tpolyA}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
-for f in `ls *polyA*tsv`; do n=${f/polyA_go_enrich.tsv/go_plot_MF.txt}; awk -F "\t" '{if ($7<0.05 && $9 == "molecular_function") print $8"\t"$2"\tpolyA}' < $f | sort -rn -k 2 -t $'\t' | head -n 10 > $n; done
-for f in `ls *expr*txt*`; do  python ../../../m-oryzae-polya/plot_go.py $f; done
+# calculate GO enrichments with gprofile
+for f in `ls *up* `; do Rscript ../../../m-oryzae-polya/gprofiler.R moryzae $f "${f/up/back}" T; done
+for f in `ls *down* `; do Rscript ../../../m-oryzae-polya/gprofiler.R moryzae $f "${f/down/back}" T; done
+for f in `ls *short* `; do Rscript ../../../m-oryzae-polya/gprofiler.R moryzae $f "${f/short/back}" F; done
+for f in `ls *long* `; do Rscript ../../../m-oryzae-polya/gprofiler.R moryzae $f "${f/long/back}" F; done
+# yeast orthologs
+for f in `ls *up* `; do Rscript ../../../../m-oryzae-polya/gprofiler.R scerevisiae $f "${f/up/back}" T; done
+for f in `ls *down* `; do Rscript ../../../../m-oryzae-polya/gprofiler.R scerevisiae $f "${f/down/back}" T; done
+for f in `ls *short* `; do Rscript ../../../../m-oryzae-polya/gprofiler.R scerevisiae $f "${f/short/back}" F; done
+for f in `ls *long* `; do Rscript ../../../../m-oryzae-polya/gprofiler.R scerevisiae $f "${f/long/back}" F; done
+
+
+
 
 # glam alignment
 glam2 n WT-CM-X_ARICH_sgl_m.fam -n 40000 -w 6 -O glam2_ARICH_sgl
@@ -363,14 +365,6 @@ cut -f 9 fimo_ARICH_sgl/fimo.txt | sort | uniq > _t
 for i in `cat _t`; do echo -ne $i" "; grep $i WT-CM-X_ARICH_sgl_m.fam -c | awk -v num=`grep -c ">" WT-CM-X_ARICH_sgl_m.fam` '{print $1/num*100}'; done	
 	
 	
-# motif scan
-function scan {
-    f=$1
-    m=$2
-    echo "" > _count; for line in `cat $f`; do  echo $line | grep -v ">" | grep -b -o -e $m >> _count; done
-    cat _count | awk -v num=`grep -c ">" $f` -F ":" '{ arr[$1]++ } END { for (i=0; i<=200; i++) print arr[i]/num*100 }'
-}
-
 # motif scan 
 python -c "
 import re, sys
