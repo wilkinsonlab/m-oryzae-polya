@@ -8,11 +8,11 @@ fastq-mcf -o file1_trimmed_1.fastq -o file2_trimmed_2.fastq -0 -l 17 -u ../../m-
     
 # build database
 
-gmap_build -d MG8_18 -D ./MG8_18 $d
+gmap_build -d MG8_21 -D ./MG8_21 $d
 
 # align
 
-gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18  a_1.fastq a_2.fastq > "${f%%.*}".sam
+gsnap -B 5 -t 8 -A sam -d MG8_21 -D ./MG8_21  a_1.fastq a_2.fastq > "${f%%.*}".sam
 
 # convert to bam, extract first reads only, sort and index
 
