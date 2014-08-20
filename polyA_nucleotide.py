@@ -82,14 +82,15 @@ if opt == "view":
     # print 'A: %.6f %%, T: %.6f %%, G: %.6f %%, C: %.6f %%, ' %
     # (sum(A)/len(A), sum(T)/len(T),sum(G)/len(G),sum(C)/len(C))
     print "CG content:", C_genome + G_genome, "%"
-
-    plt.plot(r, A, label='A', color='red', marker='+')
-    plt.plot(r, T, label='T', color='orange', marker='*')
-    plt.plot(r, G, label='G', color='blue', marker='o')
-    plt.plot(r, C, label='C', color='gray', marker='^')
+    
+    plt.ylim((0,0.8))
+    plt.plot(r, A, label='A', color='red', linewidth=2.0)
+    plt.plot(r, T, label='T', color='orange', linewidth=2.0)
+    plt.plot(r, G, label='G', color='blue', linewidth=2.0)
+    plt.plot(r, C, label='C', color='gray', linewidth=2.0)
     plt.legend(loc='upper center', bbox_to_anchor=(
         0.5, 1.05), ncol=3, fancybox=True, shadow=True)
     plt.legend()
     plt.xlabel('Position relative to polyA site')
     plt.ylabel('Percentage')
-    plt.show()
+    plt.savefig(sys.argv[6] + ".png")
