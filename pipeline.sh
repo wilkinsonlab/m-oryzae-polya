@@ -1213,3 +1213,34 @@ for line in open('WT-ALL-X.notpolyA_all_m_low', 'r'):
                     break
 " 
 
+
+# compara create heatmap
+
+ for f in `find . -iname "*.apa_orthologs_scerevisiae"`; do cat $f >> _total; done
+ sort _total | uniq > __total
+ for f in `find . -iname polyA.apa_orthologs_scerevisiae`; do grep -f __total $f | awk -v f=$f '{print $1,f}' | sed -e 's/\.\///' -e s'/\/.*//'; done > _ass
+ awk -F " " '{arr[$1]=arr[$1]","$2} END {for (k in arr) print k,arr[k]}' < _ass | sed  -e 's/_NGS//g' -e 's/ ,/\t/' -e 's/,_test//'  > tree.txt
+ python -c "
+arr = {}
+l = set()
+for lin in open('tree.txt', 'r'):
+ gene, orths = lin.strip().split('\t')
+ arr[gene] = []
+ for o in orths.split(','):
+    l.add(o)
+    arr[gene].append(o)
+import sys
+sys.stdout.write('gene,')
+for s in l:
+  sys.stdout.write(s + ',')
+print
+for gene, orths in arr.items():
+  sys.stdout.write(gene + ',')
+  for s in l:
+     if s in orths:
+       sys.stdout.write('1' + ',')
+     else:
+       sys.stdout.write('0' + ',')
+  print
+" | sed -e 's/ //' -e 's/,$//' > hist.txt
+
