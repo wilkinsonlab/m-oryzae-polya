@@ -311,31 +311,54 @@ calc_notdiff "2D4" "2D4" "MM" "-C"
 
 
 
-# GO enrichment
-function go_enrich {
+# kegg enrichment				
+function kegg_enrich {
 	type=$1
 	file_p=$2
     file_t=$3
 	echo $file_p
-	echo "GO_term"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"p_value"$'\t'"description"$'\t'"domain" > "${file_p%%.*}"_go_enrich.tsv
-    grep -f $file_p $type | awk '{if ($2 != "") print $1}' | sort | uniq > _de_list
-    awk '{if ($2 != "") print $1}' < $type | sort | uniq > _go
-	cat $file_p $file_p $file_t | sort | uniq -u | cat - _go | sort | uniq -d > _nde_list
-	cat _de_list | xargs -ipat grep pat $type | cut -f 2  | sort | uniq >  _go_list
-	for go in `cat _go_list`; do grep $go $type | cut -f 1 | grep MGG | sort | uniq > "_"$go; done
-	for f in `ls _GO*`
+	echo "kegg_term"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"p_value"$'\t'"description"$'\t'"genes" > "${file_p%%.*}"_kegg_enrich.tsv
+    grep -f $file_p $type | awk '{if ($2 != "") print $2}' | sort | uniq > _de_list
+    awk '{if ($2 != "") print $2}' < $type | sort | uniq > _kegg
+	cat $file_p $file_p $file_t | sort | uniq -u | cat - _kegg | sort | uniq -d > _nde_list
+	cat _de_list | xargs -ipat grep pat $type | cut -f 1  | sort | uniq >  _kegg_list
+	for kegg in `cat _kegg_list`; do grep $kegg $type | cut -f 2 | grep MGG | sort | uniq > "_"$kegg; done
+	for f in `ls _mgr*`
 	do
 	    a=$(cat _de_list $f | sort | uniq -d | wc -l )
-	    c=$(cat _de_list $f $f | sort | uniq -u | wc -l)
-	    b=$(cat _nde_list $f | sort | uniq -d | wc -l)
+	    b=$(cat _de_list $f $f | sort | uniq -u | wc -l)
+	    c=$(cat _nde_list $f | sort | uniq -d | wc -l)
 	    d=$(cat _nde_list $f $f | sort | uniq -u | wc -l)
 	    res=$(Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d )
-	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file_p%%.*}"_go_enrich.tsv
-	    grep -m 1 "${f/_/}" $type | cut -f 3,4 >> "${file_p%%.*}"_go_enrich.tsv
+	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file_p%%.*}"_kegg_enrich.tsv
+	    grep -m 1 "${f/_/}" $type | cut -f 3 | tr '\n' '\t' >> "${file_p%%.*}"_kegg_enrich.tsv
+	    cat _de_list $f | sort | uniq -d | tr '\n' ',' | sed 's/,$/\n/' >>  "${file_p%%.*}"_kegg_enrich.tsv
 	done
-    Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_go_enrich.tsv
-	rm _go _de_list _nde_list _go_list _GO*
+    Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_kegg_enrich.tsv
+	rm _kegg _de_list _nde_list _kegg_list _mgr*
 }
+
+# extract and sort data above for xls
+for f in `ls *up_kegg_enrich.tsv`; do echo $f ; awk -v n=$(sed -e 's/^_/diff_expr\//' -e 's/_kegg_enrich\.tsv/\.csv/'  <<< $f)  -F "\t" '{if($7<0.05){ print $1"\t"$7"\t"$8; split($9,k,","); for (a in k){ system(" grep "k[a]" "n" | cut -f 1,3 -d \",\" | tr \",\" \"\t\"  | tr \"\\n\" \"\\t\"   "); system(" grep "k[a]" _info | cut -f 2,3,4")  } }} ' < $f; done > _up
+python -c "
+import operator
+curr = []
+for line in open('_up', 'r'):
+  if line[0] == '_' or line[0:3] == 'mgr': 
+     for x in sorted(curr, key = operator.itemgetter(1), reverse=True)[0:5]:
+        x[1] = str(x[1])
+        print '\t'.join(x) 
+     curr = [] 
+     print
+     print line
+  else:
+     items = line.strip().split('\t')
+     items[1] = float(items[1])
+     curr.append(items)
+for x in sorted(curr, key = operator.itemgetter(1))[0:5]:
+  x[1] = str(x[1])
+  print '\t'.join(x) 
+"
 
 
 # calculate GO enrichments with gprofile
@@ -509,7 +532,7 @@ for line in open('Magnaporthe_oryzae.MG8.21.gff3', 'r'):
     id_end = infos.index(';', id_start)
     gene = infos[id_start + 3: id_end]
     table[chrx][gene] = (start, end)
-for line in open('WT-ALL-X.notpolyA_all_m_high', 'r'):
+for line in open('WT-ALL-X.notpolyA_all_m_low', 'r'):
  (val, pos, chrx, sense) = line.strip().split(' ')
  pos = int(pos)
  for gene, coord in table[chrx].items():

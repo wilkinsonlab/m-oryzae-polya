@@ -53,11 +53,13 @@ for line in polyA_file:
             location[gene]['five_prime_UTR'] += 1
             flag = True
             print line.strip(), "5'UTR"
+            break
     for start, end in table[gene]['CDS']:
        if pos >= start and pos <= end:
             location[gene]['CDS'] += 1           
             flag = True  
             print line.strip(), "CDS"
+            break
     if not flag:        
         if table[gene]["three_prime_UTR"]:
             if table[gene]["sense"] == "+" and pos >= table[gene]["three_prime_UTR"][0][0] or table[gene]["sense"] == "-" and pos <= table[gene]["three_prime_UTR"][0][1]:

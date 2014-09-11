@@ -61,6 +61,7 @@ for transcript, array in table.items():
     mean = np.mean(arr)
     std = np.std(arr)
     if std == 0.0:
+        #std = 0.1
         table[transcript] = {}
         continue
     for pos, val in array.items():
