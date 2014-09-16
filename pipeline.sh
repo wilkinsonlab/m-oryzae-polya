@@ -387,6 +387,16 @@ paste _motif*
 cut -f 9 fimo_ARICH_sgl/fimo.txt | sort | uniq > _t
 for i in `cat _t`; do echo -ne $i" "; grep $i WT-CM-X_ARICH_sgl_m.fam -c | awk -v num=`grep -c ">" WT-CM-X_ARICH_sgl_m.fam` '{print $1/num*100}'; done	
 	
+# RNA structure base probabilities
+file=_all
+mkdir "_"$file".out"
+cd "_"$file".out"
+RNAfold -p -d2 --noLP < ../$file > /dev/null
+for f in `ls *_dp.ps`; do grep -E "[0-9].[ul]box" $f | awk '{if (arr[$1] == 0) arr[$1] = $3 ; else {if ($3 > arr[$1]) arr[$1]=$3}; if (arr[$2] == 0) arr[$2] = $3; else {if ($3>arr[$2]) arr[$2]=$3}; count[$1]++; count[$2]++} END {for (k in arr) print k, arr[k]}' | sort -n > "_"$f; done
+cat _*_dp.ps | awk '{arr[$1]+=$2; count[$1]++;}END{for (k in arr) print k, arr[k]/count[k]}' | sort -n
+cd ..
+rm -rf "_"$file".out"
+
 	
 # motif scan 
 python -c "
