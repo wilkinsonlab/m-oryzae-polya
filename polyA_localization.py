@@ -92,9 +92,8 @@ for transcript, loc in location.items():
     count_poly += sum(loc.values())
     #print transcript,loc["three_prime_UTR"],loc["five_prime_UTR"],loc["CDS"],loc["intron"],loc["not_annotated"] 
 if __name__ == "__main__":
-  pass
   #sys.stdout.write("%d,%d,%d,%d,%d\n" % (three_utr, five_utr, cds, intron, not_annotated))
-
+  pass
 
 gff_file.close()
 polyA_file.close()

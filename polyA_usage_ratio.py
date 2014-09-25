@@ -51,17 +51,17 @@ for gene, (fold_d, pos_d) in distal.items():
     if fold_d > 0:
         for (fold_p, pos_p) in all[gene]:
             if fold_p < 0:
-                print gene, abs(pos_p - pos_d), fold_d
+                #print gene, abs(pos_p - pos_d), fold_d
                 break
         todistal += 1 
     else:
         for (fold_p, pos_p) in all[gene]:
             if fold_p > 0:
-                print gene, abs(pos_p - pos_d), fold_d
+                #print gene, abs(pos_p - pos_d), fold_d
                 break
         toproximal += 1
     count += 1
-#print   toproximal/count, todistal/count
+print   toproximal/count, todistal/count
 
 
 

@@ -388,7 +388,7 @@ cut -f 9 fimo_ARICH_sgl/fimo.txt | sort | uniq > _t
 for i in `cat _t`; do echo -ne $i" "; grep $i WT-CM-X_ARICH_sgl_m.fam -c | awk -v num=`grep -c ">" WT-CM-X_ARICH_sgl_m.fam` '{print $1/num*100}'; done	
 	
 # RNA structure base probabilities
-file=__S
+file=__EF
 mkdir "_"$file".out"
 cd "_"$file".out"
 RNAfold -p -d2 --noLP < ../$file > /dev/null
@@ -582,7 +582,6 @@ for f in *filtered.bam; do sam-stats $f | grep "len mean"; done
 
 
 # replicates correlation
-
 for f in "WT-CM" "WT-MM" "WT--N" "WT--C" "2D4-CM" "2D4-MM" "2D4--N" "2D4--C"
 do
    echo -ne $f
@@ -601,26 +600,7 @@ do
     echo -ne "${sample%%.*}"","
     cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 >= 10) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $0}' | wc -l
 done
-# always expressed genes (WT)
-for sample in "WT-CM" "WT-MM" "WT--N" "WT--C" 
-do
-    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 >= 10) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > "_"$sample"_"t
-done
-cat _*_t | sort | uniq -c | awk '{if ($1 == 4) print $0}' > _all
-cat _all | wc -l
-# never expressed genes
-cat gene_summary.txt _*_t | tail -n +2 | cut -f 1 | sort | uniq -u | wc -l
-rm _*
-# always expressed genes (2D4)
-for sample in "2D4-CM" "2D4-MM" "2D4--N" "2D4--C" 
-do
-    cat $sample-1.expr $sample-2.expr $sample-3.expr | awk '{if ($2 >= 10) print $1}' | sort | uniq -c | awk '{if ($1 >= 2) print $2}' > "_"$sample"_"t
-done
-cat _*_t | sort | uniq -c | awk '{if ($1 == 4) print $0}' > _all
-cat _all | wc -l
-# never expressed genes
-cat gene_summary.txt _*_t | tail -n +2 | cut -f 1 | sort | uniq -u | wc -l
-rm _*
+
 
 # number of genes with an recognizable generic polyA site
 for f in *X.polyA_all_m 
@@ -640,6 +620,39 @@ do
     echo -ne "${f%%??.*}"","
     cut -f 5 -d " " $f | sort | uniq | wc -l
 done
+
+# always expressed genes (genes that always have a recognizable polyA) (WT)
+cut -f 5 -d " " WT-CM-X.polyA_all_m | sort | uniq > _CM
+cut -f 5 -d " " WT-MM-X.polyA_all_m | sort | uniq > _MM
+cut -f 5 -d " " WT--N-X.polyA_all_m | sort | uniq > _N
+cut -f 5 -d " " WT--C-X.polyA_all_m | sort | uniq > _C
+cat _CM _MM _N _C | sort | uniq -c | awk '{if($1 == 4) print $2}' | wc -l
+# never expressed genes (genes that never have a recognizable polyA)(WT)
+cat _CM _MM _N _C | sort | uniq > _t 
+cut -f 1 gene_summary.txt > _all
+cat _t _t _all | sort | uniq -u | wc -l
+rm _CM _MM _N _C
+# always expressed genes (genes that always have a recognizable polyA) (2D4)
+cut -f 5 -d " " 2D4-CM-X.polyA_all_m | sort | uniq > _CM
+cut -f 5 -d " " 2D4-MM-X.polyA_all_m | sort | uniq > _MM
+cut -f 5 -d " " 2D4--N-X.polyA_all_m | sort | uniq > _N
+cut -f 5 -d " " 2D4--C-X.polyA_all_m | sort | uniq > _C
+cat _CM _MM _N _C | sort | uniq -c | awk '{if($1 == 4) print $2}' | wc -l
+# never expressed genes (genes that never have a recognizable polyA) (2D4)
+cat _CM _MM _N _C | sort | uniq > _t 
+cut -f 1 gene_summary.txt > _all
+cat _t _t _all | sort | uniq -u | wc -l
+rm _CM _MM _N _C
+
+
+
+# distribution of APA in genes 
+for f in *X.polyA_all_m
+do
+   echo -ne "${f%%??.*},"	
+   python ../../m-oryzae-polya/polyA_distribution.py Magnaporthe_oryzae.MG8.21.gff3 $f 
+done
+
 # number of genes with APA in WT but not in 2D4, and viceversa
 for f in "ALL" "CM" "MM" "-N" "-C" 
 do
@@ -651,12 +664,6 @@ do
     echo $a","$b
 done
 
-# distribution of APA in genes 
-for f in *X.polyA_all_m
-do
-   echo -ne "${f%%??.*},"	
-   python ../../m-oryzae-polya/polyA_distribution.py Magnaporthe_oryzae.MG8.21.gff3 $f 
-done
 
 # APA classification
 for f in *X.polyA_apa_m
@@ -667,7 +674,7 @@ do
 done
 
 
-# number of polyA sites per gene 
+# number of cleveage sites per gene 
 for f in *X.polyA_all_m
 do
     echo -ne "${f%%.*}"","
