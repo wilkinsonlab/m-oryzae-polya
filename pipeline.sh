@@ -317,7 +317,7 @@ function kegg_enrich {
 	file_p=$2
     file_t=$3
 	echo $file_p
-	echo "kegg_term"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"p_value"$'\t'"description"$'\t'"genes" > "${file_p%%.*}"_kegg_enrich.tsv
+	echo "term"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"p_value"$'\t'"description"$'\t'"genes" > "${file_p%%.*}"_kegg_enrich.tsv
     grep -f $file_p $type | awk '{if ($2 != "") print $2}' | sort | uniq > _de_list
     awk '{if ($2 != "") print $2}' < $type | sort | uniq > _kegg
 	cat $file_p $file_p $file_t | sort | uniq -u | cat - _kegg | sort | uniq -d > _nde_list
@@ -337,6 +337,34 @@ function kegg_enrich {
     Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_kegg_enrich.tsv
 	rm _kegg _de_list _nde_list _kegg_list _mgr*
 }
+
+function reactome_enrich {
+	type=$1
+	file_p=$2
+    file_t=$3
+	echo $file_p
+	echo "term"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"p_value"$'\t'"description"$'\t'"genes" > "${file_p%%.*}"_reactome_enrich.tsv
+    grep -f $file_p $type | awk '{if ($2 != "") print $2}' | sort | uniq > _de_list
+    awk '{if ($2 != "") print $2}' < $type | sort | uniq > _reactome
+	cat $file_p $file_p $file_t | sort | uniq -u | cat - _reactome | sort | uniq -d > _nde_list
+	cat _de_list | xargs -ipat grep pat $type | cut -f 1  | sort | uniq >  _reactome_list
+	for reactome in `cat _reactome_list`; do grep $reactome $type | cut -f 2 | sort | uniq > "_"$reactome; done
+	for f in `ls _REACT*`
+	do
+	    a=$(cat _de_list $f | sort | uniq -d | wc -l )
+	    b=$(cat _de_list $f $f | sort | uniq -u | wc -l)
+	    c=$(cat _nde_list $f | sort | uniq -d | wc -l)
+	    d=$(cat _nde_list $f $f | sort | uniq -u | wc -l)
+	    res=$(Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d )
+	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file_p%%.*}"_reactome_enrich.tsv
+	    grep -m 1 "${f/_/}" $type | cut -f 3 | tr '\n' '\t' >> "${file_p%%.*}"_reactome_enrich.tsv
+	    cat _de_list $f | sort | uniq -d | tr '\n' ',' | sed 's/,$/\n/' >>  "${file_p%%.*}"_reactome_enrich.tsv
+	done
+    Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_reactome_enrich.tsv
+	rm _reactome _de_list _nde_list _reactome_list _REACT*
+}
+
+
 
 # extract and sort data above for xls
 for f in `ls *up_kegg_enrich.tsv`; do echo $f ; awk -v n=$(sed -e 's/^_/diff_expr\//' -e 's/_kegg_enrich\.tsv/\.csv/'  <<< $f)  -F "\t" '{if($7<0.05){ print $1"\t"$7"\t"$8; split($9,k,","); for (a in k){ system(" grep "k[a]" "n" | cut -f 1,3 -d \",\" | tr \",\" \"\t\"  | tr \"\\n\" \"\\t\"   "); system(" grep "k[a]" _info | cut -f 2,3,4")  } }} ' < $f; done > _up
