@@ -337,7 +337,7 @@ function kegg_enrich {
     Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_kegg_enrich.tsv
 	rm _kegg _de_list _nde_list _kegg_list _mgr*
 }
-
+# reactome enrichment
 function reactome_enrich {
 	type=$1
 	file_p=$2
