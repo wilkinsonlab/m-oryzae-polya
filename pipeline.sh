@@ -329,19 +329,23 @@ function kegg_enrich {
 	    b=$(cat _de_list $f $f | sort | uniq -u | wc -l)
 	    c=$(cat _nde_list $f | sort | uniq -d | wc -l)
 	    d=$(cat _nde_list $f $f | sort | uniq -u | wc -l)
-	    res=$(Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d )
+	    res=$(Rscript ../../../m-oryzae-polya/fisher_test.R $a $b $c $d )
 	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file_p%%.*}"_kegg_enrich.tsv
 	    grep -m 1 "${f/_/}" $type | cut -f 3 | tr '\n' '\t' >> "${file_p%%.*}"_kegg_enrich.tsv
 	    cat _de_list $f | sort | uniq -d | tr '\n' ',' | sed 's/,$/\n/' >>  "${file_p%%.*}"_kegg_enrich.tsv
 	done
-    Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_kegg_enrich.tsv
+    Rscript ../../../m-oryzae-polya/FDR.R "${file_p%%.*}"_kegg_enrich.tsv
 	rm _kegg _de_list _nde_list _kegg_list _mgr*
 }
-# reactome enrichment
+
+
+
+
+# reactome enrichment (s.cerevisiae only)
 function reactome_enrich {
 	type=$1
 	file_p=$2
-    file_t=$3
+        file_t=$3
 	echo $file_p
 	echo "term"$'\t'"a"$'\t'"b"$'\t'"c"$'\t'"d"$'\t'"p_value"$'\t'"description"$'\t'"genes" > "${file_p%%.*}"_reactome_enrich.tsv
     grep -f $file_p $type | awk '{if ($2 != "") print $2}' | sort | uniq > _de_list
@@ -355,12 +359,12 @@ function reactome_enrich {
 	    b=$(cat _de_list $f $f | sort | uniq -u | wc -l)
 	    c=$(cat _nde_list $f | sort | uniq -d | wc -l)
 	    d=$(cat _nde_list $f $f | sort | uniq -u | wc -l)
-	    res=$(Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d )
+	    res=$(Rscript ../../../m-oryzae-polya/fisher_test.R $a $b $c $d )
 	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file_p%%.*}"_reactome_enrich.tsv
 	    grep -m 1 "${f/_/}" $type | cut -f 3 | tr '\n' '\t' >> "${file_p%%.*}"_reactome_enrich.tsv
 	    cat _de_list $f | sort | uniq -d | tr '\n' ',' | sed 's/,$/\n/' >>  "${file_p%%.*}"_reactome_enrich.tsv
 	done
-    Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_reactome_enrich.tsv
+    Rscript ../../../m-oryzae-polya/FDR.R "${file_p%%.*}"_reactome_enrich.tsv
 	rm _reactome _de_list _nde_list _reactome_list _REACT*
 }
 
@@ -401,6 +405,18 @@ for f in `ls *short* `; do Rscript ../../../../m-oryzae-polya/gprofiler.R scerev
 for f in `ls *long* `; do Rscript ../../../../m-oryzae-polya/gprofiler.R scerevisiae $f "${f/long/back}" F; done
 
 
+# shuffle fasta
+python -c "
+import random
+i = 0
+for line in open('_all_s', 'r'):
+ if line[0] == '>': continue
+ l = list(line.strip())
+ random.shuffle(l)
+ i += 1
+ print '>', i 
+ print ''.join(l) 
+"
 
 
 # glam alignment
@@ -842,14 +858,14 @@ done
 
 
 # polyA site usage change (only dependent)
-for f in "CM"  "MM" 
+for f in "CM" # "MM" 
 do
     echo -ne WT-$f"_"vs_WT--C","
     cat diff_polyA/WT-$f"_"vs_WT--C_down.polyA_all_m  diff_polyA/WT-$f"_"vs_WT--C_up.polyA_all_m > _a
     python ../../m-oryzae-polya/polyA_localization.py Magnaporthe_oryzae.MG8.21.gff3 _a | grep "3'UTR" | awk '{print $5",E"$3"@"$2}' | grep -f - diff_polyA/WT-$f"_"vs_WT--C_polyA.csv > _g
     cat _g | python ../../m-oryzae-polya/polyA_usage_ratio.py # | awk '{x=($2-$4); print x < 0 ? -x : x , $5 }' 
 done
-for f in "CM" "MM" "-N" "-C"
+for f in "CM" #"MM" "-N" "-C"
 do
     echo -ne WT"-"$f"_"vs_2D4"-"$f","
     cat diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"down.polyA_all_m  diff_polyA/WT"-"$f"_"vs_2D4"-"$f"_"up.polyA_all_m > _a
@@ -1023,26 +1039,6 @@ gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT-CM-3_1_trimmed.fastq
 gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT-MM-3_1_trimmed.fastq WT-MM-3_2_trimmed.fastq > WT-MM-3.sam
 gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT--N-2_1_trimmed.fastq WT--N-2_2_trimmed.fastq > WT--N-2.sam
 gsnap -B 5 -t 8 -A sam -d MG8_18 -D ./MG8_18/  --nofails WT--N-3_1_trimmed.fastq WT--N-3_2_trimmed.fastq > WT--N-3.sam
-
-
-# ncRNA search denovo
-
-mugsy --prefix magna --directory /media/marco/Elements/3Tfill/oryzae_18/ncrna/magna/out_magna/ genomes/*
-cat out_magna/magna.maf | python ../../../../m-oryzae-polya/maf_order.py Magnaporthe_oryzae > sorted.maf
-rnazWindow.pl  --min-seqs=3 sorted.maf > windows.maf
-RNAz --both-strands --no-shuffle --cutoff=0.9 windows.maf > rnaz.out
-rnazOutputSort.pl rnaz.out | rnazCluster.pl > results.dat
-#rnazIndex.pl --gff -w results.dat | sed -e 's/Magnaporthe_oryzae\.//' -e 's/\t\([+\-]\)\t/\t\1\t\.\t/' > results_w.gff
-rnazIndex.pl --gff results.dat | sed -e 's/Magnaporthe_oryzae\.//' -e 's/\t.\t/\t.\t.\t/' > results_l.gff
-cut -f 1,4,5,7 results_l.gff | awk '{if($4 == "+") S=1; else S=2; system("fastacmd -d ../../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" -S "S" ")}' > results.fa
-blastn -task dc-megablast -query results.fa -db ../../Rfam.fasta -max_target_seqs 1 -outfmt 6 
-blastn -task megablast -query results.fa -db ../../WT-CM-X.notpolyA_all_m_400.fa -max_target_seqs 1 -outfmt 6
-rnazFilter.pl "z<-3" ../results.dat | grep -e "^locus" | cut -f 2,3,4 | sed 's/Magnaporthe_oryzae\.//' | awk '{system("fastacmd -d ../../../Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$1"\" -L "$2","$3" ")}' | RNAfold
-
-RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse1.maf > maf_parse1.out &
-RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse2.maf > maf_parse2.out &
-RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse3.maf > maf_parse3.out &
-RNAz --both-strands --no-shuffle --cutoff=0.5 maf_parse4.maf > maf_parse4.out &
 
 
 
@@ -1281,6 +1277,67 @@ for line in open('WT-ALL-X.notpolyA_all_m_low', 'r'):
                     break
 " 
 
+#kegg
+cut -f 5 -d " " ../2D4-CM-X.polyA_all_m ../2D4--C-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _2D4-CM_vs_2D4--C_expr_down _back
+cut -f 5 -d " " ../2D4-CM-X.polyA_all_m ../2D4--C-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _2D4-CM_vs_2D4--C_expr_up _back
+cut -f 5 -d " " ../2D4-CM-X.polyA_all_m ../2D4-MM-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _2D4-CM_vs_2D4-MM_expr_down _back
+cut -f 5 -d " " ../2D4-CM-X.polyA_all_m ../2D4-MM-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _2D4-CM_vs_2D4-MM_expr_up _back
+cut -f 5 -d " " ../2D4-CM-X.polyA_all_m ../2D4--N-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _2D4-CM_vs_2D4--N_expr_down _back
+cut -f 5 -d " " ../2D4-CM-X.polyA_all_m ../2D4--N-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _2D4-CM_vs_2D4--N_expr_up _back
+cut -f 5 -d " " ../2D4-MM-X.polyA_all_m ../2D4--C-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _2D4-MM_vs_2D4--C_expr_down _back
+cut -f 5 -d " " ../2D4-MM-X.polyA_all_m ../2D4--C-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _2D4-MM_vs_2D4--C_expr_up _back
+cut -f 5 -d " " ../2D4-MM-X.polyA_all_m ../2D4--N-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _2D4-MM_vs_2D4--N_expr_down _back
+cut -f 5 -d " " ../2D4-MM-X.polyA_all_m ../2D4--N-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _2D4-MM_vs_2D4--N_expr_up _back
+cut -f 5 -d " " ../WT-CM-X.polyA_all_m ../2D4-CM-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-CM_vs_2D4-CM_expr_down _back
+cut -f 5 -d " " ../WT-CM-X.polyA_all_m ../2D4-CM-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-CM_vs_2D4-CM_expr_up _back
+cut -f 5 -d " " ../WT-CM-X.polyA_all_m ../WT--C-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-CM_vs_WT--C_expr_down _back
+cut -f 5 -d " " ../WT-CM-X.polyA_all_m ../WT--C-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-CM_vs_WT--C_expr_up _back
+cut -f 5 -d " " ../WT-CM-X.polyA_all_m ../WT-MM-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-CM_vs_WT-MM_expr_down _back
+cut -f 5 -d " " ../WT-CM-X.polyA_all_m ../WT-MM-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-CM_vs_WT-MM_expr_up _back
+cut -f 5 -d " " ../WT-CM-X.polyA_all_m ../WT--N-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-CM_vs_WT--N_expr_down _back
+cut -f 5 -d " " ../WT-CM-X.polyA_all_m ../WT--N-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-CM_vs_WT--N_expr_up _back
+cut -f 5 -d " " ../WT--C-X.polyA_all_m ../2D4--C-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT--C_vs_2D4--C_expr_down _back
+cut -f 5 -d " " ../WT--C-X.polyA_all_m ../2D4--C-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT--C_vs_2D4--C_expr_up _back
+cut -f 5 -d " " ../WT-CM-X.polyA_all_m ../2D4-MM-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-MM_vs_2D4-MM_expr_down _back
+cut -f 5 -d " " ../WT-CM-X.polyA_all_m ../2D4-MM-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-MM_vs_2D4-MM_expr_up _back
+cut -f 5 -d " " ../WT-MM-X.polyA_all_m ../WT--C-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-MM_vs_WT--C_expr_down _back
+cut -f 5 -d " " ../WT-MM-X.polyA_all_m ../WT--C-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-MM_vs_WT--C_expr_up _back
+cut -f 5 -d " " ../WT-MM-X.polyA_all_m ../WT--N-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-MM_vs_WT--N_expr_down _back
+cut -f 5 -d " " ../WT-MM-X.polyA_all_m ../WT--N-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT-MM_vs_WT--N_expr_up _back
+cut -f 5 -d " " ../2D4-CM-X.polyA_all_m ../WT--N-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT--N_vs_2D4--N_expr_down _back
+cut -f 5 -d " " ../2D4-CM-X.polyA_all_m ../WT--N-X.polyA_all_m | sort | uniq > _back
+kegg_enrich ../kegg.txt _WT--N_vs_2D4--N_expr_up _back
+
+
+
+
 
 # compara create heatmap
 
@@ -1311,4 +1368,27 @@ for gene, orths in arr.items():
        sys.stdout.write('0' + ',')
   print
 " | sed -e 's/ //' -e 's/,$//' > hist.txt
+
+# compara retrive motif frequency
+mkdir _TA
+rm _TA/*
+#for f in `ls -d */`; do python ../../m-oryzae-polya/polyA_nucleotide.py $f/*genome.fa $f/*polyA -100 100 print $f/"_"sequences; done
+count=0; for f in `find . -iname "_sequences"`;  do python scan.py $f TTTTT > _TA/"${f##*/}"$count; count=$((count+1));  done
+	paste _TA/* > _m
+Rscript average.R 
+# compara cutsite frequencies
+for f in `ls -d */`; do python ../../m-oryzae-polya/polyA_nucleotide.py $f/*genome.fa $f/*polyA -1 0 print $f/"_"cutsite; done
+	count=0; for f in `ls -d */`; do if [ -e $f/"_cutsite" ]; then total=`grep -c ">" $f/"_cutsite"`; echo $f > _TA/_sequence$count ; for m in `cat motifs`; do grep -v ">" $f/"_cutsite" | grep -c $m; done | awk -v tot=$total '{print $1/tot}' >> _TA/_sequence$count;echo $total;  count=$((count + 1)); fi; done
+# compara get orthologs from biomart
+source=cneoformans
+dest=moryzae
+genes=`tr '\n' ',' < polyA.apa | sed 's/,$//'`
+query=`cat ../query.xml | sed -e 's/SOURCE/'$source'/' -e 's/DEST/'$dest'/' -e 's/VALUE/'$genes'/' | tr -d '\n'`
+wget -O _results.txt --post-data "query=$query" "http://fungi.ensembl.org/biomart/martservice" 2> /dev/null
+cut -f 2 _results.txt | grep . | sort | uniq > polyA.apa_orthologs_$dest
+rm _results.txt
+
+
+
+
 

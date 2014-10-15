@@ -1,27 +1,28 @@
 #!/usr/bin/env python
-# $Id: iprscan_soappy.py 2466 2013-01-25 13:56:18Z hpm $
+# $Id: iprscan_soappy.py 2763 2014-04-10 15:57:38Z hpm $
 # ======================================================================
-#
+# 
 # Copyright 2008-2013 EMBL - European Bioinformatics Institute
-#
+# 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-#
+# 
 #     http://www.apache.org/licenses/LICENSE-2.0
-#
+# 
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+# 
 # ======================================================================
 # InterProScan (SOAP) service, Python client using SOAPpy.
 #
 # Tested with:
 #   Python 2.5.2 with SOAPpy 0.12.0 (Ubuntu 8.04 LTS)
 #   Python 2.6.5 with SOAPpy 0.12.0 (Ubuntu 10.04 LTS)
+#   Python 2.7.3 with SOAPpy 0.12.0 (Ubuntu 12.04 LTS)
 #
 # See:
 # http://www.ebi.ac.uk/Tools/webservices/services/pfa/iprscan_soap
@@ -31,18 +32,20 @@
 wsdlUrl = 'http://www.ebi.ac.uk/Tools/services/soap/iprscan?wsdl'
 
 # Load libraries
-import base64
-import platform
-import os
-import SOAPpy
-import sys
-import time
+import base64, platform, os, SOAPpy, sys, time
 import warnings
 from SOAPpy import WSDL
 from optparse import OptionParser
 
 # Suppress all deprecation warnings (not recommended for development)
 warnings.simplefilter('ignore', DeprecationWarning)
+
+print >>sys.stderr, """
+=============================================================================
+NB: the service used by this client was decommissioned on Wednesday 9th April 
+2014. See http://www.ebi.ac.uk/Tools/webservices/ for replacement services.
+=============================================================================
+"""
 
 # Set interval for checking status
 checkInterval = 3
@@ -55,26 +58,20 @@ numOpts = len(sys.argv)
 
 # Usage message
 usage = "Usage: %prog [options...] [seqFile]"
-description = """Identify protein family, domain and signal signatures in a
-protein sequence using InterProScan. For more information on InterProScan
+description = """Identify protein family, domain and signal signatures in a 
+protein sequence using InterProScan. For more information on InterProScan 
 refer to http://www.ebi.ac.uk/Tools/pfa/iprscan"""
-epilog = """For further information about the InterProScan (SOAP) web service, see
+epilog = """For further information about the InterProScan (SOAP) web service, see 
 http://www.ebi.ac.uk/Tools/webservices/services/pfa/iprscan_soap."""
-version = "$Id: iprscan_soappy.py 2466 2013-01-25 13:56:18Z hpm $"
+version = "$Id: iprscan_soappy.py 2763 2014-04-10 15:57:38Z hpm $"
 # Process command-line options
-parser = OptionParser(
-    usage=usage, description=description, epilog=epilog, version=version)
+parser = OptionParser(usage=usage, description=description, epilog=epilog, version=version)
 # Tool specific options
-parser.add_option(
-    '--appl', help='signature methods to use, see --paramDetail appl')
-parser.add_option('--crc', action="store_true",
-                  help='enable InterProScan Matches look-up (faster)')
-parser.add_option('--nocrc', action="store_true",
-                  help='disable InterProScan Matches look-up (slower)')
-parser.add_option('--goterms', action="store_true",
-                  help='enable inclusion of GO terms')
-parser.add_option('--nogoterms', action="store_true",
-                  help='disable inclusion of GO terms')
+parser.add_option('--appl', help='signature methods to use, see --paramDetail appl')
+parser.add_option('--crc', action="store_true", help='enable InterProScan Matches look-up (faster)')
+parser.add_option('--nocrc', action="store_true", help='disable InterProScan Matches look-up (slower)')
+parser.add_option('--goterms', action="store_true", help='enable inclusion of GO terms')
+parser.add_option('--nogoterms', action="store_true", help='disable inclusion of GO terms')
 parser.add_option('--sequence', help='input sequence file name')
 # General options
 parser.add_option('--email', help='e-mail address')
@@ -85,18 +82,14 @@ parser.add_option('--async', action='store_true', help='asynchronous mode')
 parser.add_option('--jobid', help='job identifier')
 parser.add_option('--polljob', action="store_true", help='get job result')
 parser.add_option('--status', action="store_true", help='get job status')
-parser.add_option(
-    '--resultTypes', action='store_true', help='get result types')
-parser.add_option(
-    '--params', action='store_true', help='list input parameters')
+parser.add_option('--resultTypes', action='store_true', help='get result types')
+parser.add_option('--params', action='store_true', help='list input parameters')
 parser.add_option('--paramDetail', help='get details for parameter')
 parser.add_option('--quiet', action='store_true', help='decrease output level')
-parser.add_option(
-    '--verbose', action='store_true', help='increase output level')
+parser.add_option('--verbose', action='store_true', help='increase output level')
 parser.add_option('--trace', action="store_true", help='show SOAP messages')
 parser.add_option('--WSDL', default=wsdlUrl, help='WSDL URL for service')
-parser.add_option('--debugLevel', type='int',
-                  default=debugLevel, help='debug output level')
+parser.add_option('--debugLevel', type='int', default=debugLevel, help='debug output level')
 (options, args) = parser.parse_args()
 
 # Increase output level
@@ -112,15 +105,11 @@ if options.debugLevel:
     debugLevel = options.debugLevel
 
 # Debug print
-
-
 def printDebugMessage(functionName, message, level):
     if(level <= debugLevel):
         print >>sys.stderr, '[' + functionName + '] ' + message
 
 # Get input parameters list
-
-
 def serviceGetParameters():
     printDebugMessage('serviceGetParameters', 'Begin', 1)
     result = server.getParameters()
@@ -128,17 +117,13 @@ def serviceGetParameters():
     return result
 
 # Get input parameter information
-
-
 def serviceGetParameterDetails(paramName):
     printDebugMessage('serviceGetParameterDetails', 'Begin', 1)
-    result = server.getParameterDetails(parameterId=paramName)
+    result= server.getParameterDetails(parameterId=paramName)
     printDebugMessage('serviceGetParameterDetails', 'End', 1)
     return result
 
 # Submit job
-
-
 def serviceRun(email, title, params):
     printDebugMessage('serviceRun', 'Begin', 1)
     jobid = server.run(email=email, title=title, parameters=params)
@@ -146,16 +131,12 @@ def serviceRun(email, title, params):
     return jobid
 
 # Get job status
-
-
 def serviceCheckStatus(jobId):
     printDebugMessage('serviceCheckStatus', 'jobId: ' + jobId, 1)
-    result = server.getStatus(jobId=jobId)
+    result = server.getStatus(jobId = jobId)
     return result
 
 # Get available result types for job
-
-
 def serviceGetResultTypes(jobId):
     printDebugMessage('serviceGetResultTypes', 'Begin', 1)
     result = server.getResultTypes(jobId=jobId)
@@ -163,8 +144,6 @@ def serviceGetResultTypes(jobId):
     return result['type']
 
 # Get result
-
-
 def serviceGetResult(jobId, type):
     printDebugMessage('serviceGetResult', 'Begin', 1)
     printDebugMessage('serviceGetResult', 'jobId: ' + jobId, 1)
@@ -175,8 +154,6 @@ def serviceGetResult(jobId, type):
     return result
 
 # Client-side poll
-
-
 def clientPoll(jobId):
     printDebugMessage('clientPoll', 'Begin', 1)
     result = 'PENDING'
@@ -188,8 +165,6 @@ def clientPoll(jobId):
     printDebugMessage('clientPoll', 'End', 1)
 
 # Get result for a jobid
-
-
 def getResult(jobId):
     printDebugMessage('getResult', 'Begin', 1)
     printDebugMessage('getResult', 'jobId: ' + jobId, 1)
@@ -202,22 +177,18 @@ def getResult(jobId):
         result = serviceGetResult(jobId, resultType['identifier'])
         # Derive the filename for the result
         if options.outfile:
-            filename = options.outfile + '.' + resultType[
-                'identifier'] + '.' + resultType['fileSuffix']
+            filename = options.outfile + '.' + resultType['identifier'] + '.' + resultType['fileSuffix']
         else:
-            filename = jobId + '.' + resultType[
-                'identifier'] + '.' + resultType['fileSuffix']
+            filename = jobId + '.' + resultType['identifier'] + '.' + resultType['fileSuffix']
         # Write a result file
         if not options.outformat or options.outformat == resultType['identifier']:
-            fh = open(filename, 'w')
+            fh = open(filename, 'w');
             fh.write(result)
             fh.close()
             print filename
     printDebugMessage('getResult', 'End', 1)
 
 # Read a file
-
-
 def readFile(filename):
     printDebugMessage('readFile', 'Begin', 1)
     fh = open(filename, 'r')
@@ -227,8 +198,6 @@ def readFile(filename):
     return data
 
 # Output parameter details.
-
-
 def printGetParameterDetails(paramName):
     printDebugMessage('printGetParameterDetails', 'Begin', 1)
     paramDetail = serviceGetParameterDetails(paramName)
@@ -249,8 +218,6 @@ def printGetParameterDetails(paramName):
     printDebugMessage('printGetParameterDetails', 'End', 1)
 
 # Output available result types for job.
-
-
 def printGetResultTypes(jobId):
     printDebugMessage('printGetResultTypes', 'Begin', 1)
     for resultType in serviceGetResultTypes(jobId):
@@ -266,18 +233,16 @@ def printGetResultTypes(jobId):
     printDebugMessage('printGetResultTypes', 'End', 1)
 
 # Set the client user-agent.
-clientRevision = '$Revision: 2466 $'
+clientRevision = '$Revision: 2763 $'
 clientVersion = '0'
 if len(clientRevision) > 11:
-    clientVersion = clientRevision[11:-2]
+    clientVersion = clientRevision[11:-2] 
 userAgent = 'EBI-Sample-Client/%s (%s; Python %s; %s) %s' % (
-    clientVersion, os.path.basename(__file__),
+    clientVersion, os.path.basename( __file__ ),
     platform.python_version(), platform.system(),
     SOAPpy.Client.SOAPUserAgent()
 )
 # Function to return User-agent.
-
-
 def SOAPUserAgent():
     return userAgent
 # Redefine default User-agent function to return custom User-agent.
@@ -293,8 +258,7 @@ for method in server.methods:
     if server.methods[method].namespace == None:
         server.methods[method].namespace = 'http://soap.jdispatcher.ebi.ac.uk'
 
-# Configure HTTP proxy from OS environment (e.g.
-# http_proxy="http://proxy.example.com:8080")
+# Configure HTTP proxy from OS environment (e.g. http_proxy="http://proxy.example.com:8080")
 if os.environ.has_key('http_proxy'):
     http_proxy_conf = os.environ['http_proxy'].replace('http://', '')
 elif os.environ.has_key('HTTP_PROXY'):
@@ -322,14 +286,14 @@ elif options.paramDetail:
 elif options.email and not options.jobid:
     params = {}
     if len(args) > 0:
-        if os.access(args[0], os.R_OK):  # Read file into content
+        if os.access(args[0], os.R_OK): # Read file into content
             params['sequence'] = readFile(args[0])
-        else:  # Argument is a sequence id
+        else: # Argument is a sequence id
             params['sequence'] = args[0]
-    elif options.sequence:  # Specified via option
-        if os.access(options.sequence, os.R_OK):  # Read file into content
+    elif options.sequence: # Specified via option
+        if os.access(options.sequence, os.R_OK): # Read file into content
             params['sequence'] = readFile(options.sequence)
-        else:  # Argument is a sequence id
+        else: # Argument is a sequence id
             params['sequence'] = options.sequence
     # Booleans need to be represented as 1/0 rather than True/False
     if options.crc:
@@ -342,12 +306,12 @@ elif options.email and not options.jobid:
         params['goterms'] = 0
     # Add the other options (if defined)
     if options.appl:
-        params['appl'] = {'string': options.appl}
+        params['appl'] = {'string':options.appl}
     # Submit the job
     jobid = serviceRun(options.email, options.title, params)
-    if options.async:  # Async mode
+    if options.async: # Async mode
         print jobid
-    else:  # Sync mode
+    else: # Sync mode
         if outputLevel > 0:
             print jobid
         time.sleep(5)
