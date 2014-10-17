@@ -432,7 +432,7 @@ cut -f 9 fimo_ARICH_sgl/fimo.txt | sort | uniq > _t
 for i in `cat _t`; do echo -ne $i" "; grep $i WT-CM-X_ARICH_sgl_m.fam -c | awk -v num=`grep -c ">" WT-CM-X_ARICH_sgl_m.fam` '{print $1/num*100}'; done	
 	
 # RNA structure base probabilities
-file=__EF
+file=_TAGA
 mkdir "_"$file".out"
 cd "_"$file".out"
 RNAfold -p -d2 --noLP < ../$file > /dev/null
@@ -1384,7 +1384,7 @@ source=cneoformans
 dest=moryzae
 genes=`tr '\n' ',' < polyA.apa | sed 's/,$//'`
 query=`cat ../query.xml | sed -e 's/SOURCE/'$source'/' -e 's/DEST/'$dest'/' -e 's/VALUE/'$genes'/' | tr -d '\n'`
-wget -O _results.txt --post-data "query=$query" "http://fungi.ensembl.org/biomart/martservice" 2> /dev/null
+wget -O _results.txt --post-data "query=$query" "http://fungi.ensembl.org/biomart/martservice" 2> /dev/null > /dev/null
 cut -f 2 _results.txt | grep . | sort | uniq > polyA.apa_orthologs_$dest
 rm _results.txt
 
