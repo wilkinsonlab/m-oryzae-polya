@@ -53,8 +53,8 @@ for line in gff_file:
         # version 21
         if items[8].find("Parent") != -1: continue
         chrx = items[0]
-        start = int(items[3])
-        end = int(items[4])
+        #start = int(items[3])
+        #end = int(items[4])
         sense = items[6]
         for x in items[8].split(';'):
             if x.split('=')[0] == "ID":
@@ -84,12 +84,12 @@ for line in polyA_file:
     sense = items[3]
     value = int(items[0])
     transcript = items[4]
-    start = int(items[5])
-    end = int(items[6])
+    #start = int(items[5])
+    #end = int(items[6])
     if int(value) <= min_expr: continue
     val_norm = int(value) * norms[transcript]
     table[transcript][pos] = value
-    lines[transcript] = (chrx, sense, start, end)
+    lines[transcript] = (chrx, sense)#, start, end)
     vals.append(val_norm)
 
 arr = numpy.array(vals)
@@ -97,12 +97,12 @@ mean = numpy.mean(arr)
 median = numpy.median(arr)
 std = numpy.std(arr) 
 mad = MAD(arr)
-#print mean, median, mad
 for transcript, array in table.items():
     if not lines.has_key(transcript):
         table[transcript] = {}
         continue
-    chrx, sense, start, end = lines[transcript]
+    #chrx, sense, start, end = lines[transcript]
+    chrx, sense = lines[transcript]
     for pos, val in array.items():
         val_norm = int(val) * norms[transcript]
 	#print "DEBUG", table[transcript][pos], pos, lines[transcript][0], lines[transcript][1], transcript, (val_norm - median) / mad
@@ -142,5 +142,5 @@ for transcript, polis in polyA.items():
         elif opt == 'apa' and len(polis) > 1:
                 print table[transcript][max_curr], max_curr, lines[transcript][0], lines[transcript][1], transcript, lines[transcript][2], lines[transcript][3]
         elif opt == 'all':
-                print table[transcript][max_curr], max_curr, lines[transcript][0], lines[transcript][1], transcript, lines[transcript][2], lines[transcript][3]
+                print table[transcript][max_curr], max_curr, lines[transcript][0], lines[transcript][1], transcript#, lines[transcript][2], lines[transcript][3]
 

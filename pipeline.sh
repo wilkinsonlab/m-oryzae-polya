@@ -368,6 +368,9 @@ function reactome_enrich {
 	rm _reactome _de_list _nde_list _reactome_list _REACT*
 }
 
+# to crate kegg graphs
+for f in `ls *up_kegg_enrich.tsv`; do n=`echo $f | sed 's/expr_up_kegg_enrich.tsv/plot/'` ; awk  -F "\t" '{if($7<0.05)print $1"\t"$2"\t"$7"\t"$8"\tUP"}' < $f > _$n; done
+for f in `ls *down_kegg_enrich.tsv`; do n=`echo $f | sed 's/expr_down_kegg_enrich.tsv/plot/'` ; awk  -F "\t" '{if($7<0.05)print $1"\t"$2"\t"$7"\t"$8"\tDOWN"}' < $f >> _$n; done
 
 
 # extract and sort data above for xls
@@ -1373,14 +1376,15 @@ for gene, orths in arr.items():
 mkdir _TA
 rm _TA/*
 #for f in `ls -d */`; do python ../../m-oryzae-polya/polyA_nucleotide.py $f/*genome.fa $f/*polyA -100 100 print $f/"_"sequences; done
-count=0; for f in `find . -iname "_sequences"`;  do python scan.py $f TTTTT > _TA/"${f##*/}"$count; count=$((count+1));  done
+count=0; for f in `find . -iname "_sequences"`;  do python scan.py $f TA[TC][GA]TA > _TA/"${f##*/}"$count; count=$((count+1));  done
 	paste _TA/* > _m
 Rscript average.R 
+
 # compara cutsite frequencies
 for f in `ls -d */`; do python ../../m-oryzae-polya/polyA_nucleotide.py $f/*genome.fa $f/*polyA -1 0 print $f/"_"cutsite; done
 	count=0; for f in `ls -d */`; do if [ -e $f/"_cutsite" ]; then total=`grep -c ">" $f/"_cutsite"`; echo $f > _TA/_sequence$count ; for m in `cat motifs`; do grep -v ">" $f/"_cutsite" | grep -c $m; done | awk -v tot=$total '{print $1/tot}' >> _TA/_sequence$count;echo $total;  count=$((count + 1)); fi; done
 # compara get orthologs from biomart
-source=cneoformans
+source=hsapiens
 dest=moryzae
 genes=`tr '\n' ',' < polyA.apa | sed 's/,$//'`
 query=`cat ../query.xml | sed -e 's/SOURCE/'$source'/' -e 's/DEST/'$dest'/' -e 's/VALUE/'$genes'/' | tr -d '\n'`

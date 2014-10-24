@@ -46,7 +46,7 @@ for line in polyA_file:
     if len(items) >= 5:
         gene = items[4]
     else:
-        gene = ""    
+        gene = ""
 
     # if value < 10: continue
 
@@ -58,12 +58,13 @@ for line in polyA_file:
 
     stream = str(stream)
 
-    i = 0
-    for x in stream:
-        if x in ('A', 'T', 'G', 'C'):
-            N[x][i] += 1
-        L[i] += 1
-        i += 1
+    if opt == "view":
+        i = 0
+        for x in stream:
+            if x in ('A', 'T', 'G', 'C'):
+                N[x][i] += 1
+            L[i] += 1
+            i += 1
 
     if opt == "print":
         # for x in range(value):
