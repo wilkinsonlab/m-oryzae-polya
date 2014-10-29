@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Query>
+<Query  virtualSchemaName = "fungi_mart_23" formatter = "FASTA" header = "0" uniqueRows = "0" count = "" datasetConfigVersion = "0.7" >
+				
+	<Dataset name = "SOURCE_eg_gene" interface = "default" >
+		<Filter name = "ensembl_gene_id" value = "GENE"/>
+		<Attribute name = "peptide" />
+		<Attribute name = "ensembl_gene_id" />
+	</Dataset>
+</Query>

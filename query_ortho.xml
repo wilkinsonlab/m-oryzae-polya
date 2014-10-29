@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Query>
+<Query  virtualSchemaName = "fungi_mart_23" formatter = "TSV" header = "0" uniqueRows = "0" count = "" datasetConfigVersion = "0.7" >
+                        
+        <Dataset name = "SOURCE_eg_gene" interface = "default" >
+                <Filter name = "ensembl_gene_id" value = "VALUE"/>i
+                <Attribute name = "ensembl_gene_id" />
+                <Attribute name = "DEST_eg_gene" />
+        </Dataset>
+</Query>
+

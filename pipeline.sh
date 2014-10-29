@@ -888,7 +888,7 @@ done
 # 3' UTR length
 for f in *X.polyA_all_m
 do
-    echo -ne "${f%%??.*}"","
+    echo -ne "${f%%??.*}"","	
     python ../../m-oryzae-polya/3UTR_length.py Magnaporthe_oryzae.MG8.21.gff3 $f
 done 
 
@@ -1376,7 +1376,7 @@ for gene, orths in arr.items():
 mkdir _TA
 rm _TA/*
 #for f in `ls -d */`; do python ../../m-oryzae-polya/polyA_nucleotide.py $f/*genome.fa $f/*polyA -100 100 print $f/"_"sequences; done
-count=0; for f in `find . -iname "_sequences"`;  do python scan.py $f TA[TC][GA]TA > _TA/"${f##*/}"$count; count=$((count+1));  done
+count=0; for f in `find . -iname "_sequences"`;  do python scan.py $f TGTA[ATC] > _TA/"${f##*/}"$count; count=$((count+1));  done
 	paste _TA/* > _m
 Rscript average.R 
 
@@ -1384,8 +1384,8 @@ Rscript average.R
 for f in `ls -d */`; do python ../../m-oryzae-polya/polyA_nucleotide.py $f/*genome.fa $f/*polyA -1 0 print $f/"_"cutsite; done
 	count=0; for f in `ls -d */`; do if [ -e $f/"_cutsite" ]; then total=`grep -c ">" $f/"_cutsite"`; echo $f > _TA/_sequence$count ; for m in `cat motifs`; do grep -v ">" $f/"_cutsite" | grep -c $m; done | awk -v tot=$total '{print $1/tot}' >> _TA/_sequence$count;echo $total;  count=$((count + 1)); fi; done
 # compara get orthologs from biomart
-source=hsapiens
-dest=moryzae
+source=moryzae
+dest=hsapiens
 genes=`tr '\n' ',' < polyA.apa | sed 's/,$//'`
 query=`cat ../query.xml | sed -e 's/SOURCE/'$source'/' -e 's/DEST/'$dest'/' -e 's/VALUE/'$genes'/' | tr -d '\n'`
 wget -O _results.txt --post-data "query=$query" "http://fungi.ensembl.org/biomart/martservice" 2> /dev/null > /dev/null
@@ -1393,6 +1393,18 @@ cut -f 2 _results.txt | grep . | sort | uniq > polyA.apa_orthologs_$dest
 rm _results.txt
 
 
+# get fasta for spliceosome or others
+for protein in `cat spliceosome.txt`; do
+  rm fasta/$f".fa"
+  for species in `cat ensembl_fungi_list.txt`; do
+    gene=`grep $protein orthologs/$species".txt" -m 1 | cut -f 2 | grep . `
+    if [ "$gene" != "" ]; then  
+      query=`cat ../m-oryzae-polya/query_fasta.xml | sed -e 's/SOURCE/'$species'/' -e 's/GENE/'$gene'/' | tr -d '\n'`
+      wget -O _results_$protein".txt" --post-data "query=$query" "http://fungi.ensembl.org/biomart/martservice" 2> /dev/null > /dev/null
+      cat _results_$protein".txt" | sed 's/>.*/>'$species'/' >> fasta/$protein".fa"
+    fi
+  done
+done
 
 
 
