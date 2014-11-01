@@ -1393,6 +1393,8 @@ cut -f 2 _results.txt | grep . | sort | uniq > polyA.apa_orthologs_$dest
 rm _results.txt
 
 
+
+
 # get fasta for spliceosome or others
 for protein in `cat spliceosome.txt`; do
   rm fasta/$f".fa"
@@ -1407,4 +1409,6 @@ for protein in `cat spliceosome.txt`; do
 done
 
 
+# extract domain pictura from interpro svg result
+sed -e 's/ height="[0-9]*"/ height="30"/g' -e 's/ width="[0-9]*"/ width="1200"/g'  -e 's/ x="[0-9]*"/ x="0"/g'   -e 's/ y="[0-9]*"/ y="0"/g' -e 's/viewBox="0 0 [0-9]* [0-9]*"/viewBox="0 0 1200 30"/' -e 's/y="19px"/y="5px"/' -e 's/"#blackArrowComponent"\/>.*<\/svg>/"#blackArrowComponent"\/><\/svg>/' -e 's/<tspan.*//'
 
