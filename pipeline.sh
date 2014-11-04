@@ -1394,6 +1394,7 @@ rm _results.txt
 
 
 
+####spliceosome
 
 # get fasta for spliceosome or others
 for protein in `cat spliceosome.txt`; do
@@ -1408,7 +1409,70 @@ for protein in `cat spliceosome.txt`; do
   done
 done
 
+# add human orthologs
+while read -r human moryzae; 
+do
+python -c "
+from Bio import SeqIO
+import sys
+s = {}
+for seq_record in SeqIO.parse(sys.argv[1], 'fasta'):
+    if s.has_key(seq_record.id):
+      if len(seq_record.seq) > len(s[seq_record.id]):
+         s[seq_record.id] = str(seq_record.seq)
+    else:
+      s[seq_record.id] = str(seq_record.seq)
 
-# extract domain pictura from interpro svg result
+for k in sorted(s.keys()):
+  print '>', k
+  print s[k]
+
+" _results_$human".txt" | fasta_formatter -w 80 | sed 's/>.*/>human/' >> fasta/$moryzae".fa"
+done < human_orthologs.txt
+
+
+#remove duplicates
+for f in `ls fasta/*fa`; 
+do
+python -c "
+from Bio import SeqIO
+import sys
+s = {}
+for seq_record in SeqIO.parse(sys.argv[1], 'fasta'):
+    if s.has_key(seq_record.id):
+      if len(seq_record.seq) > len(s[seq_record.id]):
+         s[seq_record.id] = str(seq_record.seq)
+    else:
+      s[seq_record.id] = str(seq_record.seq)
+
+for k in sorted(s.keys()):
+  print '>', k
+  print s[k]
+
+" $f | fasta_formatter -w 80 > _t ; mv _t $f
+done 
+
+# muscle and phyml
+for f in `ls *.fa`; do muscle -in $f -phyiout  $f.aln; done
+ls *aln | awk '{
+arr[i] = $1
+i+=1
+}END{
+i=0
+for (x in arr){
+  print "phyml -i "arr[x]" -aa --quiet &"
+  i++;
+  if (i==7){
+    print "wait"
+    i=0
+  }
+}
+}' 
+
+# create tree pdf
+for f in `ls *_tree.txt`; do ~/Downloads/newick-utils-1.6/src/nw_display -i 'visibility:hidden' -b 'visibility:hidden' $f -s -S -w 900 | convert - ${f/txt/pdf}; done
+rm all_trees.pdf; pdftk *pdf cat output all_trees.pdf
+
+# extract domain picture from interpro svg result
 sed -e 's/ height="[0-9]*"/ height="30"/g' -e 's/ width="[0-9]*"/ width="1200"/g'  -e 's/ x="[0-9]*"/ x="0"/g'   -e 's/ y="[0-9]*"/ y="0"/g' -e 's/viewBox="0 0 [0-9]* [0-9]*"/viewBox="0 0 1200 30"/' -e 's/y="19px"/y="5px"/' -e 's/"#blackArrowComponent"\/>.*<\/svg>/"#blackArrowComponent"\/><\/svg>/' -e 's/<tspan.*//'
 

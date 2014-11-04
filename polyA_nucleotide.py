@@ -51,8 +51,7 @@ for line in polyA_file:
     # if value < 10: continue
 
     if sense == '+':
-        stream = fasta_seqs[chrx].seq[
-            pos - end - 1: pos - start].reverse_complement()
+        stream = fasta_seqs[chrx].seq[pos - end - 1: pos - start].reverse_complement()
     else:
         stream = fasta_seqs[chrx].seq[pos + start - 1: pos + end]
 
