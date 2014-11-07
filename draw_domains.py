@@ -20,8 +20,7 @@ infile = open(sys.argv[1], 'r')
 orderfile = open(sys.argv[2], 'r')
 
 domain_color = {}
-colors = ['red', 'yellow', 'blue', 'green',
-          'cyan', 'magenta', 'pink', 'navy', 'fucsia', 'gray', 'orange']
+colors = ['red', 'yellow', 'blue', 'green', 'cyan', 'magenta', 'pink', 'navy', 'fucsia', 'gray', 'orange']
 colors_k = 0
 entries = {}
 lengths = {}
@@ -47,13 +46,14 @@ order = []
 for line in orderfile:
    order.append(line.strip())
 
+x = 70
 y = 10
 for species in order:
     s.addElement(text(species, 0, y))  
     if lengths.has_key(species):
-        s.addElement(oh.createLine(70, y , lengths[species], y, strokewidth=1, stroke="black"))
+        s.addElement(oh.createLine(x, y , x + lengths[species], y, strokewidth=1, stroke="black"))
         for (domain, start, end, e_value) in entries[species]:
-            s.addElement(oh.createRect(start + 70, y-3, end - start + 70, 6, 1, 1,
+            s.addElement(oh.createRect(x + start, y-3, end - start, 6, 1, 1,
                          strokewidth=1, stroke='black', fill=domain_color[domain]))
     y += 20
 s.save(sys.argv[1] + '.domains.svg')

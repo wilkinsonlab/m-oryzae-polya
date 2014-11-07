@@ -451,7 +451,7 @@ import re, sys
 from Bio import SeqIO
 f = open(sys.argv[1], 'r')
 s = sys.argv[2]
-d = [0 for x in range(200)]
+d = [0 for x in range(int(sys.argv[3]))]
 c = 0.0
 for record in SeqIO.parse(f, 'fasta'):
   for m in re.finditer(s, str(record.seq)):

@@ -33,10 +33,13 @@ for line in gff_file:
     if line[0] == '#' or line[0] == '\n':
         continue
     items = line.split('\t')
-    if items[2] == "exon" and items[1] == "protein_coding":
+    if items[2] == "exon" and items[1] == "ensembl_havana" and items[8].find("gene_biotype \"protein_coding\"") != -1 :
+    #if items[2] == "exon" and items[1] == "protein_coding":
         for x in items[8].split(';'):
             if x.strip().split(spacer)[0] == ID:
                 gene_id = x.strip().split(spacer)[1].replace("\"", "")
+        if not genome_seqs.has_key(items[0]):
+            continue      
         if genes.has_key(gene_id):
             genes[gene_id].exons.append((int(items[3]), int(items[4])))
         else:     
@@ -93,17 +96,17 @@ for intron in introns:
         acceptors[acceptor] += 1
     else:
         acceptors[acceptor] = 1    
-       
+#        
 # print " \t" +  sys.argv[2]      
 # print "protein coding genes:\t", len(genes.keys()   )   
 # print "percentage of genes containg introns:\t%.2f" % (count / float(len(genes.keys())))    
 # print "average number of introns per gene:\t%.1f" % (sum(num) / float(len(num)))
 # print "average intron length:\t%d" % (sum(length) / float(len(length)))  
-#     
-# for donor, value in donors.items():
-#     print donor, value / float(len(introns)) * 100, "%"
-# for acceptor, value in acceptors.items():
-#     print acceptor, value / float(len(introns)) * 100, "%"
-for intron in introns:
-    print ">" + intron.gene_id
-    print intron.seq
+#   
+for donor, value in donors.items():
+    print donor, value / float(len(introns)) 
+for acceptor, value in acceptors.items():
+    print acceptor, value / float(len(introns)) 
+# for intron in introns:
+#     print ">" + intron.gene_id
+#     print "N" * (300 - len(intron.seq)) + intron.seq[-300:]

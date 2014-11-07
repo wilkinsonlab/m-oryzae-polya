@@ -65,7 +65,7 @@ for line in polyA_file:
             L[i] += 1
             i += 1
 
-    if opt == "print":
+    if opt == "print" and stream != "":
         # for x in range(value):
         out.write(">" + chrx + ":" + str(pos) + ":" + str(value) + ":" + sense + ":" + gene + "\n")
         out.write(stream + "\n")
