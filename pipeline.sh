@@ -334,7 +334,7 @@ function kegg_enrich {
 	    grep -m 1 "${f/_/}" $type | cut -f 3 | tr '\n' '\t' >> "${file_p%%.*}"_kegg_enrich.tsv
 	    cat _de_list $f | sort | uniq -d | tr '\n' ',' | sed 's/,$/\n/' >>  "${file_p%%.*}"_kegg_enrich.tsv
 	done
-    Rscript ../../../m-oryzae-polya/FDR.R "${file_p%%.*}"_kegg_enrich.tsv
+    Rscript ../../m-oryzae-polya/FDR.R "${file_p%%.*}"_kegg_enrich.tsv
 	rm _kegg _de_list _nde_list _kegg_list _mgr*
 }
 
@@ -451,6 +451,8 @@ import re, sys
 from Bio import SeqIO
 f = open(sys.argv[1], 'r')
 s = sys.argv[2]
+s = s.replace('R', '[GA]').replace('Y', '[TC]').replace('S', '[GC]').replace('W', '[TA]').replace('K', '[GT]').replace('M', '[AC]').replace('D', '[GTA]').replace('H', '[TAC]').replace('B', '[GTC]').replace('V', '[GAC]').replace('N', '[ATGC]')
+print s
 d = [0 for x in range(int(sys.argv[3]))]
 c = 0.0
 for record in SeqIO.parse(f, 'fasta'):
@@ -1476,3 +1478,5 @@ rm all_trees.pdf; pdftk *pdf cat output all_trees.pdf
 # extract domain picture from interpro svg result
 sed -e 's/ height="[0-9]*"/ height="30"/g' -e 's/ width="[0-9]*"/ width="1200"/g'  -e 's/ x="[0-9]*"/ x="0"/g'   -e 's/ y="[0-9]*"/ y="0"/g' -e 's/viewBox="0 0 [0-9]* [0-9]*"/viewBox="0 0 1200 30"/' -e 's/y="19px"/y="5px"/' -e 's/"#blackArrowComponent"\/>.*<\/svg>/"#blackArrowComponent"\/><\/svg>/' -e 's/<tspan.*//'
 
+# get all logos
+for f in `ls _*`; do ~/Downloads/weblogo/seqlogo -f $f -F PNG -o donor_logo/$f -c -a -n -Y ; done
