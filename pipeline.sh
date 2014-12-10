@@ -1380,7 +1380,7 @@ rm _TA/*
 #for f in `ls -d */`; do python ../../m-oryzae-polya/polyA_nucleotide.py $f/*genome.fa $f/*polyA -100 100 print $f/"_"sequences; done
 count=0; for f in `find . -iname "_sequences"`;  do python scan.py $f TGTA[ATC] > _TA/"${f##*/}"$count; count=$((count+1));  done
 	paste _TA/* > _m
-Rscript average.R 
+Rscript ../../m-oryzae-polya/average_table.R
 
 # compara cutsite frequencies
 for f in `ls -d */`; do python ../../m-oryzae-polya/polyA_nucleotide.py $f/*genome.fa $f/*polyA -1 0 print $f/"_"cutsite; done
@@ -1410,28 +1410,6 @@ for protein in `cat spliceosome.txt`; do
     fi
   done
 done
-
-# add human orthologs
-while read -r human moryzae; 
-do
-python -c "
-from Bio import SeqIO
-import sys
-s = {}
-for seq_record in SeqIO.parse(sys.argv[1], 'fasta'):
-    if s.has_key(seq_record.id):
-      if len(seq_record.seq) > len(s[seq_record.id]):
-         s[seq_record.id] = str(seq_record.seq)
-    else:
-      s[seq_record.id] = str(seq_record.seq)
-
-for k in sorted(s.keys()):
-  print '>', k
-  print s[k]
-
-" _results_$human".txt" | fasta_formatter -w 80 | sed 's/>.*/>human/' >> fasta/$moryzae".fa"
-done < human_orthologs.txt
-
 
 #remove duplicates
 for f in `ls fasta/*fa`; 
@@ -1472,11 +1450,32 @@ for (x in arr){
 }' 
 
 # create tree pdf
+for f in `find . -iname "*tree.txt"`; do while read a b; do sed -i '0,/'$a'/s//'$b'/' $f; done  < labels.txt ; done
 for f in `ls *_tree.txt`; do ~/Downloads/newick-utils-1.6/src/nw_display -i 'visibility:hidden' -b 'visibility:hidden' $f -s -S -w 900 | convert - ${f/txt/pdf}; done
 rm all_trees.pdf; pdftk *pdf cat output all_trees.pdf
 
-# extract domain picture from interpro svg result
-sed -e 's/ height="[0-9]*"/ height="30"/g' -e 's/ width="[0-9]*"/ width="1200"/g'  -e 's/ x="[0-9]*"/ x="0"/g'   -e 's/ y="[0-9]*"/ y="0"/g' -e 's/viewBox="0 0 [0-9]* [0-9]*"/viewBox="0 0 1200 30"/' -e 's/y="19px"/y="5px"/' -e 's/"#blackArrowComponent"\/>.*<\/svg>/"#blackArrowComponent"\/><\/svg>/' -e 's/<tspan.*//'
-
 # get all logos
 for f in `ls _*`; do ~/Downloads/weblogo/seqlogo -f $f -F PNG -o donor_logo/$f -c -a -n -Y ; done
+
+# interpro create domains pictures
+for d in `ls -d */`;  do    cd $d; grep Pfam *txt | sed 's/\.fasta[^\t]*\t/\t/' > ${d/\/}".pfam"  ; cd .. ; done
+for d in `ls -d */`;  do    cd $d; grep SMART *txt | sed 's/\.fasta[^\t]*\t/\t/' > ${d/\/}".smart"  ; cd .. ; done
+for d in `for d in `ls -d */`;  do cd $d ; rm ${d/\/}.list; for f in `ls *fasta`; do echo -ne ${f/.fasta/}"\t" >> ${d/\/}.list;  grep -v ">" $f | tr -d '\n' | wc -c >> ${d/\/}.list; done ; cd ..; donels -d */`;  do    cd $d; grep SMART *txt | sed 's/\.fasta[^\t]*\t/\t/' > ${d/\/}".smart"  ; cd .. ; done
+for d in `ls -d */`;  do name=`grep ${d/\/} ../spliceosome_order.csv | cut -f 2`; cd $d;  python ../../../../m-oryzae-polya/draw_domains.py ${d/\/}".pfam" ../../order.txt ${d/\/}".list"  $name 5  ; cd .. ; done
+for d in `ls -d */`;  do name=`grep ${d/\/} ../spliceosome_order.csv | cut -f 2`; cd $d;  python ../../../../m-oryzae-polya/draw_domains.py ${d/\/}".smart" ../../order.txt ${d/\/}".list"  $name 5  ; cd .. ; done
+for d in `ls -d */`;  do cd $d; convert ${d/\/}".smart.domains.svg"  ${d/\/}".smart.domains.pdf"  ; cd .. ; done
+for d in `ls -d */`;  do cd $d; convert ${d/\/}".pfam.domains.svg"  ${d/\/}".pfam.domains.pdf"  ; cd .. ; done
+
+# alternative splicing
+sudo htseq-count -s reverse -r pos -f bam -t gene -i ID SRR081547.sorted.bam Gaeumannomyces_graminis.Gae_graminis_V2.24.gff3 > _gene_count
+sudo htseq-count -s reverse -r pos -f bam -t intron -i ID SRR081547.sorted.bam _introns.gtf > _intron_count
+awk -F $'\t' 'function abs(x){return ((x < 0.0) ? -x : x)}{if ($3 == "gene") print $9"\t"abs($4-$5)}' < Gaeumannomyces_graminis.Gae_graminis_V2.24.gff3   | sed 's/ID=gene:\(GGTG_.....\).*\t/\1\t/' > _gene_length
+awk -F $'\t' 'function abs(x){return ((x < 0.0) ? -x : x)}{if ($3 == "intron") print $9"\t"abs($4-$5)}' < _introns.gtf  | sed 's/.*ID //' > _intron_length
+sort -k 1,1 _gene_length -o _gene_length ; sort -k 1,1 _intron_length -o _intron_length
+sed -i 's/gene://' _gene_count
+sort -k 1,1 _intron_count -o _intron_count; join _intron_count _intron_length | awk '{print $1,$2,$3,$2/$3}' > _intron_norm
+sort -k 1,1 _gene_count -o _gene_count; join _gene_count _gene_length | awk '{print $1,$2,$3,$2/$3}' > _gene_norm
+rm _o; for f in `cut -f 1 _intron_count`; do grep -m 1 $f  _introns.gtf | sed -e 's/.*gene_id "//' -e 's/"; ID /\t/' >> _o; done; sort -k 1,1 _o -o _o
+reset;join _o _gene_norm | sort -k 2,2 | join - _intron_norm -1 2 -2 1 | awk '{if ($3>0 && $5 > 0.05 && $8 > 0.05)print $1,$6/$3}' | scisort -k 2
+
+	

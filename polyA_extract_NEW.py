@@ -1,4 +1,4 @@
-import sys
+import sys, math
 import numpy as np
 import scipy.special
 import sys
@@ -25,8 +25,6 @@ def MAD(a, c=0.6745, axis=None):
         m = ma.median(ma.fabs(aswp - d) / c, axis=0)
 
     return m
-
-
 
 gff_file = open(sys.argv[1], 'r')
 polyA_file = open(sys.argv[2], 'r')
