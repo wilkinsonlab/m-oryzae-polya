@@ -425,14 +425,9 @@ for line in open('_all_s', 'r'):
 # glam alignment
 glam2 n WT-CM-X_ARICH_sgl_m.fam -n 40000 -w 6 -O glam2_ARICH_sgl
 fimo -oc fimo_ARICH_sgl --norc --thresh 1e-2 glam2_ARICH_sgl/glam2.meme WT-CM-X_TOT_sgl_m.fam 
-for i in {1..10}
-do
- echo "Motif "$i > "_motif"$i
- cut -f 1,3 fimo_ARICH_sgl/fimo.txt | awk -v motif=$i -v num=`grep -c ">" WT-CM-X_TOT_sgl_m.fam` '{ if ( $1 == motif ) arr[$2]++ } END { for (i=0; i<=200; i++) print arr[i]/num*100 }' >> "_motif"$i
-done
-paste _motif*
-cut -f 9 fimo_ARICH_sgl/fimo.txt | sort | uniq > _t
-for i in `cat _t`; do echo -ne $i" "; grep $i WT-CM-X_ARICH_sgl_m.fam -c | awk -v num=`grep -c ">" WT-CM-X_ARICH_sgl_m.fam` '{print $1/num*100}'; done	
+
+cut -f 9 fimo_out/fimo.txt | sort | uniq > _t
+for i in `cat _t`; do echo -ne $i" "; grep $i Rozella_allomycis.introns.3prime.fa -c | awk -v num=`grep -c ">" Rozella_allomycis.introns.3prime.fa` '{print $1/num*100}'; done	
 	
 # RNA structure base probabilities
 file=_TAGA
@@ -462,6 +457,30 @@ for record in SeqIO.parse(f, 'fasta'):
 for v in d:
   print v / c * 100		
 " 
+
+# matrix scan
+python -c "
+import re, sys
+from Bio import SeqIO
+file = open(sys.argv[1], 'r')
+m_file = open(sys.argv[2], 'r')
+matrix = []
+for line in m_file:
+  length = len(line.strip().split(' '))
+  matrix.append(line.strip().split(' '))
+d = [0 for x in range(int(sys.argv[3]))]
+count = 0.0
+for record in SeqIO.parse(f, 'fasta'):
+  s = str(record.seq)
+  for i, x in enumerate(s):
+    for j in s[i:i+length]:
+       
+    d[m.start(0)] += 1
+  count += 1		
+for v in d:
+  print v / c * 100		
+" 
+
 
 # extract 3'UTR sequences
 python -c "
