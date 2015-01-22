@@ -40,4 +40,5 @@ for l in range(length):
     info_content += count[l]['T'] / lines * math.log(count[l]['T'] / lines / T_genome, 2)
     info_content += count[l]['G'] / lines * math.log(count[l]['G'] / lines / G_genome, 2)
     info_content += count[l]['C'] / lines * math.log(count[l]['C'] / lines / C_genome, 2) 
+
 print info_content        

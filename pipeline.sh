@@ -458,28 +458,7 @@ for v in d:
   print v / c * 100		
 " 
 
-# matrix scan
-python -c "
-import re, sys
-from Bio import SeqIO
-file = open(sys.argv[1], 'r')
-m_file = open(sys.argv[2], 'r')
-matrix = []
-for line in m_file:
-  length = len(line.strip().split(' '))
-  matrix.append(line.strip().split(' '))
-d = [0 for x in range(int(sys.argv[3]))]
-count = 0.0
-for record in SeqIO.parse(f, 'fasta'):
-  s = str(record.seq)
-  for i, x in enumerate(s):
-    for j in s[i:i+length]:
-       
-    d[m.start(0)] += 1
-  count += 1		
-for v in d:
-  print v / c * 100		
-" 
+
 
 
 # extract 3'UTR sequences

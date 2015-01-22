@@ -76,11 +76,11 @@ for gene_id, gene in genes.items():
         if intron.sense == "+":
             intron.start = start
             intron.end = end
-            intron.seq = genome_seqs[intron.chrx].seq[start-4:end+1]
+            intron.seq = genome_seqs[intron.chrx].seq[start-1:end]
         elif intron.sense == "-":
             intron.start = end
             intron.end = start 
-            intron.seq = genome_seqs[intron.chrx].seq[start-2:end+3].reverse_complement()
+            intron.seq = genome_seqs[intron.chrx].seq[start-1:end].reverse_complement()
         introns.append(intron)
         genes[gene_id].introns.append(intron)
         
@@ -100,11 +100,12 @@ for intron in introns:
         donors[donor] += 1
     else:
         donors[donor] = 1   
-    acceptor = str(intron.seq[3:9])
+    acceptor = str(intron.seq[-3:])
     if acceptors.has_key(acceptor):
         acceptors[acceptor] += 1
     else:
         acceptors[acceptor] = 1  
+    print acceptor    
 
 
 # i=0
@@ -123,13 +124,14 @@ for intron in introns:
 # print "average number of introns per gene:\t%.1f" % (sum(num) / float(len(num)))
 # print "average intron length:\t%d" % (median(length))  
 # print "number of introns:" + str(len(introns))  
-for donor, value in donors.items():
-     print donor + "\t" + str(value / float(len(introns)) )
+#for donor, value in donors.items():
+#     print donor + "\t" + str(value / float(len(introns)) )
 #for acceptor, value in acceptors.items():
 #         print acceptor + "\t" + str(value / float(len(introns)) )
 #for intron in introns:
-        #print ">" + intron.gene_id
-        #print intron.seq #"N" * (97 - len(intron.seq)) + intron.seq[-97:]
+        #if len(intron.seq) > 250: continue
+#        print ">" + intron.gene_id
+#        print intron.seq #"N" * (97 - len(intron.seq)) + intron.seq[-97:]
 # ratios = []        
 # for gene in genes.values():
 #     if len(gene.introns) == 0: continue
