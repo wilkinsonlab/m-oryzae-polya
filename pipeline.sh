@@ -1430,23 +1430,6 @@ for k in sorted(s.keys()):
 " $f | fasta_formatter -w 80 > _t ; mv _t $f
 done 
 
-# muscle and phyml
-for f in `ls *.fa`; do muscle -in $f -phyiout  $f.aln; done
-ls *aln | awk '{
-arr[i] = $1
-i+=1
-}END{
-i=0
-for (x in arr){
-  print "phyml -i "arr[x]" -aa --quiet &"
-  i++;
-  if (i==7){
-    print "wait"
-    i=0
-  }
-}
-}' 
-
 # create tree pdf
 for f in `find . -iname "*tree.txt"`; do while read a b; do sed -i '0,/'$a'/s//'$b'/' $f; done  < labels.txt ; done
 for f in `ls *_tree.txt`; do ~/Downloads/newick-utils-1.6/src/nw_display -i 'visibility:hidden' -b 'visibility:hidden' $f -s -S -w 900 | convert - ${f/txt/pdf}; done
