@@ -105,7 +105,6 @@ for intron in introns:
         acceptors[acceptor] += 1
     else:
         acceptors[acceptor] = 1  
-    print acceptor    
 # i=0
 # for intron in introns:
 #         i+=1
@@ -116,12 +115,11 @@ for intron in introns:
 # 
 #         print intron.chrx + "\t" + "protein_coding" + "\t" + "intron" + "\t" + str(intron.start) + "\t" + str(intron.end) + "\t" + "." + "\t" + intron.sense + "\t" + "." + "\t" + "gene_id \"" + intron.gene_id + "\"; ID intron_" + str(i) + "_"
 # # # #        
-# print " \t" +  sys.argv[2]      
-# print "protein coding genes:\t", len(genes.keys())   
-# print "protein coding genes containg introns:\t%d" % (count)
-# print "average number of introns per gene:\t%.1f" % (sum(num) / float(len(num)))
-# print "average intron length:\t%d" % (median(length))  
-# print "number of introns:" + str(len(introns))  
+print "protein coding genes:\t", len(genes.keys())   
+print "protein coding genes containg introns:\t%d" % (count)
+print "average number of introns per gene:\t%.1f" % (sum(num) / float(len(num)))
+print "average intron length:\t%d" % (median(length))  
+print "number of introns:" + str(len(introns))  
 # for donor, value in donors.items():
 #      print donor + "\t" + str(value / float(len(introns)) )
 # for acceptor, value in acceptors.items():

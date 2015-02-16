@@ -518,10 +518,10 @@ join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > 
 # search for matching small rna in intra-APA
 python -c "
 import sys
-threshold = 100
+threshold = 50
 length = 18
-length_max = 25
-file = open('SRR643875.bedgraph', 'r')
+length_max = 30
+file = open('SRR099267.bed', 'r')
 apa = open('../_WT-CM-X.intra', 'r')
 record_chrx = ''
 curr__stop = 0

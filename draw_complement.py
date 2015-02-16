@@ -16,7 +16,7 @@ import re
 
 infile = open(sys.argv[1], 'r')
 
-colors = ['red', 'yellow', 'blue', 'cyan', 'magenta', 'pink', 'navy', 'olivedrab', 'gray', 'orange', 'black', 'green']
+colors = ['red', 'yellow', 'blue', 'cyan', 'magenta', 'pink', 'navy', 'olive', 'gray', 'orange', 'black', 'green', 'aliceblue', 'burlywood', 'darkgray', 'darkslategray', 'darkorange', 'darkkhaki', 'darkslateblue', 'deeppink', 'dimgray', 'gainsboro', 'dodgerblue', 'darkolivegreen', 'darkblue']
 entry = {}
 labels = {}
 complex = ""
