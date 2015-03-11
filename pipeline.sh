@@ -430,7 +430,7 @@ cut -f 9 fimo_out/fimo.txt | sort | uniq > _t
 for i in `cat _t`; do echo -ne $i" "; grep $i Rozella_allomycis.introns.3prime.fa -c | awk -v num=`grep -c ">" Rozella_allomycis.introns.3prime.fa` '{print $1/num*100}'; done	
 	
 # RNA structure base probabilities
-file=_TAGA
+file=_k.fa
 mkdir "_"$file".out"
 cd "_"$file".out"
 RNAfold -p -d2 --noLP < ../$file > /dev/null

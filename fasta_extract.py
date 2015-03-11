@@ -18,11 +18,7 @@ with open(extract_file) as f:
 fasta_sequences = SeqIO.parse(open(fasta_file),'fasta')
 f =  open(result_file, "w")
 seqs = []
-i=0
 for seq in fasta_sequences:
-        i+=1
-        if i % 10000 == 0:
-            print i
         nuc = seq.id
 	if nuc in extract :
 		seqs.append(seq)
