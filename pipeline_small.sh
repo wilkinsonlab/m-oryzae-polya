@@ -48,9 +48,10 @@ for f in `ls *fastq.al`; do
 done
 
 ### annotation diffential expression
-for f in `ls ../[Wer]*sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t ncRNA -i ID $f ../Magnaporthe_oryzae.MG8.25.ncrna.gff3 > ${v/sorted.bam/count} & done
+for f in `ls ../[Wer]*sorted.bam.uniq`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t ncRNA -i ID $f ../Magnaporthe_oryzae.MG8.25.ncrna.gff3 > ${v/sorted.bam/ncrna.count} & done
 # or 
-for f in `ls ../[Wer]*sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t exon -i gene_id $f ../Magnaporthe_oryzae.MG8.25.gff3 > ${v/sorted.bam/count} & done
+for f in `ls ../[Wer]*sorted.bam.uniq`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t exon -i gene_id $f ../Magnaporthe_oryzae.MG8.25.gtf > ${v/sorted.bam/all.count} & done
+#...now use DESeq2
 
 ### transcripts assembly diffential expression
 # in diff_expr dir
@@ -64,7 +65,7 @@ for f in `ls ../*fastq.trimmed.x`; do v=${f/..\//}; rsem-calculate-expression --
 # DE on transcriptome
 s=`ls *isoforms.results`; ~/Downloads/trinityrnaseq-2.0.2/util/abundance_estimates_to_matrix.pl --est_method RSEM  --out_prefix trans $s
 s=`ls *genes.results`; ~/Downloads/trinityrnaseq-2.0.2/util/abundance_estimates_to_matrix.pl --est_method RSEM  --out_prefix genes $s
-~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix trans.counts.matrix --method edgeR --samples_file ../desc.txt ; ~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix genes.counts.matrix --method edgeR --samples_file ../desc.txt
+~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix trans.counts.matrix --method edgeR --samples_file ../../desc.txt ; ~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix genes.counts.matrix --method edgeR --samples_file ../../desc.txt
 
 
 ### peaks diffential expression
@@ -72,7 +73,13 @@ for f in `ls ../[Wer]*.sorted.bam`; do bedtools bamtobed -i $f | awk '{print $1,
 mv ../[Wer]*bed .
 for  f in `ls *.bed`; do macs14 -t $f -g 40949933 -n $f; done
 cat *_peaks.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","peak",$2+1,$3,".",".",".","ID=peak_"++count"_"}' | sed 's/ /\t/g' > peaks.gff3
-for f in `ls ../[Wer]*sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s no -r pos -f bam -t peak -i ID $f peaks.gff3 > ${v/sorted.bam/peak_count} & done
+for f in `ls ../[Wer]*sorted.bam.uniq`; do v=${f/..\//};   htseq-count -a 0 -s no -r pos -f bam -t peak -i ID $f peaks.gff3 > ${v/sorted.bam/peak_count} & done
+#...now use DESeq2
+
+### clusters diffential expression
+for f in `ls ../*sam`; do v=${f/..\//}; python cluster.py $f | sed 's/ /\t/g'> ${v/sam/bed}; done
+cat *.bed | sort -k1,1 -k2,2n | bedtools merge -d 25 -i   - | awk '{print $1,"marco","peak",$2+1,$3,".",".",".","ID=peak_"++count"_"}' | sed 's/ /\t/g' > peaks.gff3
+for f in `ls ../[Wer]*sorted.bam.uniq`; do v=${f/..\//};   htseq-count -a 0 -s no -r pos -f bam -t peak -i ID $f peaks.gff3 > ${v/sorted.bam/peak_count} & done
 #...now use DESeq2
 
 ### sequences differential expression
@@ -84,29 +91,19 @@ cut -f 1,2 seq.count > exp_1.count;cut -f 1,3 seq.count > exp_2.count;cut -f 1,4
 
 
 # get info, in db folder
-for f in `ls ../*fastq.trimmed.x`;
-do
-rm "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 ncrna $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 cds _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 utr __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 unspliced _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 2 -k 1 rrna __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 2 -k 1 retro _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 ../magna __un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-cut -done 
-
 for f in `ls ../*fasta.collapsed`;
 do
 rm "_"${f/..\/}
-bowtie -S -p 8 -v 3 -k 1 ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 3 -k 1 retro  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 3 -k 1 rrna  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 3 -k 1 cds -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 3 -k 1 utr  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 3 -k 1 unspliced  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 3 -k 1 ../magna -f __un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
+bowtie -S -p 8 -v 0 -k 1 ../db/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
+bowtie -S -p 8 -v 0 -k 1 ../db/retro  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
+bowtie -S -p 8 -v 0 -k 1 ../db/rrna  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
+bowtie -S -p 8 -v 0 -k 1 ../db/cds -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
+bowtie -S -p 8 -v 0 -k 1 ../db/utr  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
+bowtie -S -p 8 -v 0 -k 1 ../db/unspliced  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
+bowtie -S -p 8 -v 0 -k 1 ../magna -f __un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
 done 
+
+
 
 # assembly aligned reads with inchworm
 #for f in `ls *fasta.al`; do
