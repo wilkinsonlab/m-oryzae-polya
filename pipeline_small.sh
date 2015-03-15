@@ -77,9 +77,10 @@ for f in `ls ../[Wer]*sorted.bam.uniq`; do v=${f/..\//};   htseq-count -a 0 -s n
 #...now use DESeq2
 
 ### clusters diffential expression
-for f in `ls ../*sam`; do v=${f/..\//}; python cluster.py $f | sed 's/ /\t/g'> ${v/sam/bed}; done
-cat *.bed | sort -k1,1 -k2,2n | bedtools merge -d 25 -i   - | awk '{print $1,"marco","peak",$2+1,$3,".",".",".","ID=peak_"++count"_"}' | sed 's/ /\t/g' > peaks.gff3
-for f in `ls ../[Wer]*sorted.bam.uniq`; do v=${f/..\//};   htseq-count -a 0 -s no -r pos -f bam -t peak -i ID $f peaks.gff3 > ${v/sorted.bam/peak_count} & done
+for f in `ls ../*sorted.bam.uniq`; do v=${f/..\//}; v=${v/sorted.bam.uniq/cov}; echo $v ; genomeCoverageBed -ibam $f -g genome.txt -d > $v & done
+for f in `ls ../*sorted.bam.uniq`; do v=${f/..\//}; v=${v/sorted.bam.uniq/cov} ;  l=`wc -l $f | cut -f 1 -d " "`; awk -v l=$l '{printf( "%s\t%d\t%f\n", $1, $2, $3*1000/l)}' < $v  > $v.norm & done
+for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f  > ${f/cov/bed} & done
+cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","peak",$2,$3,".",".",".","ID=peak_"++count"_"}' | sed 's/ /\t/g' > peaks.gff3
 #...now use DESeq2
 
 ### sequences differential expression
