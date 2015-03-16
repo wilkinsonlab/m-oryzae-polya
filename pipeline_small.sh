@@ -68,14 +68,6 @@ s=`ls *genes.results`; ~/Downloads/trinityrnaseq-2.0.2/util/abundance_estimates_
 ~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix trans.counts.matrix --method edgeR --samples_file ../../desc.txt ; ~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix genes.counts.matrix --method edgeR --samples_file ../../desc.txt
 
 
-### peaks diffential expression
-for f in `ls ../[Wer]*.sorted.bam`; do bedtools bamtobed -i $f | awk '{print $1, $2+2, $3, $4, $5, $6}' | sed 's/ /\t/g' > ${f/.sorted.bam/.bed}; done
-mv ../[Wer]*bed .
-for  f in `ls *.bed`; do macs14 -t $f -g 40949933 -n $f; done
-cat *_peaks.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","peak",$2+1,$3,".",".",".","ID=peak_"++count"_"}' | sed 's/ /\t/g' > peaks.gff3
-for f in `ls ../[Wer]*sorted.bam.uniq`; do v=${f/..\//};   htseq-count -a 0 -s no -r pos -f bam -t peak -i ID $f peaks.gff3 > ${v/sorted.bam/peak_count} & done
-#...now use DESeq2
-
 ### clusters diffential expression
 for f in `ls ../*sorted.bam.uniq`; do v=${f/..\//}; v=${v/sorted.bam.uniq/cov}; echo $v ; genomeCoverageBed -ibam $f -g genome.txt -d > $v & done
 for f in `ls ../*sorted.bam.uniq`; do v=${f/..\//}; v=${v/sorted.bam.uniq/cov} ;  l=`wc -l $f | cut -f 1 -d " "`; awk -v l=$l '{printf( "%s\t%d\t%f\n", $1, $2, $3*1000/l)}' < $v  > $v.norm & done
@@ -104,27 +96,27 @@ bowtie -S -p 8 -v 0 -k 1 ../db/unspliced  -f _un --un __un 1> /dev/null 2> _res;
 bowtie -S -p 8 -v 0 -k 1 ../magna -f __un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
 done 
 
+# for cluster etc...
+for f in `ls *_vs_*.fa`;
+do
+rm _*	
+bowtie2  -f $f --un=_un -x ../../db/bowtie2/ncrna --local -k 1 --quiet --no-head   | awk '{if($2!=4)print $0}'  > _ncrna_out 
+bowtie2  -f _un --un=__un -x ../../db/bowtie2/retro --local -k 1 --quiet --no-head   | awk '{if($2!=4)print $0}'  > _retro_out 
+bowtie2  -f __un --un=_un -x ../../db/bowtie2/utr --local -k 1 --quiet --no-head   | awk '{if($2!=4)print $0}' > _cds_out 
+bowtie2  -f _un --un=__un -x ../../db/bowtie2/cds --local -k 1 --quiet --no-head   | awk '{if($2!=4)print $0}'  > _utr_out 
+bowtie2  -f __un --un=_un -x ../../db/bowtie2/unspliced --local -k 1 --quiet --no-head   | awk '{if($2!=4)print $0}' > _intron_out
+bowtie2  -f _un --un=__un -x ../../db/bowtie2/magna --local -k 1 --quiet --no-head   | awk '{if($2!=4)print $0}'  > _intergenic_out
+cmsearch --cpu 4 -E 1e-2 --tblout _intergenic_rfam --noali ~/Downloads/Rfam.cm _un > /dev/null &
+cmsearch --cpu 4 -E 1e-2 --tblout _unaligned_rfam --noali ~/Downloads/Rfam.cm __un > /dev/null; 
+echo $f >  "_"$f
+for g in _ncrna_out _retro_out _cds_out _utr_out _intron_out _intergenic_out; do echo ${g/_out/} > "_"$g; awk '{if($2==0)s="+"; else s="-"; print $1,$3,s}' < $g >> "_"$g ; done
+echo "_intergenic_rfam" > __intergenic_rfam
+if [ -e _intergenic_rfam ] ; then  sed -i -e 's/^#.*//' -e '/^$/d'  _intergenic_rfam; cat _intergenic_rfam >> __intergenic_rfam; fi
+echo "_unaligned_rfam" > __unaligned_rfam
+if [ -e _unaligned_rfam ] ; then  sed -i -e 's/^#.*//' -e '/^$/d'  _unaligned_rfam; cat _unaligned_rfam >> __unaligned_rfam; fi
+paste  __ncrna_out __retro_out __cds_out __utr_out __intron_out __intergenic_out >> "_"$f
+cat __intergenic_rfam >> "_"$f
+cat __unaligned_rfam >> "_"$f
+done
 
 
-# assembly aligned reads with inchworm
-#for f in `ls *fasta.al`; do
-#	~/Downloads/trinityrnaseq-2.0.2/Inchworm/bin/inchworm --reads $f --run_inchworm -K 18 -L 18 --num_threads 8 |  awk '{if(substr($1,1,1) == ">") print ">s"++count; else print $1}' > ${f/fasta.al/inch.fa}
-#done
-
-# alignes assembled reads back to the genome
-#for f in `ls *inch.fa`; do 
-#	gmap -D . -d Magnaporthe_oryzae.MG8.25.dna.genome.fa.gmap -f 3 -n 1  -t 8 -B 5 --nosplicing $f > ${f/inch.fa/inch.gff3} 2> /dev/null; 
-#done
-
-# merge all the alignments and create an annotation
-#gt gff3 -sort *inch.gff3 | bedtools merge -d 51 -s -i - | awk '{print $1,"marco","smallrna",$2+1,$3,".",$4,".","ID=small_"++count"_"}' | sed 's/ /\t/g' > annotation.gff3
-
-# extract only unique alignments, this is for htseq
-#for f in `ls *.sorted.bam`; do
-#	samtools view -h $f | awk '{if($5==255 || substr($0, 1, 1)=="@") print $0}' | samtools view -bSh - > $f".uniq"
-#done
-
-# htseq-count
-#for f in `ls *.sorted.bam.uniq`; do
-#	htseq-count -a 0 -s yes -r pos -f bam -t smallrna -i ID  $f annotation.gff3 > $f".count"
-#done
