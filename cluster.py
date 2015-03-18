@@ -23,8 +23,6 @@ class Cluster:
      self.ratio = None
      self.zscore = None 
 
-transf_lambda = -1.0
-
 
 current_cluster = None
 current_chrx = None
@@ -61,6 +59,11 @@ for line in open(sys.argv[1]):
       current_chrx = chrx
       reading = False
       current_cluster = None
+
+for cluster in clusters:
+    if cluster.end - cluster.start > 500:
+        print cluster.chrx, cluster.start, cluster.end, cluster.height
+exit()        
 
 ratios = []
 best_lambda = -3
