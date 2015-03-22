@@ -1,9 +1,7 @@
-
-
-# trimming 3' adaptor
-for f in `ls WT*.fastq`; 
+# trimming 3' adaptor, quality and artifacts filtering
+for f in `ls *.fastq`; 
 do
-	fastx_clipper -l 26 -a TGGAATTCTCGGGTGCCAAGG -i $f -o $f".trimmed" &
+	fastx_clipper -c -l 26 -a TGGAATTCTCGGGTGCCAAGG -i $f | fastq_quality_filter -q 30 -p 70 | fastx_artifacts_filter -o $f".trimmed" &
 done
 
 # trimming HD ->4 4<- nucleotides
@@ -27,11 +25,19 @@ SeqIO.write(seqs, f, 'fastq')
 " $f $f".x" &
 done
 
-# aligning
+
+# aligning not unique
 for f in `ls *fastq.trimmed.x`;
 do
-	bowtie -S -M 1 -v 0 -p 8 --best --strata --al ${f/.trimmed.x/.al} --max  ${f/.trimmed.x/.max} --un ${f/.trimmed.x/.un}  magna $f | samtools view -Sh -F 4 - >  ${f/.*/.sam}
+	bowtie -S -M 1 -v 0 -p 8 --best --strata --al ${f/.trimmed.x/.al} --max  ${f/.trimmed.x/.max} --un ${f/.trimmed.x/.un}  db/bowtie/magna $f | samtools view -Sh -F 4 - >  ${f/.*/.sam}
 done
+
+# aligning unique
+for f in `ls *fastq.trimmed.x`;
+do
+	bowtie -S -m 1 -v 0 -p 8 --best --strata db/bowtie/magna $f | samtools view -Sh -F 4 - >  ${f/.*/.uniq.sam}
+done
+
 
 # sort and index
 for f in `ls *.sam`; do
@@ -40,7 +46,7 @@ for f in `ls *.sam`; do
 done
 
 # create bedgraphs
-for f in `ls *sorted.bam`; do genomeCoverageBed -bg -scale RPM -ibam $f > ${f/.sorted.bam/.bedgraph} & done
+for f in `ls *sorted.bam`; do genomeCoverageBed -bg -ibam $f -g genome.txt > ${f/.sorted.bam/.bedgraph} & done
 
 # converting aligned reads to fasta
 for f in `ls *fastq.al`; do 
@@ -48,10 +54,21 @@ for f in `ls *fastq.al`; do
 done
 
 ### annotation diffential expression
-for f in `ls ../[Wer]*sorted.bam.uniq`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t ncRNA -i ID $f ../Magnaporthe_oryzae.MG8.25.ncrna.gff3 > ${v/sorted.bam/ncrna.count} & done
-# or 
-for f in `ls ../[Wer]*sorted.bam.uniq`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t exon -i gene_id $f ../Magnaporthe_oryzae.MG8.25.gtf > ${v/sorted.bam/all.count} & done
-#...now use DESeq2
+for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t ncRNA -i ID $f Magnaporthe_oryzae.MG8.25.ncrna.gff3 > ${v/sorted.bam/ncrna.count} & done
+for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t exon -i gene_id $f Magnaporthe_oryzae.MG8.25.gtf > ${v/sorted.bam/all.count} & done
+Rscript ../diff.R WT_1.uniq.all.count WT_2.uniq.all.count  WT_3.uniq.all.count exp5_1.uniq.all.count exp5_2.uniq.all.count exp5_3.uniq.all.count WT_vs_EXP5_all.csv
+Rscript ../diff.R WT_1.uniq.all.count WT_2.uniq.all.count  WT_3.uniq.all.count rbp35_1.uniq.all.count rbp35_2.uniq.all.count rbp35_3.uniq.all.count WT_vs_RBP35_all.csv
+Rscript ../diff.R WT_1.uniq.ncrna.count WT_2.uniq.ncrna.count  WT_3.uniq.ncrna.count exp5_1.uniq.ncrna.count exp5_2.uniq.ncrna.count exp5_3.uniq.ncrna.count WT_vs_EXP5_ncrna.csv
+Rscript ../diff.R WT_1.uniq.ncrna.count WT_2.uniq.ncrna.count  WT_3.uniq.ncrna.count rbp35_1.uniq.ncrna.count rbp35_2.uniq.ncrna.count rbp35_3.uniq.ncrna.count WT_vs_RBP35_ncrna.csv
+
+
+### clusters diffential expression
+for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//}; v=${v/uniq.sorted.bam/cov}; genomeCoverageBed -ibam $f -g ../genome.txt -d > $v & done
+for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f | sed 's/ /\t/g' > ${f/cov/bed} & done
+cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","cluster",$2,$3,".",".",".","ID=cluster_"++count"_"}' | sed 's/ /\t/g' > cluster.gff3
+for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s no -r pos -f bam -t cluster -i ID $f cluster.gff3 > ${v/sorted.bam/count} & done
+Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count rbp35_1.uniq.count rbp35_2.uniq.count rbp35_3.uniq.count WT_vs_RBP35.csv
+Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count exp5_1.uniq.count exp5_2.uniq.count exp5_3.uniq.count WT_vs_EXP5.csv
 
 ### transcripts assembly diffential expression
 # in diff_expr dir
@@ -60,37 +77,42 @@ cat ../*fastq.trimmed.x | fastq_to_fasta -o all_reads.fa
 # assemble all the reads
 ~/Downloads/trinityrnaseq-2.0.2/Inchworm/bin/inchworm --reads all_reads.fa --run_inchworm -K 18 -L 18 --num_threads 8 > all_reads.fa.inch
 # prepare and run rsem
-rsem-prepare-reference --bowtie all_reads.fa.inch all
-for f in `ls ../*fastq.trimmed.x`; do v=${f/..\//}; rsem-calculate-expression --bowtie-n 0 --seed-length 25 -p 8 $f all ${v/.fastq.al/}; done
+~/Downloads/rsem-1.2.19/rsem-prepare-reference --bowtie all_reads.fa.inch all
+for f in `ls ../*fastq.trimmed.x`; do v=${f/..\//}; ~/Downloads/rsem-1.2.19/rsem-calculate-expression --bowtie-n 0 --seed-length 18 -p 8 $f all ${v/.fastq.trimmed.x/}; done
 # DE on transcriptome
 s=`ls *isoforms.results`; ~/Downloads/trinityrnaseq-2.0.2/util/abundance_estimates_to_matrix.pl --est_method RSEM  --out_prefix trans $s
 s=`ls *genes.results`; ~/Downloads/trinityrnaseq-2.0.2/util/abundance_estimates_to_matrix.pl --est_method RSEM  --out_prefix genes $s
-~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix trans.counts.matrix --method edgeR --samples_file ../../desc.txt ; ~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix genes.counts.matrix --method edgeR --samples_file ../../desc.txt
+~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix trans.counts.matrix --method edgeR --samples_file ../desc.txt 
+~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix genes.counts.matrix --method edgeR --samples_file ../desc.txt
 
-
-### clusters diffential expression
-for f in `ls ../*sorted.bam.uniq`; do v=${f/..\//}; v=${v/sorted.bam.uniq/cov}; echo $v ; genomeCoverageBed -ibam $f -g genome.txt -d > $v & done
-for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f  > ${f/cov/bed} & done
-cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","peak",$2,$3,".",".",".","ID=peak_"++count"_"}' | sed 's/ /\t/g' > peaks.gff3
-#...now use DESeq2
-
-
- ### for the avr-regions (modify cluster.py)
-for f in `ls ../[Wer]*sorted.bam`; do v=${f/..\//}; v=${v/sorted.bam/cov}; echo $v ; genomeCoverageBed -ibam $f -g ../genome.txt -d > $v & done
-for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f  > ${f/cov/bed} & done
-cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","region",$2,$3,".",".",".","ID=region_"++count"_"}' | sed 's/ /\t/g' > regions.gff3
- 
+### transcripts assembly diffential expression with DESeq2
+cat ../W*fastq.trimmed.x | fastq_to_fasta -o all_reads_WT.fa
+cat ../e*fastq.trimmed.x | fastq_to_fasta -o all_reads_exp5.fa
+cat ../r*fastq.trimmed.x | fastq_to_fasta -o all_reads_rbp35.fa
+for f in `ls *fa`; do ~/Downloads/trinityrnaseq-2.0.2/Inchworm/bin/inchworm --reads $f --run_inchworm -K 18 -L 18 --num_threads 8 > $f.inch; done
+cat *inch | fasta_formatter | fastx_collapser -o all_reads.fa.inch
+for f in `ls ../*fastq.trimmed.x`; do v=${f/..\//}; bowtie -S -p 8 -v 0 -m 1 --sam-nohead  all $f  | awk '{if($2!=4)print $3}' | sort | uniq -c | awk '{print $2"\t"$1}' > "_"$v ; done
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*x`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
+cat $tmp > _count
+cut -f 1,2 _count > exp5_1.count;cut -f 1,3 _count > exp5_2.count;cut -f 1,4 _count > exp5_3.count; cut -f 1,5 _count > rbp35_1.count; cut -f 1,6 _count > rbp35_2.count; cut -f 1,7 _count > rbp35_3.count; cut -f 1,8 _count > WT_1.count; cut -f 1,9 _count > WT_2.count; cut -f 1,10 _count > WT_3.count
+Rscript ../diff.R WT_1.count WT_2.count  WT_3.count exp5_1.count exp5_2.count exp5_3.count WT_vs_EXP5.csv
+Rscript ../diff.R WT_1.count WT_2.count  WT_3.count rbp35_1.count rbp35_2.count rbp35_3.count WT_vs_RBP35.csv
 
 ### sequences differential expression
-#*fasta.collapsed.count were created after collapsing fastq sequences
+for f in `ls *.fastq.trimmed.x`; do fastx_collapser -i $f -o ${f/fastq/fasta}.collapsed ; done
+for f in `ls *fasta.trimmed.x.collapsed`; do awk '{if (substr($0, 1, 1) == ">"){ split($0, arr, "-"); val=arr[2];} else { print $0"\t"val; val="-" }  }' < $f > $f.count; done
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls ../*fasta.collapsed.count`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
 cat $tmp > seq.count
 cut -f 1,2 seq.count > exp_1.count;cut -f 1,3 seq.count > exp_2.count;cut -f 1,4 seq.count > exp_3.count; cut -f 1,5 seq.count > rbp_1.count; cut -f 1,6 seq.count > rbp_2.count; cut -f 1,7 seq.count > rbp_3.count; cut -f 1,8 seq.count > wt_1.count; cut -f 1,9 seq.count > wt_2.count; cut -f 1,10 seq.count > wt_3.count
-#...now use DESeq2
-
+Rscript ../diff.R WT_1.count WT_2.count  WT_3.count exp5_1.count exp5_2.count exp5_3.count WT_vs_EXP5.csv
+Rscript ../diff.R WT_1.count WT_2.count  WT_3.count rbp35_1.count rbp35_2.count rbp35_3.count WT_vs_RBP35.csv
 
 ### HD adapter differential expression
-# retrieve HD adapter and DE here...
+for f in `ls ../*fasta.trimmed`; do v=${f/..\//}; grep -v ">" $f | awk '{print substr($0,1,4)}' | sort | uniq -c | awk '{print $2"\t"$1}' > ${v/fasta.trimmed/5prime.count}; done
+for f in `ls ../*fasta.trimmed`; do v=${f/..\//}; grep -v ">" $f | awk '{print substr($0,length($0)-3,4)}' | sort | uniq -c | awk '{print $2"\t"$1}' > ${v/fasta.trimmed/3prime.count}; done
+Rscript ../diff.R WT_1.5prime.count WT_2.5prime.count WT_3.5prime.count exp5_1.5prime.count exp5_2.5prime.count exp5_3.5prime.count WT_vs_EXP5.5prime.csv
+Rscript ../diff.R WT_1.3prime.count WT_2.3prime.count WT_3.3prime.count exp5_1.3prime.count exp5_2.3prime.count exp5_3.3prime.count WT_vs_EXP5.3prime.csv
+
 # extraction of adapter-related sequences
 #sample oriente
  for f in `awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $6<0.05 && $6!="NA" && $3>0) print $1}' < WT_vs_RBP35_3prime.csv | sed 's/"//g'`; do grep "^"$f ../[Wr]*.fasta.trimmed.collapsed -h | sort -u | awk '{ print ">s_"++count; print substr($1, 5, length($1)-8) }'  ; done > WT_vs_RBP35_3prime_up.fa & 
@@ -104,6 +126,12 @@ cut -f 1,2 seq.count > exp_1.count;cut -f 1,3 seq.count > exp_2.count;cut -f 1,4
 #adapter oriented
  for f in `cat *5prime.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $6<0.05 && $6!="NA" ) print $1}' | sed 's/"//g'`; do  grep "^"$f ../[Wer]*.fasta.trimmed.collapsed -h | sort -u | awk '{ print ">s_"++count; print substr($1, 5, length($1)-8) }' > "_"$f ; done
  for f in `cat *3prime.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $6<0.05 && $6!="NA" ) print $1}' | sed 's/"//g'`; do  grep $f"$" ../[Wer]*.fasta.trimmed.collapsed -h | sort -u | awk '{ print ">s_"++count; print substr($1, 5, length($1)-8) }' > "__"$f ; done
+
+
+### for the avr-regions (modify cluster.py)
+for f in `ls ../[Wer]*sorted.bam`; do v=${f/..\//}; v=${v/sorted.bam/cov}; echo $v ; genomeCoverageBed -ibam $f -g ../genome.txt -d > $v & done
+for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f  > ${f/cov/bed} & done
+cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","region",$2,$3,".",".",".","ID=region_"++count"_"}' | sed 's/ /\t/g' > regions.gff3
  
  
 
@@ -213,5 +241,4 @@ done < __exp5_IP17_GTAGAG_L006_R1.sam
 
 # for all the retros......
 reset;tmp=$(mktemp);tmp2=$(mktemp);for file in `ls *retro5*`; do sort -k 1,1 $file -o $file ;  if [ -s "$tmp" ];   then   join -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";   else     cp "$file" "$tmp2";   fi;   cp "$tmp2" "$tmp"; done; cat $tmp | sort -nk1
-
 

@@ -22,8 +22,8 @@ for line in F:
 
 F.close()
 
-print "%s reads" % Nbre_reads
+#print "%s reads" % Nbre_reads
 
-print "%s distinct sequences" % (len(readDic))
+#print "%s distinct sequences" % (len(readDic))
 
-print "%f complexity" % (len(readDic)/float(Nbre_reads))
+print sys.argv[1], "%f complexity" % (len(readDic)/float(Nbre_reads))

@@ -60,10 +60,10 @@ for line in open(sys.argv[1]):
       reading = False
       current_cluster = None
 
-for cluster in clusters:
-    if cluster.end - cluster.start > 500:
-        print cluster.chrx, cluster.start, cluster.end, cluster.height
-exit()        
+#for cluster in clusters:
+#    if cluster.end - cluster.start > 500:
+#        print cluster.chrx, cluster.start, cluster.end, cluster.height
+        
 
 ratios = []
 best_lambda = -3
