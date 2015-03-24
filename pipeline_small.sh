@@ -55,11 +55,17 @@ done
 
 ### annotation diffential expression
 for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t ncRNA -i ID $f Magnaporthe_oryzae.MG8.25.ncrna.gff3 > ${v/sorted.bam/ncrna.count} & done
-for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t exon -i gene_id $f Magnaporthe_oryzae.MG8.25.gtf > ${v/sorted.bam/all.count} & done
 Rscript ../diff.R WT_1.uniq.all.count WT_2.uniq.all.count  WT_3.uniq.all.count exp5_1.uniq.all.count exp5_2.uniq.all.count exp5_3.uniq.all.count WT_vs_EXP5_all.csv
 Rscript ../diff.R WT_1.uniq.all.count WT_2.uniq.all.count  WT_3.uniq.all.count rbp35_1.uniq.all.count rbp35_2.uniq.all.count rbp35_3.uniq.all.count WT_vs_RBP35_all.csv
-Rscript ../diff.R WT_1.uniq.ncrna.count WT_2.uniq.ncrna.count  WT_3.uniq.ncrna.count exp5_1.uniq.ncrna.count exp5_2.uniq.ncrna.count exp5_3.uniq.ncrna.count WT_vs_EXP5_ncrna.csv
-Rscript ../diff.R WT_1.uniq.ncrna.count WT_2.uniq.ncrna.count  WT_3.uniq.ncrna.count rbp35_1.uniq.ncrna.count rbp35_2.uniq.ncrna.count rbp35_3.uniq.ncrna.count WT_vs_RBP35_ncrna.csv
+
+## ncRNA  diffential expression (ncrna is db made of unique ncRNA sequences)
+for f in `ls ../*[123].fastq.trimmed.x`; do v=${f/..\//}; bowtie -S -p 8 -m 1 -v 0 ncrna --quiet --sam-nohead $f | awk '{if($2==0)print $3}' | sort | uniq -c | awk '{print $2"\t"$1}' > "_"${v/.fastq.trimmed.x/.count}; done
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*count`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
+cat $tmp > _count
+cut -f 1,2 _count > exp5_1.count;cut -f 1,3 _count > exp5_2.count;cut -f 1,4 _count > exp5_3.count; cut -f 1,5 _count > rbp35_1.count; cut -f 1,6 _count > rbp35_2.count; cut -f 1,7 _count > rbp35_3.count; cut -f 1,8 _count > WT_1.count; cut -f 1,9 _count > WT_2.count; cut -f 1,10 _count > WT_3.count
+Rscript ../diff.R WT_1.count WT_2.count  WT_3.count rbp35_1.count rbp35_2.count rbp35_3.count WT_vs_RBP35.csv
+Rscript ../diff.R WT_1.count WT_2.count  WT_3.count exp5_1.count exp5_2.count exp5_3.count WT_vs_EXP5.csv
+
 
 
 ### clusters diffential expression
@@ -138,16 +144,15 @@ cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","re
 
 # get info, in db folder
 # for diff_expr_sequences
-for f in `ls ../*fasta.collapsed`;
+rm _*
+for f in `ls *[123].fasta.trimmed.x`;
 do
-rm "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 ../db/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 ../db/retro  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 ../db/rrna  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 ../db/cds -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 ../db/utr  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 ../db/unspliced  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
-bowtie -S -p 8 -v 0 -k 1 ../magna -f __un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"${f/..\/}
+bowtie -S -p 8 -v 2 -k 1 db/bowtie/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f
+bowtie -S -p 8 -v 2 -k 1 db/bowtie/retro  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f
+bowtie -S -p 8 -v 2 -k 1 db/bowtie/cds -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f
+bowtie -S -p 8 -v 2 -k 1 db/bowtie/utr  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f
+bowtie -S -p 8 -v 2 -k 1 db/bowtie/unspliced  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f
+bowtie -S -p 8 -v 2 -k 1 db/bowtie/magna -f _un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"$f
 done 
 
 # for cluster, milRNA, assemblies
@@ -180,20 +185,20 @@ done
 
 
 # for adapters and reads
-for f in `ls *fa`;
+for f in `ls *.fa`;
 do
-#rm _*	
+rm _*	
 bowtie -S  -v 0  ../db/bowtie/ncrna  -f $f --un _un  -k 1 --quiet --sam-nohead -p 8  | awk '{if($2!=4)print $0}'  > _ncrna_out 
 bowtie -S  -v 0 ../db/bowtie/retro -f _un --un __un   -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}'  > _retro_out 
 bowtie -S  -v 0 ../db/bowtie/utr -f __un --un _un    -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}' > _utr_out 
 bowtie -S  -v 0  ../db/bowtie/cds -f _un --un __un  -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}'  > _cds_out 
 bowtie -S  -v 0 ../db/bowtie/unspliced  -f __un --un _un  -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}' > _intron_out
 bowtie -S -v 0  ../db/bowtie/magna -f _un --al _intergenic --un=_unaligned  -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}'  > _intergenic_out
-cmsearch --cpu 8 -E 1e-2 --tblout _intergenic_rfam --noali ~/Downloads/Rfam.cm _un > /dev/null
-cmsearch --cpu 8 -E 1e-2 --tblout _unaligned_rfam --noali ~/Downloads/Rfam.cm __un > /dev/null 
-echo $f 
-for g in _ncrna_out _retro_out _cds_out _utr_out _intron_out _intergenic_out; do echo ${g/_out/} > "_"$g; awk '{if($2==0)s="+"; else s="-"; print $1,$3,s}' < $g >> "_"$g ; done
+echo -ne $f" "  
+#for g in _ncrna_out _retro_out _cds_out _utr_out _intron_out _intergenic_out; do echo ${g/_out/} > "_"$g; awk '{if($2==0)s="+"; else s="-"; print $1,$3,s}' < $g >> "_"$g ; done
+for g in _ncrna_out _retro_out _cds_out _utr_out _intron_out _intergenic_out; do  wc -l $g | cut -f 1 -d " " >> "_"$g ; done
 paste  -d "," __ncrna_out __retro_out __cds_out __utr_out __intron_out __intergenic_out
+continue
 if [ -s _intergenic ] ; then  
 	cmsearch --cpu 8 -E 1e-2 --tblout _intergenic_rfam --noali ~/Downloads/Rfam.cm _intergenic > /dev/null
 	sed -i -e 's/^#.*//' -e '/^$/d'  _intergenic_rfam; 
@@ -209,7 +214,6 @@ echo ""
 #num=`grep -c ">" $f`
 #for g in _ncrna_out _retro_out _cds_out _utr_out _intron_out _intergenic_out; do echo ${g/_out/} > "_"$g; wc -l $g | cut -f 1 -d " " | awk -v num=$num '{print $0/num}' >> "_"$g ; done
 #echo -e "adapter\n"$f |  paste  -d "," - __ncrna_out __retro_out __cds_out __utr_out __intron_out __intergenic_out
-
 done
 
 
