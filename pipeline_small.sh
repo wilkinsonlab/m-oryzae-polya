@@ -25,18 +25,25 @@ SeqIO.write(seqs, f, 'fastq')
 " $f $f".x" &
 done
 
-
+### bowtie1
 # aligning not unique
 for f in `ls *fastq.trimmed.x`;
 do
 	bowtie -S -M 1 -v 0 -p 8 --best --strata --al ${f/.trimmed.x/.al} --max  ${f/.trimmed.x/.max} --un ${f/.trimmed.x/.un}  db/bowtie/genome $f | samtools view -Sh -F 4 - >  ${f/.*/.sam}
 done
-
 # aligning unique
 for f in `ls *fastq.trimmed.x`;
 do
 	bowtie -S -m 1 -v 0 -p 8 --best --strata db/bowtie/genome $f | samtools view -Sh -F 4 - >  ${f/.*/.uniq.sam}
 done
+
+
+### bowtie2 --end-to-end OR --local
+for f in `ls *fastq.trimmed.x`; 
+do 
+	bowtie2 -p 8 --end-to-end --al genomic_based/bowtie2_end_to_end/${f/.trimmed.x/.al}  --un genomic_based/bowtie2_end_to_end/${f/.trimmed.x/.un}  -x db/bowtie2/genome -q $f | samtools view -bSh -F 4 - | samtools sort - genomic_based/bowtie2_end_to_end/${f/.*/.sorted}; 
+done
+
 
 
 # sort and index
@@ -48,31 +55,17 @@ done
 # create bedgraphs
 for f in `ls *sorted.bam`; do genomeCoverageBed -bg -ibam $f -g genome.txt > ${f/.sorted.bam/.bedgraph} & done
 
-# converting aligned reads to fasta
-for f in `ls *fastq.al`; do 
-	fastq_to_fasta -i $f -o ${f/fastq/fasta}; 
-done
 
 ### annotation diffential expression
-for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t ncRNA -i ID $f Magnaporthe_oryzae.MG8.25.ncrna.gff3 > ${v/sorted.bam/ncrna.count} & done
-Rscript ../diff.R WT_1.uniq.all.count WT_2.uniq.all.count  WT_3.uniq.all.count exp5_1.uniq.all.count exp5_2.uniq.all.count exp5_3.uniq.all.count WT_vs_EXP5_all.csv
-Rscript ../diff.R WT_1.uniq.all.count WT_2.uniq.all.count  WT_3.uniq.all.count rbp35_1.uniq.all.count rbp35_2.uniq.all.count rbp35_3.uniq.all.count WT_vs_RBP35_all.csv
-
-## ncRNA  diffential expression (ncrna is db made of unique ncRNA sequences)
-for f in `ls ../*[123].fastq.trimmed.x`; do v=${f/..\//}; bowtie -S -p 8 -m 1 -v 0 ncrna --quiet --sam-nohead $f | awk '{if($2==0)print $3}' | sort | uniq -c | awk '{print $2"\t"$1}' > "_"${v/.fastq.trimmed.x/.count}; done
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*count`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
-cat $tmp > _count
-cut -f 1,2 _count > exp5_1.count;cut -f 1,3 _count > exp5_2.count;cut -f 1,4 _count > exp5_3.count; cut -f 1,5 _count > rbp35_1.count; cut -f 1,6 _count > rbp35_2.count; cut -f 1,7 _count > rbp35_3.count; cut -f 1,8 _count > WT_1.count; cut -f 1,9 _count > WT_2.count; cut -f 1,10 _count > WT_3.count
-Rscript ../diff.R WT_1.count WT_2.count  WT_3.count rbp35_1.count rbp35_2.count rbp35_3.count WT_vs_RBP35.csv
-Rscript ../diff.R WT_1.count WT_2.count  WT_3.count exp5_1.count exp5_2.count exp5_3.count WT_vs_EXP5.csv
-
-
+for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t gene -i ID $f Magnaporthe_oryzae.MG8.25.gff3 > ${v/sorted.bam/count} & done
+Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count exp5_1.uniq.count exp5_2.uniq.count exp5_3.uniq.count WT_vs_EXP5_csv
+Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count rbp35_1.uniq.count rbp35_2.uniq.count rbp35_3.uniq.count WT_vs_RBP35_csv
 
 ### clusters diffential expression
 for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//}; v=${v/uniq.sorted.bam/cov}; genomeCoverageBed -ibam $f -g ../genome.txt -d > $v & done
 for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f | sed 's/ /\t/g' > ${f/cov/bed} & done
-cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","cluster",$2,$3,".",".",".","ID=cluster_"++count"_"}' | sed 's/ /\t/g' > cluster.gff3
-for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s no -r pos -f bam -t cluster -i ID $f cluster.gff3 > ${v/sorted.bam/count} & done
+cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","cluster",$2,$3,".",".",".","ID=cluster_"++count"_"}' | sed 's/ /\t/g' > clusters.gff3
+for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s no -r pos -f bam -t cluster -i ID $f clusters.gff3 > ${v/sorted.bam/count} & done
 Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count rbp35_1.uniq.count rbp35_2.uniq.count rbp35_3.uniq.count WT_vs_RBP35.csv
 Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count exp5_1.uniq.count exp5_2.uniq.count exp5_3.uniq.count WT_vs_EXP5.csv
 
@@ -149,46 +142,74 @@ rm _*
 for f in `ls *[123].fasta.trimmed.x`;
 do
 bowtie -S -p 8 -v 1 -k 1 db/bowtie/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f
-bowtie -S -p 8 -v 1 -k 1 db/bowtie/retro  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f
-bowtie -S -p 8 -v 1 -k 1 db/bowtie/cds -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f
-bowtie -S -p 8 -v 1 -k 1 db/bowtie/utr  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f
-bowtie -S -p 8 -v 1 -k 1 db/bowtie/transcripts  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f
-bowtie -S -p 8 -v 1 -k 1 db/bowtie/unspliced  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f
-bowtie -S -p 8 -v 1 -k 1 db/bowtie/genome -f __un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"$f
+bowtie -S -p 8 -v 1 -k 1 db/bowtie/rrna  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f
+bowtie -S -p 8 -v 1 -k 1 db/bowtie/retro  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f
+bowtie -S -p 8 -v 1 -k 1 db/bowtie/transcripts  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f
+bowtie -S -p 8 -v 1 -k 1 db/bowtie/unspliced  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f
+bowtie -S -p 8 -v 1 -k 1 db/bowtie/genome -f _un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"$f
 done 
+rm _*
+for f in `ls *[123].fasta.trimmed.x`; do 
+bowtie2 --local -p 8 -k 1  db/bowtie2/ncrna -f $f --un _un 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
+bowtie2 --local -p 8 -k 1  db/bowtie2/rrna  -f _un --un __un 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
+bowtie2 --local -p 8 -k 1  db/bowtie2/retro -f __un --un _un 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
+bowtie2 --local -p 8 -k 1  db/bowtie2/transcripts  -f _un --un __un 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
+bowtie2 --local -p 8 -k 1  db/bowtie2/unspliced  -f __un --un _un 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
+bowtie2 --local -p 8 -k 1  db/bowtie2/genome -f _un --un _unknown 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
+done
+
+
 
 # for cluster, milRNA, assemblies
 rm _*
 for f in `ls *_vs_*.fa `;
 do	
-blastn  -task blastn -query $f -db ../db/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1 | awk '{if ($4/$5 > 0.9  ) print $0}' > _ncrna_out
-blastn  -task blastn -query $f -db ../db/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1 | awk '{if ($4/$5 > 0.9  ) print $0}' > _rrna_out
-blastn  -task blastn -query $f -db ../db/retro.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1 | awk '{if ($4/$5 > 0.9  ) print $0}' > _retro_out
-blastn  -task blastn -query $f -db ../db/utr.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1 | awk '{if ($4/$5 > 0.9  ) print $0}' > _utr_out
-blastn  -task blastn -query $f -db ../db/cds.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1 | awk '{if ($4/$5 > 0.9  ) print $0}' > _cds_out
-blastn  -task blastn -query $f -db ../db/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1 | awk '{if ($4/$5 > 0.9  ) print $0}' > _intron_out
-blastn  -task blastn -query $f -db ../db/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1 | awk '{if ($4/$5 > 0.9  ) print $0}' > _intergenic_out
+touch 	_ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out
+blastn  -num_threads 4  -task  blastn -query $f -db ../../db/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null| awk '{if ($4==$5 )  print $0}' > _ncrna_out
+blastn  -num_threads 4  -task  blastn -query $f -db ../../db/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2>  /dev/null | awk '{if ($4==$5 ) print $0}' > _rrna_out
+blastn  -num_threads 4  -task  blastn -query $f -db ../../db/retro.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null | awk '{if ($4==$5 ) print $0}' > _retro_out
+blastn  -num_threads 4  -task  blastn -query $f -db ../../db/transcripts.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4==$5 ) print $0}' > _transcripts_out
+blastn  -num_threads 4  -task  blastn -query $f -db ../../db/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ($4==$5 ) print $0}' > _gene_out
+blastn  -num_threads 4  -task  blastn -query $f -db ../../db/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4==$5 ) print $0}' > _intergenic_out
 for g in `ls _*`; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
-for g in _ncrna_out _rrna_out _retro_out _utr_out _cds_out _intron_out _intergenic_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
+## print numbers
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
+## print details	
+#echo -e "\n"$f
+#python -c "
+#yes = []
+#for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out'):
+#  out = open('_'+file, 'w')
+#  out.write(file + '\n')
+#  for line in open(file):
+#    items = line.strip().split('\t')
+#    if items[0] not in yes:
+#      out.write(items[1] + '\n')
+#      yes.append(items[0])
+#  out.close()       
+#" 
+#for f in `ls __*`; do sort $f | uniq -c | sort -o $f; done
+#paste __*
 done
+## print numbers
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
 cat $tmp
 
 
 # for adapters and reads
-for f in `ls *.fa`;
+for f in `ls *vs*.fa`;
 do
 rm _*	
-bowtie -S  -v 0  ../db/bowtie/ncrna  -f $f --un _un  -k 1 --quiet --sam-nohead -p 8  | awk '{if($2!=4)print $0}'  > _ncrna_out 
-bowtie -S  -v 0 ../db/bowtie/retro -f _un --un __un   -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}'  > _retro_out 
-bowtie -S  -v 0 ../db/bowtie/utr -f __un --un _un    -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}' > _utr_out 
-bowtie -S  -v 0  ../db/bowtie/cds -f _un --un __un  -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}'  > _cds_out 
-bowtie -S  -v 0 ../db/bowtie/unspliced  -f __un --un _un  -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}' > _intron_out
-bowtie -S -v 0  ../db/bowtie/genome -f _un --al _intergenic --un=_unaligned  -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}'  > _intergenic_out
+bowtie -S  -v 0  ../../db/bowtie/ncrna  -f $f --un _un  -k 1 --quiet --sam-nohead -p 8  | awk '{if($2!=4)print $0}'  > _ncrna_out 
+bowtie -S  -v 0 ../../db/bowtie/rrna -f _un --un __un   -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}'  > _rrna_out 
+bowtie -S  -v 0 ../../db/bowtie/retro -f __un --un _un    -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}' > _retro_out 
+bowtie -S  -v 0  ../../db/bowtie/transcripts -f _un --un __un  -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}'  > _transcripts_out 
+bowtie -S  -v 0 ../../db/bowtie/unspliced  -f __un --un _un  -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}' > _gene_out
+bowtie -S -v 0  ../../db/bowtie/genome -f _un --al _intergenic --un=_unaligned  -k 1 --quiet --sam-nohead -p 8   | awk '{if($2!=4)print $0}'  > _intergenic_out
 echo -ne $f" "  
-#for g in _ncrna_out _retro_out _cds_out _utr_out _intron_out _intergenic_out; do echo ${g/_out/} > "_"$g; awk '{if($2==0)s="+"; else s="-"; print $1,$3,s}' < $g >> "_"$g ; done
-for g in _ncrna_out _retro_out _cds_out _utr_out _intron_out _intergenic_out; do  wc -l $g | cut -f 1 -d " " >> "_"$g ; done
-paste  -d "," __ncrna_out __retro_out __cds_out __utr_out __intron_out __intergenic_out
+#for g in _ncrna_out _retro_out _cds_out _utr_out _gene_out _intergenic_out; do echo ${g/_out/} > "_"$g; awk '{if($2==0)s="+"; else s="-"; print $1,$3,s}' < $g >> "_"$g ; done
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out; do  wc -l $g | cut -f 1 -d " " >> "_"$g ; done
+paste  -d "," __ncrna_out __rrna_out __retro_out __transcripts_out __gene_out __intergenic_out
 continue
 if [ -s _intergenic ] ; then  
 	cmsearch --cpu 8 -E 1e-2 --tblout _intergenic_rfam --noali ~/Downloads/Rfam.cm _intergenic > /dev/null
@@ -203,9 +224,43 @@ fi
 echo ""
 
 #num=`grep -c ">" $f`
-#for g in _ncrna_out _retro_out _cds_out _utr_out _intron_out _intergenic_out; do echo ${g/_out/} > "_"$g; wc -l $g | cut -f 1 -d " " | awk -v num=$num '{print $0/num}' >> "_"$g ; done
-#echo -e "adapter\n"$f |  paste  -d "," - __ncrna_out __retro_out __cds_out __utr_out __intron_out __intergenic_out
+#for g in _ncrna_out _retro_out _cds_out _utr_out _gene_out _intergenic_out; do echo ${g/_out/} > "_"$g; wc -l $g | cut -f 1 -d " " | awk -v num=$num '{print $0/num}' >> "_"$g ; done
+#echo -e "adapter\n"$f |  paste  -d "," - __ncrna_out __retro_out __cds_out __utr_out __gene_out __intergenic_out
 done
+
+
+for f in `ls *vs*.fa`;
+do
+rm _*	
+bowtie2 --end-to-end -x ../../db/bowtie2/ncrna  -f $f --un _un --quiet --no-head -p 8  | awk '{if($2!=4)print $0}'  > _ncrna_out 
+bowtie2 --end-to-end -x ../../db/bowtie2/rrna -f _un --un __un --quiet --no-head -p 8   | awk '{if($2!=4)print $0}'  > _rrna_out 
+bowtie2 --end-to-end -x ../../db/bowtie2/retro -f __un --un _un --quiet --no-head -p 8   | awk '{if($2!=4)print $0}' > _retro_out 
+bowtie2 --end-to-end -x  ../../db/bowtie2/transcripts -f _un --un __un --quiet --no-head -p 8   | awk '{if($2!=4)print $0}'  > _transcripts_out 
+bowtie2 --end-to-end -x ../../db/bowtie2/unspliced  -f __un --un _un --quiet --no-head -p 8   | awk '{if($2!=4)print $0}' > _gene_out
+bowtie2 --end-to-end -x  ../../db/bowtie2/genome -f _un --al _intergenic --un=_unaligned  --quiet --no-head -p 8   | awk '{if($2!=4)print $0}'  > _intergenic_out
+echo -ne $f" "  
+#for g in _ncrna_out _retro_out _cds_out _utr_out _gene_out _intergenic_out; do echo ${g/_out/} > "_"$g; awk '{if($2==0)s="+"; else s="-"; print $1,$3,s}' < $g >> "_"$g ; done
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out; do  wc -l $g | cut -f 1 -d " " >> "_"$g ; done
+paste  -d "," __ncrna_out __rrna_out __retro_out __transcripts_out __gene_out __intergenic_out
+continue
+if [ -s _intergenic ] ; then  
+	cmsearch --cpu 8 -E 1e-2 --tblout _intergenic_rfam --noali ~/Downloads/Rfam.cm _intergenic > /dev/null
+	sed -i -e 's/^#.*//' -e '/^$/d'  _intergenic_rfam; 
+	echo "_intergenic_rfam"; cat _intergenic_rfam 
+fi
+if [ -s _unaligned ] ; then  
+	cmsearch --cpu 8 -E 1e-2 --tblout _unaligned_rfam --noali ~/Downloads/Rfam.cm _unaligned > /dev/null
+	sed -i -e 's/^#.*//' -e '/^$/d'  _unaligned_rfam;  
+	echo "_unaligned_rfam"; cat _unaligned_rfam;
+fi
+echo ""
+
+#num=`grep -c ">" $f`
+#for g in _ncrna_out _retro_out _cds_out _utr_out _gene_out _intergenic_out; do echo ${g/_out/} > "_"$g; wc -l $g | cut -f 1 -d " " | awk -v num=$num '{print $0/num}' >> "_"$g ; done
+#echo -e "adapter\n"$f |  paste  -d "," - __ncrna_out __retro_out __cds_out __utr_out __gene_out __intergenic_out
+done
+
+
 
 
 ### retrotransposons map
