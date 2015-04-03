@@ -56,19 +56,6 @@ done
 for f in `ls *sorted.bam`; do genomeCoverageBed -bg -ibam $f -g genome.txt > ${f/.sorted.bam/.bedgraph} & done
 
 
-### annotation diffential expression
-for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t gene -i ID $f Magnaporthe_oryzae.MG8.25.gff3 > ${v/sorted.bam/count} & done
-Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count exp5_1.uniq.count exp5_2.uniq.count exp5_3.uniq.count WT_vs_EXP5_csv
-Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count rbp35_1.uniq.count rbp35_2.uniq.count rbp35_3.uniq.count WT_vs_RBP35_csv
-
-### clusters diffential expression
-for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//}; v=${v/uniq.sorted.bam/cov}; genomeCoverageBed -ibam $f -g ../genome.txt -d > $v & done
-for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f | sed 's/ /\t/g' > ${f/cov/bed} & done
-cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","cluster",$2,$3,".",".",".","ID=cluster_"++count"_"}' | sed 's/ /\t/g' > clusters.gff3
-for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s no -r pos -f bam -t cluster -i ID $f clusters.gff3 > ${v/sorted.bam/count} & done
-Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count rbp35_1.uniq.count rbp35_2.uniq.count rbp35_3.uniq.count WT_vs_RBP35.csv
-Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count exp5_1.uniq.count exp5_2.uniq.count exp5_3.uniq.count WT_vs_EXP5.csv
-
 ### transcripts assembly diffential expression
 # in diff_expr dir
 # join all fastq into a single fasta
@@ -164,36 +151,37 @@ done
 rm _*
 for f in `ls *_vs_*.fa `;
 do	
+db_dir="../../../db"
 touch 	_ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out
-blastn  -num_threads 4  -task  blastn -query $f -db ../../db/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null| awk '{if ($4==$5 )  print $0}' > _ncrna_out
-blastn  -num_threads 4  -task  blastn -query $f -db ../../db/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2>  /dev/null | awk '{if ($4==$5 ) print $0}' > _rrna_out
-blastn  -num_threads 4  -task  blastn -query $f -db ../../db/retro.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null | awk '{if ($4==$5 ) print $0}' > _retro_out
-blastn  -num_threads 4  -task  blastn -query $f -db ../../db/transcripts.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4==$5 ) print $0}' > _transcripts_out
-blastn  -num_threads 4  -task  blastn -query $f -db ../../db/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ($4==$5 ) print $0}' > _gene_out
-blastn  -num_threads 4  -task  blastn -query $f -db ../../db/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4==$5 ) print $0}' > _intergenic_out
+blastn  -num_threads 4  -task  blastn -query $f -db $db_dir/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null| awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9)  print $0}' > _ncrna_out
+blastn  -num_threads 4  -task  blastn -query $f -db $db_dir/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2>  /dev/null | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _rrna_out
+blastn  -num_threads 4  -task  blastn -query $f -db $db_dir/retro.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _retro_out
+blastn  -num_threads 4  -task  blastn -query $f -db $db_dir/transcripts.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _transcripts_out
+blastn  -num_threads 4  -task  blastn -query $f -db $db_dir/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _gene_out
+blastn  -num_threads 4  -task  blastn -query $f -db $db_dir/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _intergenic_out
 for g in `ls _*`; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
 ## print numbers
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
+#for g in _ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
 ## print details	
-#echo -e "\n"$f
-#python -c "
-#yes = []
-#for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out'):
-#  out = open('_'+file, 'w')
-#  out.write(file + '\n')
-#  for line in open(file):
-#    items = line.strip().split('\t')
-#    if items[0] not in yes:
-#      out.write(items[1] + '\n')
-#      yes.append(items[0])
-#  out.close()       
-#" 
-#for f in `ls __*`; do sort $f | uniq -c | sort -o $f; done
-#paste __*
+echo -e "\n"$f
+python -c "
+yes = []
+for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out'):
+  out = open('_'+file, 'w')
+  out.write(file + '\n')
+  for line in open(file):
+    items = line.strip().split('\t')
+    if items[0] not in yes:
+      out.write(items[1] + '\n')
+      yes.append(items[0])
+  out.close()       
+" 
+for f in `ls __*`; do sort $f | uniq -c | sort -o $f; done
+paste __*
 done
 ## print numbers
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
-cat $tmp
+#tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
+#cat $tmp
 
 
 # for adapters and reads
@@ -261,6 +249,136 @@ echo ""
 done
 
 
+########## 
+# CLUSTERS, BOTH GENOMIC AND TRANSCRIPTOME
+##########
+# get all the alignments
+for f in `ls *fasta.trimmed.x.collapsed`;  do  
+bowtie2 -p 4 -a --end-to-end  -x db/bowtie2/genome -f $f | samtools view -bSh -F 4 - | samtools sort - genomic_based/_bowtie2_end_to_end/${f/.*/.sorted};  
+done
+# calculate coverage
+for f in `ls [W]*sorted.bam`;
+do
+python -c "
+import numpy, pysam, sys
+chrom = {}
+for line in open(sys.argv[1], 'r'):
+  chrx, length = line.strip().split('\t')
+  chrom[chrx] = numpy.array([0] * (int(length)+1))
+
+samfile = pysam.Samfile( sys.argv[2],'r' )
+i = 0
+for read in samfile.fetch():
+  i += 1
+  if i % 1000000 == 0: sys.stderr.write(str(i) + '\n')
+  name, val = read.qname.split('-')
+  val = int(val)
+  chrx = samfile.getrname(read.tid)
+  chrom[chrx][read.pos:read.reference_end] += val
+
+for chrx, array in chrom.items():
+  for pos, val in enumerate(array):
+     print chrx + '\t' + str(pos+1) + '\t' + str(val)
+" ../../genome.txt $f > ${f/sorted.bam/cov} &
+done
+# detect clusters
+for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f | sed 's/ /\t/g' > ${f/cov/bed} & done
+cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","cluster",$2,$3,".",".",".","ID=cluster_"++count"_"}' | sed 's/ /\t/g' > clusters.gff3
+cat ../../genome.txt | while read a b; do grep "^"$a clusters.gff3 | sort -k 4n,4; done  > _o; mv _o clusters.gff3
+# compute weighted expression
+for f in `ls [er]*sorted.bam`;
+do
+python -c "
+import numpy, pysam, sys, math
+clusters = []
+for line in open(sys.argv[1], 'r'):
+  items = line.strip().split('\t')
+  clusters.append((items[8].replace('ID=', ''),  items[0], int(items[3]), int(items[4])))
+  exprs[cluster] = 0.0
+
+samfile = pysam.Samfile( sys.argv[2],'r' )
+i = 0
+counts = {}
+for read in samfile.fetch():
+  i += 1
+  if i % 1000000 == 0: sys.stderr.write(str(i) + '\n')
+  name, val = read.qname.split('-')
+  #for a, b in read.get_tags(): name += ' ' + str(a) + ' ' + str(b)
+  name += '_' + str(read.flag)
+  if not counts.has_key(name): counts[name] = 0.0
+  counts[name] += 1
+samfile.close()
+
+block_span = 100000
+chroms = ('supercont8.8', '7', '6', '5', '4', '3', '1', '2')
+table_blocks = dict.fromkeys(chroms)
+for chrx in chroms:
+    table_blocks[chrx] = dict((block, [])
+                              for block in range(0, 10000000, block_span))
+for chrx in chroms:
+    for cluster, chrx, start, end in clusters:
+        block_start = int(math.floor(start / float(block_span)) * block_span)
+        block_end = int(math.floor(end / float(block_span)) * block_span)
+        for block in range(block_start, block_end + block_span, block_span):
+            table_blocks[chrx][block].append((cluster, chrx, start, end))
+
+samfile = pysam.Samfile( sys.argv[2],'r' )
+i = 0
+exprs = {}
+for read in samfile.fetch():	
+  i += 1
+  if i % 1000000 == 0: sys.stderr.write(str(i) + '\n')
+  name, val = read.qname.split('-')
+  name += '_' + str(read.flag)
+  block = int(math.floor((read.pos+1, read.reference_end+1)[read.is_reverse] / float(block_span)) * block_span)
+  for (cluster, chrx, start, end) in table_blocks[samfile.getrname(read.tid)][block]:
+    if samfile.getrname(read.tid) == chrx and read.pos+1 >= start and read.reference_end <= end:
+       exprs[cluster] += int(val) / counts[name]
+       break
+samfile.close()
+
+for cluster, expr in exprs.items():
+     print cluster + '\t' + str(int(expr))
+" clusters.gff3 $f > ${f/sorted.bam/counts} 
+done
+
+
+
+
+### siRNA discovery
+bowtie2-build clusters.fa _clusters
+for f in `ls ../../../*.fasta.trimmed.x.collapsed`; do v=${f/..\/..\/..\//}; bowtie2 -p 4 -x _clusters -f $f  > "_"${v/.fasta.trimmed.x.collapsed/}.sam; done
+for g in exp5_1 exp5_2 exp5_3 WT_1 WT_2 WT_3 rbp35_1 rbp35_2 rbp35_3; do 
+g=WT_2
+count=$(grep $g ../../../count.txt | cut -f 2)
+python -c "
+import sys, pysam
+exprs = {}
+vals = {}
+samfile = pysam.Samfile( sys.argv[1],'r' )
+for read in samfile.fetch():
+  if read.is_unmapped: continue
+  name, val = read.qname.split('-')
+  val = int(val)
+  cluster = samfile.getrname(read.tid)
+  if not read.is_reverse:
+    pos = read.pos
+  else :
+    pos = read.reference_end
+  if not exprs.has_key(cluster): exprs[cluster] = 0.0
+  if not vals.has_key(cluster): vals[cluster] = {}
+  if not vals[cluster].has_key(pos): vals[cluster][pos] = 0.0 
+  exprs[cluster] += int(val)
+  vals[cluster][pos] += int(val)
+for cluster, expr in exprs.items():
+  print cluster, expr, vals[cluster]
+  for pos, val in vals[cluster].items():
+    if val / expr > 0.50:
+      pass#print cluster, expr
+" "_"$g.sam | awk -v count=$count '{norm=(($2/(40949933/1000))/(count/1000000)); if (norm > 0.000020) print $1}' | while read f; do  grep -m 1 $f clusters.gff3 | awk '{if($5-$4<=100) print $0}' ; done | sort > $g.siRNA
+done
+sort WT_*siRNA | uniq -c | awk '{if ($1==3)print $10}'  | sed 's/ID=//' 
+
 
 
 ### retrotransposons map
@@ -292,6 +410,23 @@ done < __exp5_IP17_GTAGAG_L006_R1.sam
 # for all the retros......
 reset;tmp=$(mktemp);tmp2=$(mktemp);for file in `ls *retro5*`; do sort -k 1,1 $file -o $file ;  if [ -s "$tmp" ];   then   join -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";   else     cp "$file" "$tmp2";   fi;   cp "$tmp2" "$tmp"; done; cat $tmp | sort -nk1
 
+
+#####################
+# OLD STUFF
+#####################
+
+### annotation diffential expression
+for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t gene -i ID $f Magnaporthe_oryzae.MG8.25.gff3 > ${v/sorted.bam/count} & done
+Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count exp5_1.uniq.count exp5_2.uniq.count exp5_3.uniq.count WT_vs_EXP5_csv
+Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count rbp35_1.uniq.count rbp35_2.uniq.count rbp35_3.uniq.count WT_vs_RBP35_csv
+
+### clusters diffential expression
+for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//}; v=${v/uniq.sorted.bam/cov}; genomeCoverageBed -ibam $f -g ../genome.txt -d > $v & done
+for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f | sed 's/ /\t/g' > ${f/cov/bed} & done
+cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","cluster",$2,$3,".",".",".","ID=cluster_"++count"_"}' | sed 's/ /\t/g' > clusters.gff3
+for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s no -r pos -f bam -t cluster -i ID $f clusters.gff3 > ${v/sorted.bam/count} & done
+Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count rbp35_1.uniq.count rbp35_2.uniq.count rbp35_3.uniq.count WT_vs_RBP35.csv
+Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count exp5_1.uniq.count exp5_2.uniq.count exp5_3.uniq.count WT_vs_EXP5.csv
 
 
 ##### differential coverage

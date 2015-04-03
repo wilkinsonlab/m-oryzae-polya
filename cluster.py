@@ -72,9 +72,8 @@ for test_lambda in np.arange(-2,2,0.1):
  ratios = []
  for cluster in clusters:
   cluster.ratio = ((float(cluster.height)   /  (cluster.end - cluster.start)) ** test_lambda - 1) / test_lambda
-  #cluster.ratio = (float(cluster.height)   /  (cluster.end - cluster.start)) 
   ratios.append( cluster.ratio )
-  #print round(cluster.ratio, 3)
+  #print round(cluster.ratio, 2)
  if abs(scipy.stats.skew(ratios)) < abs(best_skew): 
    best_lambda =  test_lambda
    best_skew = scipy.stats.skew(ratios)
@@ -83,6 +82,7 @@ ratios = []
 for cluster in clusters:
   cluster.ratio = ((float(cluster.height)   /  (cluster.end - cluster.start)) ** best_lambda - 1) / best_lambda
   ratios.append( cluster.ratio ) 
+  #print round(cluster.ratio, 2)
 
 ratios_median = median(ratios)
 ratios_mad = 1.4826*mad(ratios)
@@ -93,7 +93,7 @@ for cluster in clusters:
   cluster.zscore = (cluster.ratio - ratios_median) / ratios_mad
   zscores.append(cluster.zscore)
 
-threshold = np.percentile(zscores, 99)
+threshold = np.percentile(zscores, 95)
 for cluster in clusters:
   if cluster.zscore > threshold:
     print cluster.chrx, cluster.start, cluster.end, cluster.height, cluster.ratio, cluster.zscore
