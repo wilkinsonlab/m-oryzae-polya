@@ -152,9 +152,9 @@ done
 
 # for cluster, milRNA, assemblies
 rm _*
-for f in `ls all_siRNA.fa `;
+for f in `ls all_siRNA.cluster.fa `;
 do	
-db_dir="../../../db"
+db_dir="../../../../db"
 touch 	_ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out
 blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null| awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9)  print $0}' > _ncrna_out
 blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2>  /dev/null | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _rrna_out
@@ -164,26 +164,26 @@ blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/unspliced.f
 blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _intergenic_out
 for g in `ls _*`; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
 ## print numbers
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
+#for g in _ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
 ## print details	
-#echo -e "\n"$f
-#python -c "
-#yes = []
-#for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out'):
-#  out = open('_'+file, 'w')
-#  for line in open(file):
-#    items = line.strip().split('\t')
-#    if items[0] not in yes:
-#      out.write(items[1] + '\n')
-#      yes.append(items[0])
-#  out.close()       
-#" 
-#for f in `ls __*`; do sort $f | uniq -c | sort -o $f; done
-#paste __*
+echo -e "\n"$f
+python -c "
+yes = []
+for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out'):
+  out = open('_'+file, 'w')
+  for line in open(file):
+    items = line.strip().split('\t')
+    if items[0] not in yes:
+      out.write(items[1] + '\n')
+      yes.append(items[0])
+  out.close()       
+" 
+for f in `ls __*`; do sort $f | uniq -c | sort -o $f; done
+paste __*
 done
 ## print numbers
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
-cat $tmp
+#tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
+#cat $tmp
 
 
 rm _*
@@ -208,17 +208,7 @@ echo -ne $f" "
 for g in _ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out; do  wc -l $g | cut -f 1 -d " " >> "_"$g ; done
 paste  -d "," __ncrna_out __rrna_out __retro_out __transcripts_out __gene_out __intergenic_out
 continue
-if [ -s _intergenic ] ; then  
-	cmsearch --cpu 8 -E 1e-2 --tblout _intergenic_rfam --noali ~/Downloads/Rfam.cm _intergenic > /dev/null
-	sed -i -e 's/^#.*//' -e '/^$/d'  _intergenic_rfam; 
-	echo "_intergenic_rfam"; cat _intergenic_rfam 
-fi
-if [ -s _unaligned ] ; then  
-	cmsearch --cpu 8 -E 1e-2 --tblout _unaligned_rfam --noali ~/Downloads/Rfam.cm _unaligned > /dev/null
-	sed -i -e 's/^#.*//' -e '/^$/d'  _unaligned_rfam;  
-	echo "_unaligned_rfam"; cat _unaligned_rfam;
-fi
-echo ""
+
 
 #num=`grep -c ">" $f`
 #for g in _ncrna_out _retro_out _cds_out _utr_out _gene_out _intergenic_out; do echo ${g/_out/} > "_"$g; wc -l $g | cut -f 1 -d " " | awk -v num=$num '{print $0/num}' >> "_"$g ; done
@@ -231,13 +221,13 @@ done
 #################### 
 # get all the alignments
 for f in `ls *fasta.trimmed.x.collapsed`;  do  
-bowtie2 -p 8 -a --end-to-end  -x db/bowtie2/genome -f $f | samtools view -bSh -F 4 - | samtools sort - genomic_based/_bowtie2_end_to_end/${f/.*/.sorted};  
+bowtie2 -p 8 -a --end-to-end  -x db/bowtie2/genome -f $f | samtools view -bSh -F 4 - | samtools sort - genomic_based/cluster/bowtie/${f/.*/.sorted};  
 done
 
 # compute weighted expression of reads
 for f in WT_1  WT_2 WT_3 exp5_1 exp5_2 exp5_3 rbp35_1  rbp35_2 rbp35_3; 
 do 
-python /media/marco/Elements/m-oryzae-polya/weight_reads.py ../../../$f.fasta.trimmed.x.collapsed $f.sorted.bam > $f.weighted &
+python /media/marco/Elements/m-oryzae-polya/weight_reads.py ../../../$f.fasta.trimmed.x.collapsed $f.sorted.bam > $f.weighted 
 done
 
 # calculate coverage on weighted reads
@@ -260,7 +250,7 @@ for line in open(sys.argv[2], 'r'):
 for chrx, array in chrom.items():
   for pos, val in enumerate(array):
      print chrx + '\t' + str(pos) + '\t' + str(val)
-" transcripts.txt $f > ${f/weighted/cov} &
+" ../../../genome.txt $f > ${f/weighted/cov} &
 done
 
 
@@ -303,7 +293,7 @@ for cluster, chrx, start, end in clusters:
   if not table_blocks.has_key(chrx): table_blocks[chrx] = []
   table_blocks[chrx].append((cluster, chrx, start, end)) 
 ###
-
+	 
 
 i = 0
 for line in open(sys.argv[2], 'r'):
@@ -346,9 +336,9 @@ awk '{print $1"\t"int($2)}' < $tmp > _out4 ; awk '{print $1"\t"int($3)}' < $tmp 
 awk '{print $1"\t"int($5)}' < $tmp > _out7 ; awk '{print $1"\t"int($6)}' < $tmp > _out8 ; awk '{print $1"\t"int($7)}' < $tmp > _out9 ;
 
 ############# 
-# siRNA discovery
+# siRNA discovery >300 discarted for MEMORY reasons
 ############# 
-for g in WT_1 WT_2 WT_3 rbp35_1 rbp35_2 rbp35_3; 
+for g in WT_1  WT_2 WT_3 exp5_1 exp5_2 exp5_3 rbp35_1  rbp35_2 rbp35_3; 
 do 
 python -c "
 import sys
@@ -368,6 +358,7 @@ for line in open(sys.argv[1], 'r'):
   cluster, chrx, start, end, name, seq, rchrx, rstart, rend, val = line.strip().split('\t')
   i += 1
   if i % 1000000 == 0: sys.stderr.write(str(i) + '\n')
+  if int(end)-int(start) > 300: continue
   if not siRNAs.has_key(cluster): siRNAs[cluster] = siRNA(cluster, start, end)
   flag = name.split('_')[1]
   s=str(bin(int(flag))).replace('0b', '')
@@ -391,17 +382,22 @@ done
 #| awk -v count=$count '{norm=(($2/(40949933/1000))/(count/1000000)); if (norm > 0.000020) print $1}' | while read f; do  grep -m 1 $f clusters.gff3 | awk '{if($5-$4<=100) print $0}' ; done | sort > $g.siRNA
 done
 
-sort exp5_*siRNA | cut -f 1 | uniq -c | awk '{if ($1==3)print $2}'  | sed 's/ID=//' > exp5_siRNA
-sort rbp35_*siRNA | cut -f 1 | uniq -c | awk '{if ($1==3)print $2}'  | sed 's/ID=//' > rbp35_siRNA
-sort WT_*siRNA | cut -f 1 | uniq -c | awk '{if ($1==3)print $2}'  | sed 's/ID=//' > WT_siRNA
-cat WT_siRNA exp5_siRNA | sort -u | grep -f - WT_vs_EXP5.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed 's/"//g' > _exp_down
-cat WT_siRNA exp5_siRNA | sort -u | grep -f - WT_vs_EXP5.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed 's/"//g' > _exp_up
-cat WT_siRNA rbp35_siRNA | sort -u | grep -f - WT_vs_RBP35.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed 's/"//g' > _rbp_down
-cat WT_siRNA rbp35_siRNA | sort -u | grep -f - WT_vs_RBP35.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed 's/"//g' > _rbp_up
-python /media/marco/Elements/m-oryzae-polya/fasta_extract.py clusters.fa _rbp_up WT_vs_RBP35.siRNA.up.fa
-python /media/marco/Elements/m-oryzae-polya/fasta_extract.py clusters.fa _rbp_down WT_vs_RBP35.siRNA.down.fa
-python /media/marco/Elements/m-oryzae-polya/fasta_extract.py clusters.fa _exp_up WT_vs_EXP5.siRNA.up.fa
-python /media/marco/Elements/m-oryzae-polya/fasta_extract.py clusters.fa _exp_down WT_vs_EXP5.siRNA.down.fa
+sort exp5_[123].siRNA | cut -f 1,2,3,5,6 | uniq -c | awk '{if ($1==3)print $2,$3,$4,$5,$6}'  | sed -e 's/ID=//' -e 's/ /\t/g' > exp5_siRNA
+sort rbp35_[123].siRNA | cut -f 1,2,3,5,6 | uniq -c | awk '{if ($1==3)print $2,$3,$4,$5,$6}'  | sed -e 's/ID=//' -e 's/ /\t/g' > rbp35_siRNA
+sort WT_[123].siRNA | cut -f 1,2,3,5,6 | uniq -c | awk '{if ($1==3)print $2,$3,$4,$5,$6}'  | sed -e 's/ID=//' -e 's/ /\t/g' > WT_siRNA
+sort WT_siRNA rbp35_siRNA exp5_siRNA | uniq > all_siRNA
+awk '{print ">"$1"\n"$4}' < exp5_siRNA > exp5_siRNA.fa
+awk '{print ">"$1"\n"$4}' < rbp35_siRNA > rbp35_siRNA.fa
+awk '{print ">"$1"\n"$4}' < WT_siRNA > WT_siRNA.fa
+awk '{print ">"$1"\n"$4}' < all_siRNA > all_siRNA.fa
+cut -f 1 all_siRNA | sort -u | grep -f - ../WT_vs_EXP5.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed 's/"//g' > _exp_down
+cut -f 1 all_siRNA | sort -u | grep -f - ../WT_vs_EXP5.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed 's/"//g' > _exp_up
+cut -f 1 all_siRNA | sort -u | grep -f - ../WT_vs_RBP35.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed 's/"//g' > _rbp_down
+cut -f 1 all_siRNA | sort -u | grep -f - ../WT_vs_RBP35.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed 's/"//g' > _rbp_up
+python /media/marco/Elements/m-oryzae-polya/fasta_extract.py all_siRNA.fa _exp_down WT_vs_EXP5.siRNA.down.fa
+python /media/marco/Elements/m-oryzae-polya/fasta_extract.py all_siRNA.fa _exp_up WT_vs_EXP5.siRNA.up.fa
+python /media/marco/Elements/m-oryzae-polya/fasta_extract.py all_siRNA.fa _rbp_down WT_vs_RBP35.siRNA.down.fa
+python /media/marco/Elements/m-oryzae-polya/fasta_extract.py all_siRNA.fa _rbp_up WT_vs_RBP35.siRNA.up.fa  
 
 ### retrotransposons map
 for f in `ls ../[Wer]*fastq.trimmed.x`; 
