@@ -10,13 +10,19 @@ sck.send("new\n")
 sck.recv(1024)
 sck.send("genome MG8_25\n")
 sck.recv(1024)
-sck.send("load /media/marco/Elements/EXP5/genomic_based/bowtie2/diff_expr_clusters/clusters.gff3\n")
+sck.send("load /media/marco/Elements/EXP5/genomic_based/visualization/bowtie2/WT_1.sorted.bam\n")
 sck.recv(1024)
-sck.send("load /media/marco/Elements/EXP5/genomic_based/bowtie2/WT_2.sorted.bam\n")
+sck.send("load /media/marco/Elements/EXP5/genomic_based/visualization/bowtie2/WT_2.sorted.bam\n")
 sck.recv(1024)
-sck.send("load /media/marco/Elements/EXP5/genomic_based/bowtie2/exp5_2.sorted.bam\n")
+sck.send("load /media/marco/Elements/EXP5/genomic_based/visualization/bowtie2/WT_3.sorted.bam\n")
 sck.recv(1024)
-sck.send("load /media/marco/Elements/EXP5/genomic_based/bowtie2/rbp35_2.sorted.bam\n")
+sck.send("load /media/marco/Elements/3Tfill/oryzae_21/WT-CM-3_plus.bedgraph\n")
+sck.recv(1024)
+sck.send("load /media/marco/Elements/3Tfill/oryzae_21/2D4-CM-3_plus.bedgraph\n")
+sck.recv(1024)
+sck.send("load /media/marco/Elements/3Tfill/oryzae_21/WT-CM-3_minus.bedgraph\n")
+sck.recv(1024)
+sck.send("load /media/marco/Elements/3Tfill/oryzae_21/2D4-CM-3_minus.bedgraph\n")
 sck.recv(1024)
 sck.send("expand Gene\n")
 sck.recv(1024)
@@ -24,12 +30,12 @@ sck.send("maxPanelHeight 500\n")
 sck.recv(1024)
 sck.send("snapshotDirectory " + os.getcwd() + "/snapshots\n")
 sck.recv(1024)
-
-
+import time
+time.sleep(10)
 for line in open(sys.argv[1]):
     chrx, start, end, name = line.strip().split("\t")
-    left = int(start) - 400
-    right = int(end) + 400
+    left = int(start) - 500
+    right = int(end) + 500
     sck.send("goto " + chrx + ":" + str(left) + "-" + str(right) + "\n")
     sck.recv(1024)
     sck.send("snapshot  " + name + "_" + chrx + ":" + start + "-" + end + ".jpg\n")

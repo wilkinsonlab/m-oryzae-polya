@@ -250,13 +250,13 @@ for line in open(sys.argv[2], 'r'):
 for chrx, array in chrom.items():
   for pos, val in enumerate(array):
      print chrx + '\t' + str(pos) + '\t' + str(val)
-" ../../../genome.txt $f > ${f/weighted/cov} &
+" ../../../genome.txt $f > ${f/weighted/cov} 
 done
 
 
 
 # detect clusters
-for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f | sed 's/ /\t/g' > ${f/cov/bed}  done
+for f in `ls *cov`; do python /media/marco/Elements/m-oryzae-polya/cluster.py $f | sed 's/ /\t/g' > ${f/cov/bed};  done
 cat *.bed | sort -k1,1 -k2,2n | bedtools merge -i - | awk '{print $1,"marco","cluster",$2,$3,".",".",".","ID=cluster_"++count"_"}' | sed 's/ /\t/g' > clusters.gff3
 cat clusters.gff3 | bedtools getfasta -bed - -fi ../../../db/genome.fa -fo clusters.fa
 cat clusters.gff3 | while read c x x s e x x x d; do  n=$c":"$((s-1))"-"$e ; sed  's/'$n'/'${d/ID=/}'/' clusters.fa > _o ;  mv _o clusters.fa; done
@@ -275,23 +275,23 @@ for line in open(sys.argv[1], 'r'):
   clusters.append((items[8].replace('ID=', ''),  items[0], int(items[3]), int(items[4])))
   reads[items[8].replace('ID=', '')] = {}
 
-#block_span = 100000
-#chroms = ('supercont8.8', '7', '6', '5', '4', '3', '1', '2')
-#table_blocks = dict.fromkeys(chroms)
-#for chrx in chroms:
-#   table_blocks[chrx] = dict((block, [])
-#                              for block in range(0, 10000000, block_span))
-#for chrx in chroms:
-#    for cluster, chrx, start, end in clusters:
-#        block_start = int(math.floor(start / float(block_span)) * block_span)
-#        block_end = int(math.floor(end / float(block_span)) * block_span)
-#        for block in range(block_start, block_end + block_span, block_span):
-##            table_blocks[chrx][block].append((cluster, chrx, start, end))
+block_span = 100000
+chroms = ('supercont8.8', '7', '6', '5', '4', '3', '1', '2')
+table_blocks = dict.fromkeys(chroms)
+for chrx in chroms:
+   table_blocks[chrx] = dict((block, [])
+                              for block in range(0, 10000000, block_span))
+for chrx in chroms:
+    for cluster, chrx, start, end in clusters:
+        block_start = int(math.floor(start / float(block_span)) * block_span)
+        block_end = int(math.floor(end / float(block_span)) * block_span)
+        for block in range(block_start, block_end + block_span, block_span):
+            table_blocks[chrx][block].append((cluster, chrx, start, end))
 ### trascriptome
-table_blocks = {}
-for cluster, chrx, start, end in clusters:
-  if not table_blocks.has_key(chrx): table_blocks[chrx] = []
-  table_blocks[chrx].append((cluster, chrx, start, end)) 
+#table_blocks = {}
+#for cluster, chrx, start, end in clusters:
+#  if not table_blocks.has_key(chrx): table_blocks[chrx] = []
+#  table_blocks[chrx].append((cluster, chrx, start, end)) 
 ###
 	 
 
@@ -301,17 +301,17 @@ for line in open(sys.argv[2], 'r'):
   i += 1
   if i % 1000000 == 0: sys.stderr.write(str(i) + '\n')
 ### transcriptome
-  if not table_blocks.has_key(rchrx): continue
-  for (cluster, chrx, start, end) in table_blocks[rchrx]:
+#  if not table_blocks.has_key(rchrx): continue
+#  for (cluster, chrx, start, end) in table_blocks[rchrx]:
 ###    
-#  block = int(math.floor(int(rstart) / float(block_span)) * block_span)
-#  for (cluster, chrx, start, end) in table_blocks[rchrx][block]:
+  block = int(math.floor(int(rstart) / float(block_span)) * block_span)
+  for (cluster, chrx, start, end) in table_blocks[rchrx][block]:
     if rchrx == chrx and int(rstart) >= start and int(rend) <= end:
        print cluster + '\t' + chrx + '\t' + str(start) + '\t' + str(end) + '\t' + name+ '\t' + seq + '\t' + rchrx + '\t' + rstart + '\t' + rend + '\t' + val 
        break
 " clusters.gff3 $f > ${f/weighted/assign} &
 done
-wait
+
 
 
 # compute clusters differential expression
