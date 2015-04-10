@@ -16,6 +16,13 @@ sck.send("load /media/marco/Elements/EXP5/genomic_based/visualization/bowtie2/WT
 sck.recv(1024)
 sck.send("load /media/marco/Elements/EXP5/genomic_based/visualization/bowtie2/WT_3.sorted.bam\n")
 sck.recv(1024)
+sck.send("load /media/marco/Elements/EXP5/genomic_based/visualization/bowtie2/rbp35_1.sorted.bam\n")
+sck.recv(1024)
+sck.send("load /media/marco/Elements/EXP5/genomic_based/visualization/bowtie2/rbp35_2.sorted.bam\n")
+sck.recv(1024)
+sck.send("load /media/marco/Elements/EXP5/genomic_based/visualization/bowtie2/rbp35_3.sorted.bam\n")
+sck.recv(1024)
+
 sck.send("load /media/marco/Elements/3Tfill/oryzae_21/WT-CM-3_plus.bedgraph\n")
 sck.recv(1024)
 sck.send("load /media/marco/Elements/3Tfill/oryzae_21/2D4-CM-3_plus.bedgraph\n")

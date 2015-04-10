@@ -239,20 +239,17 @@ chrom = {}
 for line in open(sys.argv[1], 'r'):
   chrx, length = line.strip().split('\t')
   chrom[chrx] = numpy.array([0.0] * (int(length)+1))
-
 i = 0
 for line in open(sys.argv[2], 'r'):
-  name, seq, rchrx, rstart, rend, val = line.strip().split('\t')  
+  name, seq, flag, rchrx, rstart, rend, val = line.strip().split('\t')  
   i += 1
   if i % 1000000 == 0: sys.stderr.write(str(i) + '\n')
   chrom[rchrx][int(rstart):int(rend)+1] += float(val)
-
 for chrx, array in chrom.items():
   for pos, val in enumerate(array):
      print chrx + '\t' + str(pos) + '\t' + str(val)
 " ../../../genome.txt $f > ${f/weighted/cov} 
 done
-
 
 
 # detect clusters
@@ -297,7 +294,7 @@ for chrx in chroms:
 
 i = 0
 for line in open(sys.argv[2], 'r'):
-  name, seq, rchrx, rstart, rend, val = line.strip().split('\t')
+  name, seq, flag, rchrx, rstart, rend, val = line.strip().split('\t')
   i += 1
   if i % 1000000 == 0: sys.stderr.write(str(i) + '\n')
 ### transcriptome
@@ -307,7 +304,7 @@ for line in open(sys.argv[2], 'r'):
   block = int(math.floor(int(rstart) / float(block_span)) * block_span)
   for (cluster, chrx, start, end) in table_blocks[rchrx][block]:
     if rchrx == chrx and int(rstart) >= start and int(rend) <= end:
-       print cluster + '\t' + chrx + '\t' + str(start) + '\t' + str(end) + '\t' + name+ '\t' + seq + '\t' + rchrx + '\t' + rstart + '\t' + rend + '\t' + val 
+       print cluster + '\t' + chrx + '\t' + str(start) + '\t' + str(end) + '\t' + name+ '\t' + seq + '\t' + flag + '\t' + rchrx + '\t' + rstart + '\t' + rend + '\t' + val 
        break
 " clusters.gff3 $f > ${f/weighted/assign} &
 done
