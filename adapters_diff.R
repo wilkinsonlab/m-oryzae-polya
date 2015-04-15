@@ -17,8 +17,8 @@ b2 = b2 / t(replicate(nrow(b2), colSums(b2)))
 b3 = b3 / t(replicate(nrow(b3), colSums(b3)))
 
 WT_mean=rowMeans(cbind(a1, a2, a3))
-exp5_mean=rowMeans(cbind(b1, b2, b3))
-diff=exp5_mean-WT_mean
+mutant_mean=rowMeans(cbind(b1, b2, b3))
+diff=mutant_mean-WT_mean
 stdev=sd(diff)
 zscore=diff/stdev
 pval=2*pnorm(-abs(zscore))
