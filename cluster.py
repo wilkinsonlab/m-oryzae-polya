@@ -93,7 +93,7 @@ for cluster in clusters:
   cluster.zscore = (cluster.ratio - ratios_median) / ratios_mad
   zscores.append(cluster.zscore)
 
-threshold = np.percentile(zscores, 95)
+threshold = np.percentile(zscores, 99)
 for cluster in clusters:
   if cluster.zscore > threshold:
     print cluster.chrx, cluster.start, cluster.end, cluster.height, cluster.ratio, cluster.zscore

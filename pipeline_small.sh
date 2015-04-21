@@ -89,6 +89,27 @@ Rscript /media/marco/Elements/m-oryzae-polya/adapters_diff.R WT_1.3prime.count W
  for f in `cat *5prime.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $6<0.05 && $6!="NA" ) print $1}' | sed 's/"//g'`; do  grep "^"$f ../[Wer]*.fasta.trimmed.collapsed -h | sort -u | awk '{ print ">s_"++count; print substr($1, 5, length($1)-8) }' > "_"$f ; done
  for f in `cat *3prime.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $6<0.05 && $6!="NA" ) print $1}' | sed 's/"//g'`; do  grep $f"$" ../[Wer]*.fasta.trimmed.collapsed -h | sort -u | awk '{ print ">s_"++count; print substr($1, 5, length($1)-8) }' > "__"$f ; done
 
+### transcripts assembly diffential expression with DESeq2
+cat ../W*fastq.trimmed.x | fastq_to_fasta -o all_reads_WT.fa
+cat ../e*fastq.trimmed.x | fastq_to_fasta -o all_reads_exp5.fa
+cat ../r*fastq.trimmed.x | fastq_to_fasta -o all_reads_rbp35.fa
+for f in `ls *fa`; do ~/Downloads/trinityrnaseq-2.0.2/Inchworm/bin/inchworm --reads $f --run_inchworm -K 17 -L 17 --min_assembly_coverage 10 --num_threads 8 > $f.inch; done
+cat *inch | fasta_formatter | fastx_collapser -o all_reads.fa.inchcat *inch | fasta_formatter | fastx_collapser -o all_reads.fa.inch
+for f in `ls *fasta.trimmed.x.collapsed`; do  ~/Downloads/segemehl/segemehl.x -A 100 -D 0 -i transcriptomic_based/assembly/all_reads.fa.inch.idx -d transcriptomic_based/assembly/all_reads.fa.inch -q $f -t 8 | samtools view -bS - | samtools sort - transcriptomic_based/assembly/${f/.*/.sorted} ; done
+for f in WT_1  WT_2 WT_3 exp5_1 exp5_2 exp5_3 rbp35_1  rbp35_2 rbp35_3;  do  python /media/marco/Elements/m-oryzae-polya/weight_reads.py ../../../$f.fasta.trimmed.x.collapsed $f.sorted.bam > $f.weighted ; done
+Rscript ../../diff.R WT_1.expr WT_2.expr WT_3.expr exp5_1.expr exp5_2.expr exp5_3.expr WT_vs_EXP5.expr.csv
+Rscript ../../diff.R WT_1.expr WT_2.expr WT_3.expr rbp35_1.expr rbp35_2.expr rbp35_3.expr WT_vs_RBP35.expr.csv
+cat WT_vs_EXP5.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g' > _exp_down &
+cat WT_vs_EXP5.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g' > _exp_up  &
+cat WT_vs_RBP35.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g' > _rbp_down &
+cat WT_vs_RBP35.expr.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g' > _rbp_up
+python /media/marco/Elements/m-oryzae-polya/fasta_extract.py all_reads.fa.inch _exp_down WT_vs_EXP5.expr.down.fa
+python /media/marco/Elements/m-oryzae-polya/fasta_extract.py all_reads.fa.inch _exp_up WT_vs_EXP5.expr.up.fa
+python /media/marco/Elements/m-oryzae-polya/fasta_extract.py all_reads.fa.inch _rbp_down WT_vs_RBP35.expr.down.fa
+python /media/marco/Elements/m-oryzae-polya/fasta_extract.py all_reads.fa.inch _rbp_up WT_vs_RBP35.expr.up.fa
+
+
+
 
 ### for the avr-regions (modify cluster.py)
 for f in `ls ../[Wer]*sorted.bam`; do v=${f/..\//}; v=${v/sorted.bam/cov}; echo $v ; genomeCoverageBed -ibam $f -g ../genome.txt -d > $v & done
@@ -128,9 +149,9 @@ done
 #get info expression
 
 
-# for cluster, milRNA, assemblies
+# for cluster, assemblies...
 rm _*
-for f in `ls *.siRNA.*.fa `;
+for f in `ls WT*vs*EXP*down*.fa `;
 do	
 db_dir="/media/marco/Elements/EXP5/db/"
 touch 	_ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out
@@ -138,11 +159,12 @@ blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/ncrna.fa -o
 blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2>  /dev/null | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _rrna_out
 blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/retro.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _retro_out
 blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/transcripts.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _transcripts_out
+blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/EST.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _est_out
 blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _gene_out
 blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _intergenic_out
 for g in `ls _*`; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
 ## print numbers
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out _est_out _gene_out _intergenic_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
 ## print details	
 #echo -e "\n"$f
 #python -c "
@@ -165,18 +187,20 @@ cat $tmp
 
 # classify siRNA....
 rm _*
-for f in `ls *vs*.fa`;
+for f in `ls *vs*EXP*down*.fa`;
 do
 db_dir="/media/marco/Elements/EXP5/db/"
-~/Downloads/segemehl/segemehl.x -D 2  -t 4 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _ncrna_out
-~/Downloads/segemehl/segemehl.x -D 2  -t 4 -i $db_dir/segemehl/rrna.idx -d $db_dir/rrna.fa   -q _un -u __un -nohead > _rrna_out
-~/Downloads/segemehl/segemehl.x -D 2  -t 4 -i $db_dir/segemehl/retro.idx -d $db_dir/retro.fa   -q __un -u _un -nohead > _retro_out
-~/Downloads/segemehl/segemehl.x -D 2  -t 4 -i $db_dir/segemehl/transcripts.idx -d $db_dir/transcripts.fa   -q _un -u __un -nohead > _transcripts_out
-~/Downloads/segemehl/segemehl.x -D 2  -t 4 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _introns_out
-~/Downloads/segemehl/segemehl.x -D 2  -t 4 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u _unknown -nohead > _intergenic_out
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out _introns_out _intergenic_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _ncrna_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -t 8 -i $db_dir/segemehl/rrna.idx -d $db_dir/rrna.fa   -q _un -u __un -nohead > _rrna_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -t 8 -i $db_dir/segemehl/retro.idx -d $db_dir/retro.fa   -q __un -u _un -nohead > _retro_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -t 8 -i $db_dir/segemehl/transcripts.idx -d $db_dir/transcripts.fa   -q _un -u __un -nohead > _transcripts_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa   -q __un -u _un -nohead > _est_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -t 8 -i $db_dir/segemehl/cpa_srna.idx -d $db_dir/CPA_sRNA.fa   -q _un -u __un -nohead > _cpa_srna_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _introns_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100  -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u _unknown -nohead > _intergenic_out
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out _est_out _cpa_srna_out _introns_out _intergenic_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
 echo -ne $f"\t" > "_"$f
-paste __ncrna_out __rrna_out __retro_out __transcripts_out __introns_out __intergenic_out >> "_"$f
+paste __ncrna_out __rrna_out __retro_out __transcripts_out __est_out __cpa_srna_out  __introns_out __intergenic_out >> "_"$f
 #for g in _ncrna_out _rrna_out _retro_out _transcripts_out _introns_out _intergenic_out; do cut -f 3 $g | sort | uniq -c > "_"$g; done
 #echo $f > "_"$f
 #paste __ncrna_out __rrna_out __retro_out __transcripts_out __introns_out __intergenic_out >> "_"$f
@@ -300,22 +324,11 @@ python /media/marco/Elements/m-oryzae-polya/fasta_extract.py clusters.fa _exp_up
 python /media/marco/Elements/m-oryzae-polya/fasta_extract.py clusters.fa _rbp_down WT_vs_RBP35.expr.down.fa
 python /media/marco/Elements/m-oryzae-polya/fasta_extract.py clusters.fa _rbp_up WT_vs_RBP35.expr.up.fa
 
-#############
-# for modification identification
-#############
-for f in `ls *assign`;
-do
-awk '{if (($4-$3)<=300) {split($5, arr, "_");  print $1":E"$6"_"arr[2]"\t"int($10)}}' < $f | sort -u > "_"$f 
-done
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls *`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
-awk '{print $1"\t"int($8)}' < $tmp > _out1 ; awk '{print $1"\t"int($9)}' < $tmp > _out2 ; awk '{print $1"\t"int($10)}' < $tmp > _out3 ;
-awk '{print $1"\t"int($2)}' < $tmp > _out4 ; awk '{print $1"\t"int($3)}' < $tmp > _out5 ; awk '{print $1"\t"int($4)}' < $tmp > _out6 ;
-awk '{print $1"\t"int($5)}' < $tmp > _out7 ; awk '{print $1"\t"int($6)}' < $tmp > _out8 ; awk '{print $1"\t"int($7)}' < $tmp > _out9 ;
 
 ############# 
 # siRNA discovery >300 discarted for MEMORY reasons
 ############# 
-for g in WT_1 # WT_2 WT_3 exp5_1 exp5_2 exp5_3 rbp35_1  rbp35_2 rbp35_3; 
+for g in WT_1  WT_2 WT_3 exp5_1 exp5_2 exp5_3 rbp35_1  rbp35_2 rbp35_3; 
 do 
 count=$(grep $g ../../../count.txt | cut -f 2)
 python -c "
@@ -344,7 +357,7 @@ for line in open(sys.argv[1], 'r'):
   elif flag == '16':
     siRNAs[cluster].senses[name] = '-' 
   siRNAs[cluster].expr += float(val)
-  siRNAs[cluster].vals[name] = float(val)
+  siRNAs[cluster].vals[name] = float(val)les
   siRNAs[cluster].seqs[name] = seq 
   siRNAs[cluster].poss[name] = (rchrx, rstart, rend)
   siRNAs[cluster].cigars[name] = cigar
@@ -407,14 +420,35 @@ for line in sys.stdin:
   if line[0] == '@':
     print line.strip()
   else:
-    for x in line.strip().split('\t')[11:]:
-      if x == 'NH:i:1':
+    #for x in line.strip().split('\t')[11:]:
+    #  if x == 'NH:i:1':
         for i in range(int(line.strip().split('\t')[0].split('-')[1])):
           print line.strip()
        
-" | samtools view -bSh - > ../../visualization/segemehl/$f
+" | samtools view -bSh - > visualization/$(basename $f) &
+
 done
 
+# R clusters correlation
+a=read.table("WT_1.expr", row.names=1)
+a=read.table("WT_1.expr", row.names=1)
+b=read.table("WT_2.expr", row.names=1)
+c=read.table("WT_3.expr", row.names=1)
+cor(a,b,method="spearman")
+cor(a,c,method="spearman")
+cor(b,c,method="spearman")
+d=read.table("exp5_1.expr", row.names=1)
+e=read.table("exp5_2.expr", row.names=1)
+f=read.table("exp5_3.expr", row.names=1)
+cor(d,e,method="spearman")
+cor(d,f,method="spearman")
+cor(e,f,method="spearman")
+g=read.table("rbp35_1.expr", row.names=1)
+h=read.table("rbp35_2.expr", row.names=1)
+i=read.table("rbp35_3.expr", row.names=1)
+cor(g,h,method="spearman")
+cor(g,i,method="spearman")
+cor(h,i,method="spearman")
 
 
 ### retrotransposons map
@@ -632,17 +666,5 @@ s=`ls *genes.results`; ~/Downloads/trinityrnaseq-2.0.2/util/abundance_estimates_
 ~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix trans.counts.matrix --method edgeR --samples_file ../desc.txt 
 ~/Downloads/trinityrnaseq-2.0.2/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix genes.counts.matrix --method edgeR --samples_file ../desc.txt
 
-### transcripts assembly diffential expression with DESeq2
-cat ../W*fastq.trimmed.x | fastq_to_fasta -o all_reads_WT.fa
-cat ../e*fastq.trimmed.x | fastq_to_fasta -o all_reads_exp5.fa
-cat ../r*fastq.trimmed.x | fastq_to_fasta -o all_reads_rbp35.fa
-for f in `ls *fa`; do ~/Downloads/trinityrnaseq-2.0.2/Inchworm/bin/inchworm --reads $f --run_inchworm -K 32 -L 32 --minKmerCount 2 --num_threads 8 > $f.inch; done
-cat *inch | fasta_formatter | fastx_collapser -o all_reads.fa.inch
-bowtie-build all_reads.fa.inch all
-for f in `ls ../*fastq.trimmed.x`; do v=${f/..\//}; bowtie -S -p 8 -v 0 -m 1 --sam-nohead  all $f  | awk '{if($2==0)print $3}' | sort | uniq -c | awk '{print $2"\t"$1}' > "_"$v ; done
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*x`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
-cat $tmp > _count
-cut -f 1,2 _count > exp5_1.count;cut -f 1,3 _count > exp5_2.count;cut -f 1,4 _count > exp5_3.count; cut -f 1,5 _count > rbp35_1.count; cut -f 1,6 _count > rbp35_2.count; cut -f 1,7 _count > rbp35_3.count; cut -f 1,8 _count > WT_1.count; cut -f 1,9 _count > WT_2.count; cut -f 1,10 _count > WT_3.count
-Rscript ../diff.R WT_1.count WT_2.count  WT_3.count exp5_1.count exp5_2.count exp5_3.count WT_vs_EXP5.csv
-Rscript ../diff.R WT_1.count WT_2.count  WT_3.count rbp35_1.count rbp35_2.count rbp35_3.count WT_vs_RBP35.csv
+
 
