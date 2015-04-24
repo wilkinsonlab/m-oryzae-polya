@@ -1,7 +1,7 @@
 # trimming 3' adaptor, quality and artifacts filtering
 for f in `ls *.fastq`; 
 do
-	fastx_clipper -c -l 26 -a TGGAATTCTCGGGTGCCAAGG -i $f | fastq_quality_filter -q 30 -p 70 | fastx_artifacts_filter -o $f".trimmed" &
+	fastx_clipper -c -l 24 -a TGGAATTCTCGGGTGCCAAGG -i $f | fastq_quality_filter -q 30 -p 70 | fastx_artifacts_filter -o $f".trimmed" &
 done
 
 # trimming HD ->4 4<- nucleotides
@@ -38,36 +38,33 @@ do
 done
 
 
-### bowtie2 --end-to-end OR --local
-for f in `ls *fastq.trimmed.x`; 
-do 
-	bowtie2 -p 8 --end-to-end --al genomic_based/bowtie2_end_to_end/${f/.trimmed.x/.al}  --un genomic_based/bowtie2_end_to_end/${f/.trimmed.x/.un}  -x db/bowtie2/genome -q $f | samtools view -bSh -F 4 - | samtools sort - genomic_based/bowtie2_end_to_end/${f/.*/.sorted}; 
-done
+# convert reads to fasta and collapse 
+for f in `ls *fastq.trimmed.x`; do fastq_to_fasta -i $f -o ${f/fastq/fasta} ; done
+for f in `ls *fasta.trimmed.x`; do fastx_collapser -i $f -o $f.collapsed ; done
 
-# sort and index
-for f in `ls *.sam`; do
-	samtools view -bhS $f | samtools sort - ${f/.sam/.sorted}
-	samtools index ${f/.sam/.sorted.bam}
-done
+# get reads length
+rm _*
+for f in  `ls *fasta.trimmed.x.collapsed`; do   grep -v ">" $f | awk '{print length($0)}' | sort | uniq -c | awk '{print $2"\t"$1}' > "__"$f  ; done
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; cat $tmp
 
-# create bedgraphs
-for f in `ls *sorted.bam`; do genomeCoverageBed -bg -ibam $f -g genome.txt > ${f/.sorted.bam/.bedgraph} & done
-
-# collapse reads
-for f in `ls *fastq.trimmed.x`; do fastx_collapser -i $f -o $f.collapsed & done
+# get first nucleotide
+rm _*; for f in `ls [Wer]*fasta.trimmed.x.collapsed` ;  do  grep -v ">" $f | awk '{print substr($0, 1, 1)}' | sort | uniq -c | awk '{print $2"\t"$1}' > "__"$f & done
 
 ### sequences differential expression
-for f in `ls *.fastq.trimmed.x`; do fastx_collapser -i $f -o ${f/fastq/fasta}.collapsed ; done
 for f in `ls *fasta.trimmed.x.collapsed`; do awk '{if (substr($0, 1, 1) == ">"){ split($0, arr, "-"); val=arr[2];} else { print $0"\t"val; val="-" }  }' < $f > $f.count; done
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls ../*fasta.collapsed.count`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
-cat $tmp > seq.count
-cut -f 1,2 seq.count > exp_1.count;cut -f 1,3 seq.count > exp_2.count;cut -f 1,4 seq.count > exp_3.count; cut -f 1,5 seq.count > rbp_1.count; cut -f 1,6 seq.count > rbp_2.count; cut -f 1,7 seq.count > rbp_3.count; cut -f 1,8 seq.count > wt_1.count; cut -f 1,9 seq.count > wt_2.count; cut -f 1,10 seq.count > wt_3.count
-Rscript ../diff.R WT_1.count WT_2.count  WT_3.count exp5_1.count exp5_2.count exp5_3.count WT_vs_EXP5.csv
-Rscript ../diff.R WT_1.count WT_2.count  WT_3.count rbp35_1.count rbp35_2.count rbp35_3.count WT_vs_RBP35.csv
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls *collapsed.count`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
+awk '{if ($2>1 || $3>1 || $4>1 || $5>1 || $6>1 || $7>1 || $8>1 || $9>1 || $10>1) print $0 }' <  $tmp > seq.count
+cut -f 1,2 seq.count > exp5_1.count;cut -f 1,3 seq.count > exp5_2.count;cut -f 1,4 seq.count > exp5_3.count; cut -f 1,5 seq.count > rbp35_1.count; cut -f 1,6 seq.count > rbp35_2.count; cut -f 1,7 seq.count > rbp35_3.count; cut -f 1,8 seq.count > WT_1.count; cut -f 1,9 seq.count > WT_2.count; cut -f 1,10 seq.count > WT_3.count
+Rscript diff.R WT_1.count WT_2.count  WT_3.count exp5_1.count exp5_2.count exp5_3.count WT_vs_EXP5.csv
+Rscript diff.R WT_1.count WT_2.count  WT_3.count rbp35_1.count rbp35_2.count rbp35_3.count WT_vs_RBP35.csv
+cat WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print ">"$1"\n"$1}' | sed 's/"//g' > WT_vs_EXP5.up.fa
+cat WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print ">"$1"\n"$1}' | sed 's/"//g' > WT_vs_EXP5.down.fa
+cat WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print ">"$1"\n"$1}' | sed 's/"//g' > WT_vs_RBP35.up.fa
+cat WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print ">"$1"\n"$1}' | sed 's/"//g' > WT_vs_RBP35.down.fa
 
 ### HD adapter differential expression
-for f in `ls ../*fasta.trimmed`; do v=${f/..\//}; grep -v ">" $f | awk '{print substr($0,1,4)}' | sort | uniq -c | awk '{print $2"\t"$1}' > ${v/fasta.trimmed/5prime.count}; done
-for f in `ls ../*fasta.trimmed`; do v=${f/..\//}; grep -v ">" $f | awk '{print substr($0,length($0)-3,4)}' | sort | uniq -c | awk '{print $2"\t"$1}' > ${v/fasta.trimmed/3prime.count}; done
+for f in `ls ../../*fasta.trimmed`; do v=${f/..\//}; grep -v ">" $f | awk '{print substr($0,1,4)}' | sort | uniq -c | awk '{print $2"\t"$1}' > ${v/fasta.trimmed/5prime.count}; done
+for f in `ls ../../*fasta.trimmed`; do v=${f/..\//}; grep -v ">" $f | awk '{print substr($0,length($0)-3,4)}' | sort | uniq -c | awk '{print $2"\t"$1}' > ${v/fasta.trimmed/3prime.count}; done
 Rscript /media/marco/Elements/m-oryzae-polya/adapters_diff.R WT_1.5prime.count WT_2.5prime.count WT_3.5prime.count exp5_1.5prime.count exp5_2.5prime.count exp5_3.5prime.count WT_vs_EXP5.5prime.csv
 Rscript /media/marco/Elements/m-oryzae-polya/adapters_diff.R WT_1.3prime.count WT_2.3prime.count WT_3.3prime.count exp5_1.3prime.count exp5_2.3prime.count exp5_3.3prime.count WT_vs_EXP5.3prime.csv
 Rscript /media/marco/Elements/m-oryzae-polya/adapters_diff.R WT_1.5prime.count WT_2.5prime.count WT_3.5prime.count rbp35_1.5prime.count rbp35_2.5prime.count rbp35_3.5prime.count WT_vs_RBP35.5prime.csv
@@ -127,24 +124,25 @@ samtools view $f | grep -v NH:i:1$'\t' | cut -f 1 | sort -u | wc -l
 done
 # get info unique
 rm _*
-for f in `ls *.fasta.trimmed.x.collapsed`;
+for f in `ls exp5_1.fasta.trimmed.x.collapsed`;
 do
 db_dir="/media/marco/Elements/EXP5/db/"
-~/Downloads/segemehl/segemehl.x -D 2  -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >  "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  > "__"$f
-~/Downloads/segemehl/segemehl.x -D 2  -t 8 -i $db_dir/segemehl/rrna.idx -d $db_dir/rrna.fa   -q _un -u __un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
-~/Downloads/segemehl/segemehl.x -D 2  -t 8 -i $db_dir/segemehl/retro.idx -d $db_dir/retro.fa   -q __un -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
-~/Downloads/segemehl/segemehl.x -D 2  -t 8 -i $db_dir/segemehl/transcripts.idx -d $db_dir/transcripts.fa   -q _un -u __un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f;cut -f 1 _res | sort -u |  awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
-~/Downloads/segemehl/segemehl.x -D 2  -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>  "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
-~/Downloads/segemehl/segemehl.x -D 2  -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u _unknown -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >  "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  > "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1  -t 8 -i $db_dir/segemehl/rrna.idx -d $db_dir/rrna.fa   -q _un -u __un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1  -t 8 -i $db_dir/segemehl/retro.idx -d $db_dir/retro.fa   -q __un -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1  -t 8 -i $db_dir/segemehl/transcripts.idx -d $db_dir/transcripts.fa   -q _un -u __un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f;cut -f 1 _res | sort -u |  awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1  -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>  "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1  -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u _unknown -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
 done 
+
 rm _*
-for f in `ls *.fasta.trimmed.x.collapsed`; do 
-bowtie2  -p 2  -x db/bowtie2/ncrna -f $f --un _un 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
-bowtie2  -p 2  -x db/bowtie2/rrna  -f _un --un __un 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
-bowtie2  -p 2  -x db/bowtie2/retro -f __un --un _un 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
-bowtie2  -p 2  -x db/bowtie2/transcripts  -f _un --un __un 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
-bowtie2  -p 2  -x db/bowtie2/unspliced  -f __un --un _un 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
-bowtie2  -p 2  -x db/bowtie2/genome -f _un --un _unknown 1> /dev/null 2> _res; grep exactly _res >> "_"$f; 
+for f in `ls exp5_1.fasta.trimmed.x.collapsed`; do 
+bowtie  -p 2  -v 0  db/bowtie/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie  -p 2  -v 0  db/bowtie/rrna  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie  -p 2  -v 0  db/bowtie/retro -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie  -p 2  -v 0  db/bowtie/transcripts  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie  -p 2  -v 0  db/bowtie/unspliced  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie  -p 2  -v 0  db/bowtie/genome -f _un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
 done
 #get info expression
 
