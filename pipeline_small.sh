@@ -144,7 +144,7 @@ done
 
 # for cluster, assemblies...
 rm _*
-for f in `ls WT*vs*EXP*down*.fa `;
+for f in `ls WT*.fa `;
 do	
 db_dir="/media/marco/Elements/EXP5/db/"
 touch 	_ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out
@@ -157,7 +157,7 @@ blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/unspliced.f
 blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ($4/$5 > 0.9 || $4/$6 > 0.9) print $0}' > _intergenic_out
 for g in `ls _*`; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
 ## print numbers
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out _est_out _gene_out _intergenic_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
 ## print details	
 #echo -e "\n"$f
 #python -c "
@@ -169,14 +169,14 @@ for g in _ncrna_out _rrna_out _retro_out _transcripts_out _est_out _gene_out _in
     #if items[0] not in yes:
       #out.write(items[1] + '\n')
       #yes.append(items[0])
-  #out.close()       
-#" 
-#for f in `ls __*`; do sort $f | uniq -c | sort -o $f; done
-#paste __*
+  out.close()       
+" 
+for f in `ls __*`; do sort $f | uniq -c | sort -o $f; done
+paste __*
 done
 ## print numbers
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
-cat $tmp
+#tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" #"$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
+#cat $tmp
 
 # classify siRNA....
 rm _*
