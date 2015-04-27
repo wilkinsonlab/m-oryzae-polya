@@ -25,16 +25,11 @@ SeqIO.write(seqs, f, 'fastq')
 " $f $f".x" &
 done
 
-### bowtie1
-# aligning not unique
-for f in `ls *fastq.trimmed.x`;
+
+# aligning bowtie
+for f in `ls *fasta.trimmed.x`;
 do
-	bowtie -S -M 1 -v 0 -p 8 --best --strata --al ${f/.trimmed.x/.al} --max  ${f/.trimmed.x/.max} --un ${f/.trimmed.x/.un}  db/bowtie/genome $f | samtools view -Sh -F 4 - >  ${f/.*/.sam}
-done
-# aligning unique
-for f in `ls *fastq.trimmed.x`;
-do
-	bowtie -S -m 1 -v 0 -p 8 --best --strata db/bowtie/genome $f | samtools view -Sh -F 4 - >  ${f/.*/.uniq.sam}
+	bowtie -S -M 1 -v 0 -p 8 --best --strata -f db/bowtie/genome $f | samtools view -bSh -F 4 - | samtools sort - genomic_based/visualization/bowtie/${f/.*/.sorted}
 done
 
 
@@ -329,6 +324,7 @@ python /media/marco/Elements/m-oryzae-polya/fasta_extract.py clusters.fa _rbp_up
 for g in WT_1  WT_2 WT_3 exp5_1 exp5_2 exp5_3 rbp35_1  rbp35_2 rbp35_3; 
 do 
 count=$(grep $g ../../../count.txt | cut -f 2)
+echo $count
 python -c "
 import sys
 class siRNA:
@@ -355,7 +351,7 @@ for line in open(sys.argv[1], 'r'):
   elif flag == '16':
     siRNAs[cluster].senses[name] = '-' 
   siRNAs[cluster].expr += float(val)
-  siRNAs[cluster].vals[name] = float(val)les
+  siRNAs[cluster].vals[name] = float(val)
   siRNAs[cluster].seqs[name] = seq 
   siRNAs[cluster].poss[name] = (rchrx, rstart, rend)
   siRNAs[cluster].cigars[name] = cigar
@@ -369,18 +365,19 @@ for cluster, sirna in siRNAs.items():
 " $g.assign | awk -v count=$count '{norm=($9/(count/1000000)); if (norm > 1) print $0"\t"norm}' > $g.siRNA 
 done
 
-sort exp5_[123].siRNA | cut -f 1,3-7 | uniq -c | awk '{if ($1==3)print $2,$3,$4,$5,$6,$7}'  | sed -e 's/ID=//' -e 's/ /\t/g' > exp5_siRNA
-sort rbp35_[123].siRNA | cut -f 1,3-7 | uniq -c | awk '{if ($1==3)print $2,$3,$4,$5,$6,$7}'  | sed -e 's/ID=//' -e 's/ /\t/g' > rbp35_siRNA
-sort WT_[123].siRNA | cut -f 1,3-7 | uniq -c | awk '{if ($1==3)print $2,$3,$4,$5,$6,$7}'  | sed -e 's/ID=//' -e 's/ /\t/g' > WT_siRNA
+# siRNA confirmed in 2 replicates
+sort exp5_[123].siRNA | cut -f 1,3-7 | uniq -c | awk '{if ($1>=2)print $2,$3,$4,$5,$6,$7}'  | sed -e 's/ID=//' -e 's/ /\t/g' > exp5_siRNA
+sort rbp35_[123].siRNA | cut -f 1,3-7 | uniq -c | awk '{if ($1>=2)print $2,$3,$4,$5,$6,$7}'  | sed -e 's/ID=//' -e 's/ /\t/g' > rbp35_siRNA
+sort WT_[123].siRNA | cut -f 1,3-7 | uniq -c | awk '{if ($1>=2)print $2,$3,$4,$5,$6,$7}'  | sed -e 's/ID=//' -e 's/ /\t/g' > WT_siRNA
 sort WT_siRNA rbp35_siRNA exp5_siRNA | uniq > all_siRNA
 awk '{print ">"$1"\n"$6}' < exp5_siRNA > exp5_siRNA.fa
 awk '{print ">"$1"\n"$6}' < rbp35_siRNA > rbp35_siRNA.fa
 awk '{print ">"$1"\n"$6}' < WT_siRNA > WT_siRNA.fa
 awk '{print ">"$1"\n"$6}' < all_siRNA > all_siRNA.fa
-for f in `cat ../../../transcriptomic_based/single_reads/WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_EXP5.siRNA.down.fa &
-for f in `cat ../../../transcriptomic_based/single_reads/WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_EXP5.siRNA.up.fa &
-for f in `cat ../../../transcriptomic_based/single_reads/WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_RBP35.siRNA.down.fa &
-for f in `cat ../../../transcriptomic_based/single_reads/WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_RBP35.siRNA.up.fa 
+for f in `cat ../../../transcriptomic_based/single_read/WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_EXP5.siRNA.down.fa &
+for f in `cat ../../../transcriptomic_based/single_read/WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_EXP5.siRNA.up.fa &
+for f in `cat ../../../transcriptomic_based/single_read/WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_RBP35.siRNA.down.fa &
+for f in `cat ../../../transcriptomic_based/single_read/WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_RBP35.siRNA.up.fa 
 
 
 # making the table
@@ -411,19 +408,19 @@ tmp=$(mktemp);tmp2=$(mktemp);for file in _all_seq _clusters _exp_DE _rbp_DE _WT_
 
 
 # convert segmehl alignment for visualization
-for f in `ls *sorted.bam`; do
+for f in `ls cluster/perfect/*sorted.bam`; do
 samtools view -h $f | python -c "
 import sys
 for line in sys.stdin:
   if line[0] == '@':
     print line.strip()
   else:
-    #for x in line.strip().split('\t')[11:]:
-    #  if x == 'NH:i:1':
+    for x in line.strip().split('\t')[11:]:
+      if x == 'NH:i:1':
         for i in range(int(line.strip().split('\t')[0].split('-')[1])):
           print line.strip()
        
-" | samtools view -bSh - > visualization/$(basename $f) &
+" | samtools view -bSh - > visualization/perfect/$(basename $f) &
 
 done
 
@@ -450,22 +447,23 @@ cor(h,i,method="spearman")
 
 
 ### retrotransposons map
-for f in `ls ../[Wer]*fastq.trimmed.x`; 
+for f in `ls ../[Wer]*fasta.trimmed.x.collapsed`; 
 do 
-	v=${f/..\//}; v=${v/fastq.trimmed.x/sam}; bowtie --best -S -v 0 -p 8 -m 1 ../db/bowtie/retro $f | awk '{if($2!=4)print $0}'  > $v; 
+	 #v=${f/..\//}; v=${v/fastq.trimmed.x/sam}; bowtie --best -S -v 0 -p 8 -m 1 ../db/bowtie/retro $f | awk '{if($2!=4)print $0}'  > $v;
+	 v=${f/..\//}; v=${v/fasta.trimmed.x/sam};  ~/Downloads/segemehl/segemehl.x -D 0 -A 100  -t 8 -i ../db/segemehl/retro.idx -d ../db/retro.fa -q $f > $v; 
 done
 
-for f in `ls [Wer]*sam`; 
+for f in `ls *sam*`; 
 do 
 grep "SN:.*LN:[0-9]*" -o < $f | sed -e 's/SN://' -e 's/LN://' > "_"$f
 cat "_"$f | while read a b; 
 do 
-grep $a $f | grep -v "^@" | awk '{if($2==0) printf "%d\n", $4/10}' | sort | uniq -c | awk '{print $2"\t"$1}' | sort -k 1,1 > "_"$f"_"$a"_pos" &
-grep $a $f | grep -v "^@" | awk '{if($2==16) printf "%d\n", $4/10}' | sort | uniq -c | awk '{print $2"\t"(-$1)}' | sort -k 1,1 > "_"$f"_"$a"_neg" &
+grep $a $f | grep -v "^@" | awk '{if($2==0) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)printf "%d\n", $4/10}}' | sort | uniq -c | awk '{print $2"\t"$1}' | sort -k 1,1 > "_"$f"_"$a"_pos" &
+grep $a $f | grep -v "^@" | awk '{if($2==16) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)printf "%d\n", $4/10}}' | sort | uniq -c | awk '{print $2"\t"(-$1)}' | sort -k 1,1 > "_"$f"_"$a"_neg" &
 done
 done
 
-grep "SN:.*LN:[0-9]*" -o < exp5_IP17_GTAGAG_L006_R1.sam | sed -e 's/SN://' -e 's/LN://' | cut -f 1,2 > "__"$f
+grep "SN:.*LN:[0-9]*" -o < WT_1.sam.collapsed | sed -e 's/SN://' -e 's/LN://' | cut -f 1,2 > "__"$f
 while read a b
 do 
 rm "__"$a; 
