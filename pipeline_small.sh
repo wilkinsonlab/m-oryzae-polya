@@ -134,12 +134,13 @@ rm _*
 for f in `ls *.fasta.trimmed.x.collapsed`;
 do
 db_dir="/media/marco/Elements/EXP5/db/"
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >  "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  > "__"$f
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/rrna.idx -d $db_dir/rrna.fa   -q _un -u __un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/retro.idx -d $db_dir/retro.fa   -q __un -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/transcripts.idx -d $db_dir/transcripts.fa   -q _un -u __un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f;cut -f 1 _res | sort -u |  awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>  "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u _unknown -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -H 1 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >  "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  > "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/rrna.idx -d $db_dir/rrna.fa   -q _un -u __un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/retro.idx -d $db_dir/retro.fa   -q __un -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/transcripts.idx -d $db_dir/transcripts.fa   -q _un -u __un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f;cut -f 1 _res | sort -u |  awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>  "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u __un -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa  -q __un -u _unknown -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
 done 
 
 rm _*
@@ -154,22 +155,24 @@ done
 #get info expression
 
 
-# for cluster, assemblies...
+# classify clusters and assemblies
 rm _*
-for f in `ls WT*EXP*down*fa`;
+for f in `ls all.inch.final`;
 do	
 db_dir="/media/marco/Elements/EXP5/db/"
+# assemblies
 awk_filt="\$13<0.0001"
+# clusters
 #awk_filt="\$4/\$5>0.9||\$4/\$6>0.9"
 #awk_filt="\$4==\$5"
 touch 	_ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out
-blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null| awk '{if ('$awk_filt')  print $0}' > _ncrna_out
-blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2>  /dev/null | awk '{if ('$awk_filt') print $0}' > _rrna_out
-blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/retro.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null | awk '{if ('$awk_filt') print $0}' > _retro_out
-blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/transcripts.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _transcripts_out
-blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/EST.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _est_out
-blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ('$awk_filt') print $0}' > _gene_out
-blastn -dust no  -num_threads 4  -task  blastn -query $f -db $db_dir/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _intergenic_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null| awk '{if ('$awk_filt')  print $0}' > _ncrna_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2>  /dev/null | awk '{if ('$awk_filt') print $0}' > _rrna_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/retro.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null | awk '{if ('$awk_filt') print $0}' > _retro_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/transcripts.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _transcripts_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/EST.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _est_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ('$awk_filt') print $0}' > _gene_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _intergenic_out
 for g in `ls _*`; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
 ## print numbers
 for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
@@ -198,16 +201,16 @@ cat $tmp
 
 # classify siRNA ans single reads
 rm _*
-for f in `ls h`;
+for f in `ls W*fa`;
 do
 db_dir="/media/marco/Elements/EXP5/db/"
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _ncrna_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/rrna.idx -d $db_dir/rrna.fa   -q _un -u __un -nohead > _rrna_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/retro.idx -d $db_dir/retro.fa   -q __un -u _un -nohead > _retro_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/transcripts.idx -d $db_dir/transcripts.fa   -q _un -u __un -nohead > _transcripts_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _introns_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u __un -nohead > _intergenic_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa   -q __un -u _un -nohead > _est_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _ncrna_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/rrna.idx -d $db_dir/rrna.fa   -q _un -u __un -nohead > _rrna_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/retro.idx -d $db_dir/retro.fa   -q __un -u _un -nohead > _retro_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/transcripts.idx -d $db_dir/transcripts.fa   -q _un -u __un -nohead > _transcripts_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _introns_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u __un -nohead > _intergenic_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 90 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa   -q __un -u _un -nohead > _est_out
 for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
 echo -ne $f"\t" > "_"$f
 paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __est_out >> "_"$f
@@ -235,8 +238,8 @@ done
 #for f in  *weighted; do  grep "('NH', 1)"  $f > _o; mv _o $f; done
 
 # calculate coverage on weighted reads
-for f in `ls *.weighted`;
-do
+for f in WT rbp35 exp5; do
+for g in _1 _2 _3; do  
 python -c "
 import numpy, sys
 chrom = {}
@@ -248,18 +251,20 @@ for line in open(sys.argv[2], 'r'):
   name, seq, flag, rchrx, rstart, rend, val, cigar, tags = line.strip().split('\t')  
   i += 1
   if i % 1000000 == 0: sys.stderr.write(str(i) + '\n')
-  chrom[rchrx][int(rstart):int(rend)+1] += float(val)
+  chrom[rchrx][int(rstart):int(rend)+1] += float(val) / (int(rend)+1-int(rstart))
 for chrx, array in chrom.items():
   for pos, val in enumerate(array):
      print chrx + '\t' + str(pos) + '\t' + str(val)
-" ../../../genome.txt $f > ${f/weighted/cov} 
+" ../../../genome.txt $f$g.weighted > $f$g.cov &
 done
-
+wait
+done
 
 # detect clusters (change genome.fa for transcripts analysis)
 for f in WT rbp35 exp5; do
 for g in _1 _2 _3; do  
-python /media/marco/Elements/m-oryzae-polya/cluster.py $f$g.cov | sed 's/ /\t/g' > $f$g.bed &
+count=$(grep $f$g ../../coverage.txt | cut -f 2)
+python /media/marco/Elements/m-oryzae-polya/cluster.py $f$g.cov $count | sed 's/ /\t/g' > $f$g.bed &
 done
 wait
 done

@@ -20,10 +20,12 @@ class Cluster:
      self.start = None
      self.end = None
      self.height = None  
+     self.expr = None
      self.ratio = None
+     self.rpkm = None
      self.zscore = None 
 
-
+coverage = int(sys.argv[2])
 current_cluster = None
 current_chrx = None
 clusters = []
@@ -42,6 +44,7 @@ for line in open(sys.argv[1]):
       cluster.start = pos
       cluster.end = pos
       cluster.height = val
+      cluster.expr = val
       current_cluster = cluster
       current_chrx = chrx
       clusters.append(cluster)      
@@ -50,6 +53,7 @@ for line in open(sys.argv[1]):
     if chrx == current_chrx:
       if val > 0 :
         current_cluster.end = pos
+        cluster.expr += val
         if val >  current_cluster.height:
            current_cluster.height = val
       else:
@@ -60,43 +64,57 @@ for line in open(sys.argv[1]):
       reading = False
       current_cluster = None
 
+#rpkms = []
 #for cluster in clusters:
-#    if cluster.end - cluster.start > 500:
-#        print cluster.chrx, cluster.start, cluster.end, cluster.height
-        
+	#rpkms.append(((cluster.expr  * 1000000.0) / (coverage * ((cluster.end - cluster.start) / 1000.0))))
+	
 
-ratios = []
-best_lambda = -3
+best_lambda = -2
 best_skew = 100
 for test_lambda in np.arange(-2,2,0.1):
- ratios = []
- for cluster in clusters:
-  cluster.ratio = ((float(cluster.height)   /  (cluster.end - cluster.start)) ** test_lambda - 1) / test_lambda
-  ratios.append( cluster.ratio )
-  #print round(cluster.ratio, 2)
- if abs(scipy.stats.skew(ratios)) < abs(best_skew): 
-   best_lambda =  test_lambda
-   best_skew = scipy.stats.skew(ratios)
+  #ratios = []
+  rpkms = []
+  for cluster in clusters:
+    #cluster.ratio = ((float(cluster.height)   /  (cluster.end - cluster.start)) ** test_lambda - 1) / test_lambda
+    cluster.rpkm = (((cluster.expr  * 1000000.0) / (coverage * ((cluster.end - cluster.start) / 1000.0))) ** test_lambda - 1) / test_lambda
+    #ratios.append( cluster.ratio )
+    rpkms.append(cluster.rpkm)
+    #print round(cluster.ratio, 2)
+  #if abs(scipy.stats.skew(ratios)) < abs(best_skew): 
+  #  best_lambda =  test_lambda
+  #  best_skew = scipy.stats.skew(ratios)
+  if abs(scipy.stats.skew(rpkms)) < abs(best_skew): 
+    best_lambda =  test_lambda
+    best_skew = scipy.stats.skew(rpkms)
 
-ratios = []
+#ratios = []
+rpkms = []
 for cluster in clusters:
-  cluster.ratio = ((float(cluster.height)   /  (cluster.end - cluster.start)) ** best_lambda - 1) / best_lambda
-  ratios.append( cluster.ratio ) 
+  #cluster.ratio = ((float(cluster.height)   /  (cluster.end - cluster.start)) ** best_lambda - 1) / best_lambda
+  cluster.rpkm = (((cluster.expr * 1000000.0) / (coverage * ((cluster.end - cluster.start) / 1000.0))) ** best_lambda - 1) / best_lambda
+  rpkms.append( cluster.rpkm ) 
   #print round(cluster.ratio, 2)
+  #print cluster.rpkm
 
-ratios_median = median(ratios)
-ratios_mad = 1.4826*mad(ratios)
+#ratios_median = median(ratios)
+#ratios_mad = 1.4826*mad(ratios)
 #print ratios_median,ratios_mad, scipy.stats.skew(ratios)
+
+rpkms_median = median(rpkms)
+rpkms_mad = 1.4826*mad(rpkms)
+#print rpkms_median,rpkms_mad, scipy.stats.skew(rpkms)
 
 zscores = []
 for cluster in clusters:
-  cluster.zscore = (cluster.ratio - ratios_median) / ratios_mad
+  #cluster.zscore = (cluster.ratio - ratios_median) / ratios_mad
+  cluster.zscore = (cluster.rpkm - rpkms_median) / rpkms_mad
   zscores.append(cluster.zscore)
+  #print cluster.chrx, cluster.start, cluster.end, cluster.expr, cluster.rpkm, cluster.zscore
 
-threshold = np.percentile(zscores, 99)
+#threshold = np.percentile(zscores, 99.5)
 for cluster in clusters:
-  if cluster.zscore > threshold:
-    print cluster.chrx, cluster.start, cluster.end, cluster.height, cluster.ratio, cluster.zscore
+  if cluster.zscore > 2.5:
+    print cluster.chrx, cluster.start, cluster.end, cluster.expr, cluster.rpkm, cluster.zscore
 
  
 
