@@ -30,18 +30,19 @@ done
 # aligning bowtie
 for f in `ls *fasta.trimmed.x`;
 do
-	bowtie -S -M 1 -v 0 -p 8 --best --strata -f db/bowtie/genome $f | samtools view -bSh -F 4 - | samtools sort - genomic_based/visualization/bowtie/${f/.*/.sorted}
+	bowtie -S -M 1 -v 0 -p 8 --best --strata ../db/bowtie/genome $f | samtools view -bSh -F 4 - | samtools sort - visualization/bowtie/${f/.*/.sorted}
 done
 
 
 # convert reads to fasta and collapse 
 for f in `ls *fastq.trimmed.x`; do fastq_to_fasta -i $f -o ${f/fastq/fasta} ; done
-for f in `ls *fasta.trimmed.x`; do fastx_collapser -i $f -o $f.collapsed ; done
+for f in `ls *fastq.trimmed.x`; do fastx_collapser -i $f -o $f.collapsed ; done
 
 # get reads length
-rm _*
-for f in  `ls WT*fa`; do   grep -v ">" $f | awk '{print length($0)}' | sort | uniq -c | awk '{print $2"\t"$1}' > "__"$f  ; done
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -n $tmp
+rm __*
+for f in  `ls _*coll*ncrna`; do   grep -v ">" $f | awk '{if (length($0)>9) print length($0)}' | sort | uniq -c | awk '{print $2"\t"$1}' > "__"$f  ; done
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -n $tmp > _tmp
+Rscript ../transcriptomic_based/norm.R _tmp; gedit _tmp.norm
 
 # get first nucleotide
 rm _*; for f in `ls W*fa` ;  do  grep -v ">" $f | awk '{print substr($0, 1, 1)}' | sort | uniq -c | awk '{print $2"\t"$1}' > "__"$f  ;done
@@ -144,64 +145,19 @@ db_dir="/media/marco/Elements/EXP5/db/"
 done 
 
 rm _*
-for f in `ls exp5_1.fasta.trimmed.x.collapsed`; do 
-bowtie  -p 2  -v 0  db/bowtie/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie  -p 2  -v 0  db/bowtie/rrna  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie  -p 2  -v 0  db/bowtie/retro -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie  -p 2  -v 0  db/bowtie/transcripts  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie  -p 2  -v 0  db/bowtie/unspliced  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie  -p 2  -v 0  db/bowtie/genome -f _un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-done
-#get info expression
-
-
-# classify clusters and assemblies
-rm _*
-for f in `ls clusters.fa`;
-do	
+for f in `ls *.collapsed`; do 
 db_dir="/media/marco/Elements/EXP5/db/"
-# assemblies
-#awk_filt="\$13<0.0001"
-# clusters
-awk_filt="\$4/\$5>0.9||\$4/\$6>0.9"
-#awk_filt="\$4==\$5"
-touch 	_ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out
-blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null| awk '{if ('$awk_filt')  print $0}' > _ncrna_out
-blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2>  /dev/null | awk '{if ('$awk_filt') print $0}' > _rrna_out
-blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/retro.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null | awk '{if ('$awk_filt') print $0}' > _retro_out
-blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/transcripts.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _transcripts_out
-blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/EST.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _est_out
-blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ('$awk_filt') print $0}' > _gene_out
-blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _intergenic_out
-for g in `ls _*`; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
-## print numbers
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
-## print details	
-#echo -e "\n"$f
-#python -c "
-#yes = []
-#for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out'):
-  #out = open('_'+file, 'w')
-  #for line in open(file):
-    #items = line.strip().split('\t')
-    #if items[0] not in yes:
-      #if file == '_intergenic_out':
-        #out.write(items[1] + ':' + items[10] + '-' + items[11] + '\n')
-      #else:  
-        #out.write(items[1] + '\n')
-      #yes.append(items[0])
-  #out.close()       
-#" 
-#for f in `ls __*`; do sort $f | uniq -c | sort -o $f; done
-#paste __*
+bowtie  -p 8  -v 0  $db_dir/bowtie/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie  -p 8  -v 0  $db_dir/bowtie/rrna  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie  -p 8  -v 0  $db_dir/bowtie/retro -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie  -p 8  -v 0  $db_dir/bowtie/transcripts  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie  -p 8  -v 0  $db_dir/bowtie/unspliced  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie  -p 8  -v 0  $db_dir/bowtie/genome -f _un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
 done
-## print numbers
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
-cat $tmp
 
 # classify siRNA ans single reads
 rm _*
-for f in `ls all_siRNA.fa`;
+for f in `ls b`;
 do
 db_dir="/media/marco/Elements/EXP5/db/"
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _ncrna_out
@@ -211,13 +167,59 @@ db_dir="/media/marco/Elements/EXP5/db/"
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _introns_out
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u __un -nohead > _intergenic_out
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa   -q __un -u _un -nohead > _est_out
-#for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
-#echo -ne $f"\t" > "_"$f
-#paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __est_out >> "_"$f
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out _introns_out _intergenic_out _est_out; do cut -f 3 $g | sort | uniq -c > "_"$g; done
-echo $f > "_"$f
-paste __ncrna_out __rrna_out __retro_out __transcripts_out __introns_out __intergenic_out __est_out >> "_"$f
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
+echo -ne $f"\t" > "_"$f
+paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __est_out >> "_"$f
+#for g in _ncrna_out _rrna_out _retro_out _transcripts_out _introns_out _intergenic_out _est_out; do cut -f 3 $g | sort | uniq -c > "_"$g; done
+#echo $f > "_"$f
+#paste __ncrna_out __rrna_out __retro_out __transcripts_out __introns_out __intergenic_out __est_out >> "_"$f
 done 
+
+
+
+# classify clusters and assemblies
+rm _*
+for f in `ls WT_vs_EXP5.down.fa`;
+do	
+db_dir="/media/marco/Elements/EXP5/db/"
+# assemblies
+awk_filt="\$13<0.0001"
+# clusters
+#awk_filt="\$4/\$5>0.9||\$4/\$6>0.9"
+#awk_filt="\$4==\$5"
+touch 	_ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null| awk '{if ('$awk_filt')  print $0}' > _ncrna_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2>  /dev/null | awk '{if ('$awk_filt') print $0}' > _rrna_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/retro.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null | awk '{if ('$awk_filt') print $0}' > _retro_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/transcripts.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _transcripts_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/EST.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _est_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ('$awk_filt') print $0}' > _gene_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _intergenic_out
+for g in  _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
+## print numbers
+#for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
+## print details	
+python -c "
+yes = []
+for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out','_est_out'):
+  out = open('_'+file, 'w')
+  for line in open(file):
+    items = line.strip().split('\t')
+    if items[0] not in yes:
+      if file == '_intergenic_out':
+        out.write(items[1] + ':' + items[10] + '-' + items[11] + '\n')
+      else:  
+        out.write(items[1] + '\n')
+      yes.append(items[0])
+  out.close()       
+" 
+for k in __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out; do sort $k | uniq -c | sort -o $k; done
+paste __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out > "___"$f
+done 
+## print numbers
+#tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
+#cat $tmp
+
 
 #################### 
 # CLUSTERS, BOTH GENOMIC AND TRANSCRIPTOME
@@ -379,7 +381,7 @@ for line in open(sys.argv[1], 'r'):
   i += 1
   if i % 1000000 == 0: sys.stderr.write(str(i) + '\r')
   if int(end)-int(start) > 300: continue
-  if int(re.findall('\'NH\', ([0-9]*)', tags)[0]) != 1: continue
+  #if int(re.findall('\'NH\', ([0-9]*)', tags)[0]) != 1: continue
   if not siRNAs.has_key(cluster): siRNAs[cluster] = siRNA(cluster)
   if flag == '0': 
     siRNAs[cluster].senses[name] = '+'
@@ -395,7 +397,7 @@ for line in open(sys.argv[1], 'r'):
   
 for cluster, sirna in siRNAs.items():
   for name, val in sirna.vals.items():
-    if val / sirna.expr > 0.5 and len(sirna.seqs[name]) >= 14:
+    if val / sirna.expr > 0.5 and len(sirna.seqs[name]) >= 17:
       print sirna.cluster + '\t' + name + '\t' + sirna.poss[name][0] + '\t' + sirna.poss[name][1] + '\t' + sirna.poss[name][2] + '\t' + sirna.senses[name] + '\t' + sirna.seqs[name] + '\t' + str(sirna.expr) + '\t' + str(val) + '\t' + sirna.cigars[name] + '\t' + sirna.tagss[name] 
       break
 " $f$g.assign | awk -v count=$count '{norm=($9*1000000/count); if (norm > 1) print $0"\t"norm}' > $f$g.siRNA &
