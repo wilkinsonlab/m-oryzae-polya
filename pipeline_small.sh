@@ -49,6 +49,12 @@ rm _*; for f in `ls W*fa` ;  do  grep -v ">" $f | awk '{print substr($0, 1, 1)}'
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done  
 cat $tmp
 
+# get last nucleotide
+rm _*; for f in `ls W*fa` ;  do  grep -v ">" $f | awk '{print substr($0, length($0), 1)}' | sort | uniq -c | awk '{print $2"\t"$1}' > "__"$f  ;done
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done  
+cat $tmp
+
+
 # get one alignement, more than 1 alignment, no alignments on genome (from genomic_based/clusters)
 for f in `ls *sorted.bam`;
 do
@@ -145,19 +151,20 @@ db_dir="/media/marco/Elements/EXP5/db/"
 done 
 
 rm _*
-for f in `ls *.collapsed`; do 
+for f in `ls WT_1*.collapsed`; do 
 db_dir="/media/marco/Elements/EXP5/db/"
-bowtie  -p 8  -v 0  $db_dir/bowtie/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie  -p 8  -v 0  $db_dir/bowtie/rrna  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie  -p 8  -v 0  $db_dir/bowtie/retro -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie  -p 8  -v 0  $db_dir/bowtie/transcripts  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie  -p 8  -v 0  $db_dir/bowtie/unspliced  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie  -p 8  -v 0  $db_dir/bowtie/genome -f _un --un _unknown 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/rrna  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/retro -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/transcripts  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/unspliced  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/genome -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/est -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
 done
 
 # classify siRNA ans single reads
 rm _*
-for f in `ls b`;
+for f in `ls *collapsed`;
 do
 db_dir="/media/marco/Elements/EXP5/db/"
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _ncrna_out
@@ -167,9 +174,9 @@ db_dir="/media/marco/Elements/EXP5/db/"
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _introns_out
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u __un -nohead > _intergenic_out
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa   -q __un -u _un -nohead > _est_out
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
-echo -ne $f"\t" > "_"$f
-paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __est_out >> "_"$f
+#for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
+#echo -ne $f"\t" > "_"$f
+#paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __est_out >> "_"$f
 #for g in _ncrna_out _rrna_out _retro_out _transcripts_out _introns_out _intergenic_out _est_out; do cut -f 3 $g | sort | uniq -c > "_"$g; done
 #echo $f > "_"$f
 #paste __ncrna_out __rrna_out __retro_out __transcripts_out __introns_out __intergenic_out __est_out >> "_"$f
