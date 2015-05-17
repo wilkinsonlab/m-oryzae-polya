@@ -492,35 +492,35 @@ cor(g,i,method="spearman")
 cor(h,i,method="spearman")
 
 
-### retrotransposons map
-for f in `ls ../[Wer]*fasta.trimmed.x.collapsed`; 
-do 
-	 #v=${f/..\//}; v=${v/fastq.trimmed.x/sam}; bowtie --best -S -v 0 -p 8 -m 1 ../db/bowtie/retro $f | awk '{if($2!=4)print $0}'  > $v;
-	 v=${f/..\//}; v=${v/fasta.trimmed.x/sam};  ~/Downloads/segemehl/segemehl.x -D 0 -A 100  -t 8 -i ../db/segemehl/retro.idx -d ../db/retro.fa -q $f > $v; 
+###  map
+
+# align first...data.fa
+~/Downloads/segemehl/segemehl.x -x data.idx -d data.fa
+for f in `ls *.fasta.trimmed.x.collapsed`; do  ~/Downloads/segemehl/segemehl.x -A 100 -D 0 -t 8 -m 10 -M 100000 -E 1000 -i ../maps/data.idx -d ../maps/data.fa -q $f > ../maps/${f/fasta.trimmed.x.collapsed/sam} ; done
+
+# normalize
+for f in exp5_1 exp5_2 exp5_3 rbp35_1 rbp35_2 rbp35_3 WT_1 WT_2 WT_3 ; 
+do
+  cov=`grep $f coverage.txt | cut -f 2`
+  for g in `ls "_"$f*pos`;
+  do
+    awk -v cov=$cov '{print $1"\t"($2*1000000)/cov}' $g > $g.norm
+  done 
+  for g in `ls "_"$f*neg`;
+  do
+    awk -v cov=$cov '{print $1"\t"($2*1000000)/cov}' $g > $g.norm
+  done 
 done
 
-for f in `ls *sam*`; 
-do 
-grep "SN:.*LN:[0-9]*" -o < $f | sed -e 's/SN://' -e 's/LN://' > "_"$f
-cat "_"$f | while read a b; 
-do 
-grep $a $f | grep -v "^@" | awk '{if($2==0) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)printf "%d\n", $4/10}}' | sort | uniq -c | awk '{print $2"\t"$1}' | sort -k 1,1 > "_"$f"_"$a"_pos" &
-grep $a $f | grep -v "^@" | awk '{if($2==16) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)printf "%d\n", $4/10}}' | sort | uniq -c | awk '{print $2"\t"(-$1)}' | sort -k 1,1 > "_"$f"_"$a"_neg" &
+# plots
+for f in `grep ">" data.fa | sed 's/>//'`;
+do
+echo $f
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*$f*pos.norm`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -n $tmp > _tmp
+Rscript pos.R $f > /dev/null
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*$f*neg.norm`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -n $tmp > _tmp
+Rscript neg.R $f > /dev/null
 done
-done
-
-grep "SN:.*LN:[0-9]*" -o < WT_1.sam.collapsed | sed -e 's/SN://' -e 's/LN://' | cut -f 1,2 > "__"$f
-while read a b
-do 
-rm "__"$a; 
-for i in `seq 1 $b`
-do 
-echo $i | awk '{printf "%d\t0\n", $0/10}' 
-done | sort -u > "__"$a
-done < __exp5_IP17_GTAGAG_L006_R1.sam
-
-# for all the retros......
-reset;tmp=$(mktemp);tmp2=$(mktemp);for file in `ls *retro5*`; do sort -k 1,1 $file -o $file ;  if [ -s "$tmp" ];   then   join -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";   else     cp "$file" "$tmp2";   fi;   cp "$tmp2" "$tmp"; done; cat $tmp | sort -nk1
 
 
 #####################
