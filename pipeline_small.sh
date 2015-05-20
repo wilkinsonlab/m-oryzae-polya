@@ -151,7 +151,7 @@ db_dir="/media/marco/Elements/EXP5/db/"
 done 
 
 rm _*
-for f in `ls WT_1*.collapsed`; do 
+for f in `ls *.collapsed`; do 
 db_dir="/media/marco/Elements/EXP5/db/"
 bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
 bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/rrna  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
@@ -164,7 +164,7 @@ done
 
 # classify siRNA ans single reads
 rm _*
-for f in `ls *collapsed`;
+for f in `ls W*fa`;
 do
 db_dir="/media/marco/Elements/EXP5/db/"
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _ncrna_out
@@ -174,6 +174,7 @@ db_dir="/media/marco/Elements/EXP5/db/"
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _introns_out
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u __un -nohead > _intergenic_out
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa   -q __un -u _un -nohead > _est_out
+cat _est_out >> _EST
 #for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
 #echo -ne $f"\t" > "_"$f
 #paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __est_out >> "_"$f
@@ -186,7 +187,7 @@ done
 
 # classify clusters and assemblies
 rm _*
-for f in `ls WT_vs_EXP5.down.fa`;
+for f in `ls WT*.fa`;
 do	
 db_dir="/media/marco/Elements/EXP5/db/"
 # assemblies
@@ -496,10 +497,10 @@ cor(h,i,method="spearman")
 
 # align first...data.fa
 ~/Downloads/segemehl/segemehl.x -x data.idx -d data.fa
-for f in `ls *.fasta.trimmed.x.collapsed`; do  ~/Downloads/segemehl/segemehl.x -A 100 -D 0 -t 8 -m 10 -M 100000 -E 1000 -i ../maps/data.idx -d ../maps/data.fa -q $f > ../maps/${f/fasta.trimmed.x.collapsed/sam} ; done
+for f in `ls *.fasta.trimmed.x.collapsed`; do  ~/Downloads/segemehl/segemehl.x -A 100 -D 0 -t 8 -m 10 -M 100000 -E 1000 -i ../maps/ncrna_rrna_retro/data.idx -d ../maps/ncrna_rrna_retro/data.fa -q $f > ../maps/ncrna_rrna_retro/${f/fasta.trimmed.x.collapsed/sam} ; done
 
 # create pos & neg
-for f in `ls *sam*`;  do  
+for f in `ls *sam`;  do  
 grep "SN:.*LN:[0-9]*" -o < $f | sed -e 's/SN://' -e 's/LN://' > "_"$f; 
 cat "_"$f | while read a b;  do  
 grep $a $f | grep -v "^@" | awk '{if($2==0) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)printf "%d\n", $4/10}}' | sort | uniq -c | awk '{print $2"\t"$1}' | sort -k 1,1 > "_"$f"_"$a"_pos" & 
@@ -509,7 +510,7 @@ done; done
 # normalize
 for f in exp5_1 exp5_2 exp5_3 rbp35_1 rbp35_2 rbp35_3 WT_1 WT_2 WT_3 ; 
 do
-  cov=`grep $f coverage.txt | cut -f 2`
+  cov=`grep $f ../coverage.txt | cut -f 2`
   for g in `ls "_"$f*pos`;
   do
     awk -v cov=$cov '{print $1"\t"($2*1000000)/cov}' $g > $g.norm
@@ -521,20 +522,20 @@ do
 done
 
 # plots
-for f in `grep ">" data.fa | sed 's/>//'`;
+for f in `grep ">" EST_unknown.fa | sed -e 's/>//' -e 's/ .*//'`;
 do
 echo $f
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*$f*pos.norm`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -n $tmp > _tmp
-Rscript pos.R $f > /dev/null
+Rscript ../pos.R $f > /dev/null
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*$f*neg.norm`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -n $tmp > _tmp
-Rscript neg.R $f > /dev/null
+Rscript ../neg.R $f > /dev/null
 done
 
 ### reads length map
 
-for f in `ls  W*fa`; do  ~/Downloads/segemehl/segemehl.x -A 100 -D 0 -t 8 -m 10 -M 100000 -E 1000 -i ../../maps/data.idx -d ../../maps/data.fa -q $f > ../maps/${f/.fa/.sam} ; done
-seq 10 41 > _base
-for f in `grep ">" data.fa | sed 's/>//'`;
+for f in `ls  W*fa`; do  ~/Downloads/segemehl/segemehl.x -A 100 -D 0 -t 8 -m 10 -M 100000 -E 1000 -i ../../maps/ncrna_rrna_retro/data.idx -d ../../maps/ncrna_rrna_retro/data.fa -q $f > ../../maps/ncrna_rrna_retro/${f/.fa/.sam} ; done
+seq 10 41 > __base
+for f in `grep ">" EST_unknown.fa | sed -e 's/>//' -e 's/ .*//'`;
 do
 echo $f
 echo -e "9\t0" > __a
@@ -542,13 +543,13 @@ echo -e "9\t0" > __b
 grep $f WT_vs_EXP5.down.sam | grep -v "@" | cut -f 6 | sort | uniq -c | awk '{print $2"\t"$1}'| sed 's/M//' >> __a
 grep $f WT_vs_EXP5.up.sam | grep -v "@" | cut -f 6 | sort | uniq -c | awk '{print $2"\t"$1}' | sed 's/M//'>> __b
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -nk1 $tmp > _tmp
-Rscript length.R "EXP5_"$f > /dev/null
+Rscript ../length.R "EXP5_"$f _tmp
 echo -e "9\t0" > __a
 echo -e "9\t0" > __b
 grep $f WT_vs_RBP35.down.sam | grep -v "@" | cut -f 6 | sort | uniq -c | awk '{print $2"\t"$1}'| sed 's/M//' >> __a
 grep $f WT_vs_RBP35.up.sam | grep -v "@" | cut -f 6 | sort | uniq -c | awk '{print $2"\t"$1}' | sed 's/M//'>> __b
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -nk1 $tmp > _tmp
-Rscript length.R "RBP35_"$f > /dev/null
+Rscript ../length.R "RBP35_"$f _tmp 
 done
 
 
