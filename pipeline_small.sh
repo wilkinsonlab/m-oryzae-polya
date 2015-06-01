@@ -30,7 +30,7 @@ done
 # aligning bowtie
 for f in `ls *fasta.trimmed.x`;
 do
-	bowtie -S -M 1 -v 0 -p 8 --best --strata ../db/bowtie/genome $f | samtools view -bSh -F 4 - | samtools sort - visualization/bowtie/${f/.*/.sorted}
+	bowtie -S -M 1 -v 0 -p 8 --best --strata ../db/bowtie/genome -f $f | samtools view -bSh -F 4 - | samtools sort - visualization/bowtie/${f/.*/.sorted}
 done
 
 
@@ -52,7 +52,32 @@ cat $tmp
 # get last nucleotide
 rm _*; for f in `ls W*fa` ;  do  grep -v ">" $f | awk '{print substr($0, length($0), 1)}' | sort | uniq -c | awk '{print $2"\t"$1}' > "__"$f  ;done
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done  
-cat $tmp
+cat $tmp > _tmp; Rscript ../norm.R _tmp; cat _tmp.norm
+
+# length & nucleotide 
+for l in `seq 10 30`; do for f in `ls WT_2.fasta.trimmed.x.collapsed`  ; do  grep -v ">" $f | awk -v l=$l '{if(length($0)==l) print substr($0,1,1)}' | sort | uniq -c | awk '{print $2"\t"$1}'> _tmp.$l; Rscript norm.R _tmp.$l  ;done ; done
+
+# 3' modifications
+rm _*
+for f in `ls *collapsed`; do 
+db_dir="/media/marco/Elements/EXP5/db/"
+#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/ncrna -f $f --un _un 1>  "__"$f.ncrna
+#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/rrna  -f _un --un __un 1>  "__"$f.rrna
+#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/retro -f __un --un _un 1>  "__"$f.retro
+#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/transcripts  -f _un --un __un 1>  "__"$f.transcripts
+#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/unspliced  -f __un --un _un 1>  "__"$f.introns
+bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/genome -f $f 1>  "__"$f.intergenic
+#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/est -f __un --un _un 1>  "__"$f.est
+done
+
+rm ___*
+for f in `ls _*intergenic`; do
+awk -F "\t" '{if ($2=="+" && $8!="") split($8,arr,","); for (k in arr) print arr[k] }' $f | sed 's/.*://' > _a
+awk -F "\t" '{if ($2=="-" && $8!="") split($8,arr,","); for (k in arr) print arr[k] }' $f | tr "[ATGCatgcNn]" "[TACGtacgNn]" | sed 's/.*://' > _b
+sort _a _b | uniq -c | awk '{print $2"\t"$1}' > "_"$f
+done
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls ___*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ;cat $tmp > _tmp;Rscript ../norm.R _tmp; cat _tmp
+
 
 
 # get one alignement, more than 1 alignment, no alignments on genome (from genomic_based/clusters)
@@ -164,7 +189,7 @@ done
 
 # classify siRNA ans single reads
 rm _*
-for f in `ls W*fa`;
+for f in `ls all_siRNA.fa`;
 do
 db_dir="/media/marco/Elements/EXP5/db/"
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _ncrna_out
@@ -174,24 +199,23 @@ db_dir="/media/marco/Elements/EXP5/db/"
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _introns_out
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u __un -nohead > _intergenic_out
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa   -q __un -u _un -nohead > _est_out
-cat _est_out >> _EST
 #for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
 #echo -ne $f"\t" > "_"$f
 #paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __est_out >> "_"$f
-#for g in _ncrna_out _rrna_out _retro_out _transcripts_out _introns_out _intergenic_out _est_out; do cut -f 3 $g | sort | uniq -c > "_"$g; done
-#echo $f > "_"$f
-#paste __ncrna_out __rrna_out __retro_out __transcripts_out __introns_out __intergenic_out __est_out >> "_"$f
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out _introns_out _intergenic_out _est_out; do cut -f 3 $g | sort | uniq -c > "_"$g; done
+echo $f > "_"$f
+paste __ncrna_out __rrna_out __retro_out __transcripts_out __introns_out __intergenic_out __est_out >> "_"$f
 done 
 
 
 
 # classify clusters and assemblies
 rm _*
-for f in `ls WT*.fa`;
+for f in `ls WT_vs_EXP5.down.fa`;
 do	
 db_dir="/media/marco/Elements/EXP5/db/"
 # assemblies
-awk_filt="\$13<0.0001"
+awk_filt="\$13<0.00001"
 # clusters
 #awk_filt="\$4/\$5>0.9||\$4/\$6>0.9"
 #awk_filt="\$4==\$5"
@@ -205,28 +229,28 @@ blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _intergenic_out
 for g in  _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
 ## print numbers
-#for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}'> "__"$f
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}' > "__"$f
 ## print details	
-python -c "
-yes = []
-for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out','_est_out'):
-  out = open('_'+file, 'w')
-  for line in open(file):
-    items = line.strip().split('\t')
-    if items[0] not in yes:
-      if file == '_intergenic_out':
-        out.write(items[1] + ':' + items[10] + '-' + items[11] + '\n')
-      else:  
-        out.write(items[1] + '\n')
-      yes.append(items[0])
-  out.close()       
-" 
-for k in __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out; do sort $k | uniq -c | sort -o $k; done
-paste __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out > "___"$f
+#python -c "
+#yes = []
+#for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out','_est_out'):
+  #out = open('_'+file, 'w')
+  #for line in open(file):
+    #items = line.strip().split('\t')
+    #if items[0] not in yes:
+      #if file == '_intergenic_out':
+        #out.write(items[1] + ':' + items[10] + '-' + items[11] + '\n')
+      #else:  
+        #out.write(items[1] + '\n')
+      #yes.append(items[0])
+  #out.close()       
+#" 
+#for k in __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out; do sort $k | uniq -c | sort -o $k; done
+#paste __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out > "___"$f
 done 
 ## print numbers
-#tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
-#cat $tmp
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
+cat $tmp
 
 
 #################### 
