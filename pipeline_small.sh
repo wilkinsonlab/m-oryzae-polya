@@ -28,9 +28,9 @@ done
 
 
 # aligning bowtie
-for f in `ls *fasta.trimmed.x`;
+for f in `ls _*fasta.trimmed.x`;
 do
-	bowtie -S -M 1 -v 0 -p 8 --best --strata ../db/bowtie/genome -f $f | samtools view -bSh -F 4 - | samtools sort - visualization/bowtie/${f/.*/.sorted}
+	bowtie -S -M 1 -v 0 -p 8 --best --strata ../db/bowtie/genome -f $f | samtools view -bSh -F 4 - | samtools sort - visualization/bowtie_adenosine/${f/.*/.sorted}
 done
 
 
@@ -175,16 +175,17 @@ db_dir="/media/marco/Elements/EXP5/db/"
 ~/Downloads/segemehl/segemehl.x -D 0 -A 90 -H 1 -m 10 -M 100000 -E 1000  -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa  -q __un -u _unknown -nohead > _res; cut -f 1 _res | sort -u | wc -l >>   "_"$f; cut -f 1 _res | sort -u | awk '{split($1, arr, "-"); count+=arr[2]}END{print count}'  >> "__"$f
 done 
 
+
 rm _*
 for f in `ls *.collapsed`; do 
 db_dir="/media/marco/Elements/EXP5/db/"
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/ncrna -f $f --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/rrna  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/retro -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/transcripts  -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/unspliced  -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/genome -f _un --un __un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/est -f __un --un _un 1> /dev/null 2> _res; grep reported _res >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/ncrna -f $f --un _un 2> /dev/null | awk '{if (length($5) > 9) print $0}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/rrna  -f _un --un __un 2> /dev/null | awk '{if (length($5) > 9) print $0}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/retro -f __un --un _un 2> /dev/null | awk '{if (length($5) > 9) print $0}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/transcripts  -f _un --un __un 2> /dev/null | awk '{if (length($5) > 9) print $0}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/unspliced  -f __un --un _un 2> /dev/null | awk '{if (length($5) > 9) print $0}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/genome -f _un --un __un 2> /dev/null | awk '{if (length($5) > 9) print $0}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/est -f __un --un _un 2> /dev/null | awk '{if (length($5) > 9) print $0}' | wc -l >> "_"$f; 
 done
 
 # classify siRNA ans single reads

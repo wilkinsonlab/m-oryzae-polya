@@ -329,7 +329,7 @@ function kegg_enrich {
 	    b=$(cat _de_list $f $f | sort | uniq -u | wc -l)
 	    c=$(cat _nde_list $f | sort | uniq -d | wc -l)
 	    d=$(cat _nde_list $f $f | sort | uniq -u | wc -l)
-	    res=$(Rscript ../../../m-oryzae-polya/fisher_test.R $a $b $c $d )
+	    res=$(Rscript ../../m-oryzae-polya/fisher_test.R $a $b $c $d )
 	    echo -ne ${f/_/}$'\t'"$res"$'\t' >> "${file_p%%.*}"_kegg_enrich.tsv
 	    grep -m 1 "${f/_/}" $type | cut -f 3 | tr '\n' '\t' >> "${file_p%%.*}"_kegg_enrich.tsv
 	    cat _de_list $f | sort | uniq -d | tr '\n' ',' | sed 's/,$/\n/' >>  "${file_p%%.*}"_kegg_enrich.tsv
