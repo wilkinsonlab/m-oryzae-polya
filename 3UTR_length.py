@@ -11,19 +11,19 @@ for line in gff_file:
     if line[0] == '#' or line[0] == '\n':
         continue
     items = line.split('\t')
-    if items[2] == "three_prime_UTR":
+    if items[2] == "stop_codon":
         chrx = items[0]
         for x in items[8].split(';'):
-            if x.split('=')[0] == "Parent":
-                name = x.split('=')[1].strip()
-        name = re.sub(r'T.', "", name)
+            if x.strip().split(' ')[0] == "transcript_id":
+                name = x.strip().split(' ')[1].strip()
+        name = "gene:"+re.sub(r'"', "", name)
         sense = items[6]
         if sense == '+':
             pos = int(items[3])
         else:
             pos = int(items[4])
         stops[name] = pos
-
+print stops
 distance = [0] * 500
 count = 0.0
 dists = 0
