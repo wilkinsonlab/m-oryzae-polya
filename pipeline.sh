@@ -472,7 +472,7 @@ for line in gff_file:
     if line[0] == '#' or line[0] == '\n':
         continue
     items = line.split('\t')
-    if items[2] == 'stop_codon':
+    if items[2] == 'three_prime_UTR':
         chrx = items[0]
         for x in items[8].split(';'):
             if x.split('=')[0] == 'Parent':
@@ -480,9 +480,9 @@ for line in gff_file:
         name = re.sub(r'T.', '', name)
         sense = items[6]
         if sense == '+':
-            pos = int(items[4])
-        else:
             pos = int(items[3])
+        else:
+            pos = int(items[4])
         stops[name] = pos
 
 for line in polyA_file:
@@ -503,17 +503,17 @@ for line in polyA_file:
         start = stops[gene]
         end = pos
     if start > end: continue
-    os.system('fastacmd -s \"lcl|' + chrx + '\" -S ' + sense_ + ' -L ' +  str(start) + ',' + str(end) + ' -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa | sed -e \'s/ dna.*/@' + gene  + '@' + sense + '/\' -e \'s/lcl|//\'  ')
+    os.system('fastacmd -s \"lcl|' + chrx + '\" -S ' + sense_ + ' -L ' +  str(start) + ',' + str(end) + ' -d Magnaporthe_oryzae.MG8.21.dna.toplevel.fa | sed -e \'s/ dna.*/@' + gene  + '@' + sense + '/\' -e \'s/lcl|//\'  ')
 
 gff_file.close()
 polyA_file.close()
-" Magnaporthe_oryzae.MG8.18.gff3 WT--C-X.polyA_all_m > 3UTR_-C.fa
+" Magnaporthe_oryzae.MG8.21.gff3 2D4-CM-X.polyA_all_m > _2D4.fa
 
 
 # extract 3'UTR or intra-APA sequences (for miRNA search)
-grep stop_codon Magnaporthe_oryzae.MG8.18.gff3 | sed  -e 's/ID=stop_codon://' -e 's/T.*//' | cut -f 4,9| awk '{print $2,$1}' | sort > _g
-sort -k 5,5 -k 2 _f | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _t
-join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > $2  && arr[x+1] > $2 && arr[x+1] != "") || ($4 == 2 && arr[x] < $2  && arr[x+1] < $2 && arr[x+1] != "") ) system("echo -n "$1"; fastacmd -d Magnaporthe_oryzae.MG8.18.dna.toplevel.fa -s " "\"lcl|"$3"\" -S " "\""$4"\" -L "arr[x]","arr[x+1]" ")}' | awk -F ">" '{if ($2 != "") print ">"$2"@"$1; else print $0}' | sed 's/ .*@/@/' > _f.intra
+grep three_prime_UTR Magnaporthe_oryzae.MG8.21.gff3 | sed  -e 's/Parent=//' -e 's/T[0-9]*;//' | cut -f 4,9| awk '{print $2,$1}' | sort > _g
+sort -k 5,5 -k 2 WT-CM-X.polyA_all_m | awk '{arr[$5"@"$3"@"$4]=arr[$5"@"$3"@"$4]$2":"} END {for(x in arr) print x,arr[x]}  ' | sed -e 's/@/ /g' -e 's/+/2/' -e 's/-/1/'  -e 's/:$//' | sort > _t
+join _g _t | awk '{split($5, arr, ":"); for (x in arr) if (($4 == 1 && arr[x] > $2  && arr[x+1] > $2 && arr[x+1] != "") || ($4 == 2 && arr[x] < $2  && arr[x+1] < $2 && arr[x+1] != "") ) system("echo -n "$1"; fastacmd -d Magnaporthe_oryzae.MG8.21.dna.toplevel.fa -s " "\"lcl|"$3"\" -S " "\""$4"\" -L "arr[x]","arr[x+1]" ")}' | awk -F ">" '{if ($2 != "") print ">"$2"@"$1; else print $0}' | sed 's/ .*@/@/' > _g.intra
 
 # search for matching small rna in intra-APA
 python -c "

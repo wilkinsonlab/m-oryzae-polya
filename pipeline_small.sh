@@ -547,7 +547,7 @@ do
 done
 
 # plots
-for f in `grep ">" EST_unknown.fa | sed -e 's/>//' -e 's/ .*//'`;
+for f in `grep ">" cdna.fa | sed -e 's/>//' -e 's/ .*//'`;
 do
 echo $f
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*$f*pos.norm`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -n $tmp > _tmp
