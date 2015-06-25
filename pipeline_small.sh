@@ -212,7 +212,7 @@ done
 
 # classify clusters and assemblies
 rm _*
-for f in `ls WT_vs_EXP5.down.fa`;
+for f in `ls WT_vs_EXP5.up.fa`;
 do	
 db_dir="/media/marco/Elements/EXP5/db/"
 # assemblies
