@@ -67,8 +67,8 @@ for line in open(sys.argv[1]):
 
 for cluster in clusters:
 	cluster.rpkm = (cluster.expr  * 1000000.0) / (coverage * ((cluster.end - cluster.start) / 1000.0))	
-	#if cluster.expr > 10 and cluster.rpkm > 50:
-	print cluster.chrx, cluster.start, cluster.end, cluster.expr, cluster.rpkm
+	if cluster.expr > 10 and cluster.rpkm > 50:
+		print cluster.chrx, cluster.start, cluster.end, cluster.expr, cluster.rpkm
 
 #best_lambda = 0
 #best_skew = 100

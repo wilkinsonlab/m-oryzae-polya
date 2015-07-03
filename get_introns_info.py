@@ -86,11 +86,11 @@ for gene_id, gene in genes.items():
         if intron.sense == "+":
             intron.start = start
             intron.end = end
-            intron.seq = genome_seqs[intron.chrx].seq[start-1:end]
+            intron.seq = genome_seqs[intron.chrx].seq[start-1-3:end]
         elif intron.sense == "-":
             intron.start = end
             intron.end = start 
-            intron.seq = genome_seqs[intron.chrx].seq[start-1:end].reverse_complement()
+            intron.seq = genome_seqs[intron.chrx].seq[start-1:end+3].reverse_complement()
         introns.append(intron)
         genes[gene_id].introns.append(intron)
         
@@ -105,12 +105,13 @@ for gene in genes.values():
         num.append(len(gene.exons)-1)
 for intron in introns:           
     length.append(len(intron.seq) ) 
-    donor = str(intron.seq[0:2])
+    donor = str(intron.seq[0:9])
     if donors.has_key(donor):
         donors[donor] += 1
     else:
         donors[donor] = 1   
-    acceptor = str(intron.seq[-12:])
+    acceptor = str(intron.seq[-6:])
+    print donor
     if acceptors.has_key(acceptor):
         acceptors[acceptor] += 1
     else:
@@ -125,16 +126,16 @@ for intron in introns:
 # 
 #         print intron.chrx + "\t" + "protein_coding" + "\t" + "intron" + "\t" + str(intron.start) + "\t" + str(intron.end) + "\t" + "." + "\t" + intron.sense + "\t" + "." + "\t" + "gene_id \"" + intron.gene_id + "\"; ID intron_" + str(i) + "_"
 # # # #        
-# print "protein coding genes:\t", len(genes.keys())   
-# print "protein coding genes containg introns:\t%d" % (count)
-# print "average number of introns per gene:\t%.1f" % (sum(num) / float(len(num)))
-# print "average intron length:\t%d" % (median(length))  
-# print "number of introns:" + str(len(introns))  
-print "standard deviation:", np.std(length)
+#print "protein coding genes:\t", len(genes.keys())   
+#print "protein coding genes containg introns:\t%d" % (count)
+#print "average number of introns per gene:\t%.1f" % (sum(num) / float(len(num)))
+#print "average intron length:\t%d" % (median(length))  
+#print "number of introns:" + str(len(introns))  
+#print "standard deviation:", np.std(length)
 
 # for donor, value in donors.items():
 #      print donor + "\t" + str(value / float(len(introns)) )
-# for acceptor, value in acceptors.items():
+#for acceptor, value in acceptors.items():
 #          print acceptor + "\t" + str(value / float(len(introns)) )
 # for intron in introns:
 #     print len(intron.seq)

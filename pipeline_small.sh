@@ -28,9 +28,9 @@ done
 
 
 # aligning bowtie
-for f in `ls _*fasta.trimmed.x`;
+for f in `ls ../*fasta.trimmed.x`;
 do
-	bowtie -S -M 1 -v 0 -p 8 --best --strata ../db/bowtie/genome -f $f | samtools view -bSh -F 4 - | samtools sort - visualization/bowtie_adenosine/${f/.*/.sorted}
+	bowtie -S -M 1 -v 0 -p 8 --best --strata ../../db/bowtie/genome -f $f | samtools view -bSh -F 4 - | samtools sort - ${f/.*/.sorted}
 done
 
 
@@ -59,15 +59,15 @@ for l in `seq 10 30`; do for f in `ls WT_2.fasta.trimmed.x.collapsed`  ; do  gre
 
 # 3' modifications
 rm _*
-for f in `ls *collapsed`; do 
+for f in `ls WT_1.fasta.trimmed.x.collapsed`; do 
 db_dir="/media/marco/Elements/EXP5/db/"
-#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/ncrna -f $f --un _un 1>  "__"$f.ncrna
-#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/rrna  -f _un --un __un 1>  "__"$f.rrna
-#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/retro -f __un --un _un 1>  "__"$f.retro
-#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/transcripts  -f _un --un __un 1>  "__"$f.transcripts
-#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/unspliced  -f __un --un _un 1>  "__"$f.introns
-bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/genome -f $f 1>  "__"$f.intergenic
-#bowtie -M 1 -l 10 -n 0 -p 8 $db_dir/bowtie/est -f __un --un _un 1>  "__"$f.est
+bowtie -M 1 -v 1 -p 8 $db_dir/bowtie/ncrna -f $f --un _un 1>  "__"$f.ncrna
+bowtie -M 1 -v 0 -p 8 $db_dir/bowtie/rrna  -f _un --un __un 1>  "__"$f.rrna
+bowtie -M 1 -v 0 -p 8 $db_dir/bowtie/retro -f __un --un _un 1>  "__"$f.retro
+bowtie -M 1 -v 0 -p 8 $db_dir/bowtie/transcripts  -f _un --un __un 1>  "__"$f.transcripts
+bowtie -M 1 -v 0 -p 8 $db_dir/bowtie/unspliced  -f __un --un _un 1>  "__"$f.introns
+bowtie -M 1 -v 0 -p 8 $db_dir/bowtie/genome -f $f 1>  "__"$f.intergenic
+bowtie -M 1 -v 0 -p 8 $db_dir/bowtie/est -f __un --un _un 1>  "__"$f.est
 done
 
 rm ___*
@@ -212,13 +212,13 @@ done
 
 # classify clusters and assemblies
 rm _*
-for f in `ls WT_vs_EXP5.up.fa`;
+for f in `ls WT_vs_EXP5.expr.up.fa`;
 do	
 db_dir="/media/marco/Elements/EXP5/db/"
 # assemblies
-awk_filt="\$13<0.00001"
+#awk_filt="\$13<0.00001"
 # clusters
-#awk_filt="\$4/\$5>0.9||\$4/\$6>0.9"
+awk_filt="\$4/\$5>0.9||\$4/\$6>0.9"
 #awk_filt="\$4==\$5"
 touch 	_ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_out
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null| awk '{if ('$awk_filt')  print $0}' > _ncrna_out
@@ -227,7 +227,7 @@ blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/transcripts.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _transcripts_out
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/EST.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _est_out
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ('$awk_filt') print $0}' > _gene_out
-blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/genome.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _intergenic_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db ../guy11.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _intergenic_out
 for g in  _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
 ## print numbers
 for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}' > "__"$f
@@ -522,10 +522,10 @@ cor(h,i,method="spearman")
 
 # align first...data.fa
 ~/Downloads/segemehl/segemehl.x -x data.idx -d data.fa
-for f in `ls *.fasta.trimmed.x.collapsed`; do  ~/Downloads/segemehl/segemehl.x -A 100 -D 0 -t 8 -m 10 -M 100000 -E 1000 -i ../maps/ncrna_rrna_retro/data.idx -d ../maps/ncrna_rrna_retro/data.fa -q $f > ../maps/ncrna_rrna_retro/${f/fasta.trimmed.x.collapsed/sam} ; done
+for f in `ls *.fasta.trimmed.x.collapsed`; do  ~/Downloads/segemehl/segemehl.x -A 100 -D 0 -t 8 -m 18 -M 100000 -E 1000 -i ../maps/EST_unknown/EST_unknown.idx -d ../maps/EST_unknown/EST_unknown.fa -q $f > ../maps/EST_unknown/${f/fasta.trimmed.x.collapsed/sam} ; done
 
 # create pos & neg
-for f in `ls *sam`;  do  
+for f in `ls exp5_1.sam exp5_2.sam exp5_3.sam rbp35_1.sam rbp35_2.sam rbp35_3.sam WT_1.sam WT_2.sam WT_3.sam`;  do  
 grep "SN:.*LN:[0-9]*" -o < $f | sed -e 's/SN://' -e 's/LN://' > "_"$f; 
 cat "_"$f | while read a b;  do  
 grep $a $f | grep -v "^@" | awk '{if($2==0) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)printf "%d\n", $4/10}}' | sort | uniq -c | awk '{print $2"\t"$1}' | sort -k 1,1 > "_"$f"_"$a"_pos" & 
@@ -584,8 +584,8 @@ done
 
 ### annotation diffential expression
 for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//};   htseq-count -a 0 -s yes -r pos -f bam -t gene -i ID $f Magnaporthe_oryzae.MG8.25.gff3 > ${v/sorted.bam/count} & done
-Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count exp5_1.uniq.count exp5_2.uniq.count exp5_3.uniq.count WT_vs_EXP5_csv
-Rscript ../diff.R WT_1.uniq.count WT_2.uniq.count  WT_3.uniq.count rbp35_1.uniq.count rbp35_2.uniq.count rbp35_3.uniq.count WT_vs_RBP35_csv
+Rscript ../../diff.R WT_1.count WT_2.count  WT_3.count exp5_1.count exp5_2.count exp5_3.count WT_vs_EXP5_csv
+Rscript ../../diff.R WT_1.count WT_2.count  WT_3.count rbp35_1.count rbp35_2.count rbp35_3.count WT_vs_RBP35_csv
 
 ### clusters diffential expression
 for f in `ls ../[Wer]*uniq.sorted.bam`; do v=${f/..\//}; v=${v/uniq.sorted.bam/cov}; genomeCoverageBed -ibam $f -g ../genome.txt -d > $v & done
