@@ -111,7 +111,7 @@ for intron in introns:
     else:
         donors[donor] = 1   
     acceptor = str(intron.seq[-6:])
-    print donor
+    #print donor
     if acceptors.has_key(acceptor):
         acceptors[acceptor] += 1
     else:
@@ -126,12 +126,24 @@ for intron in introns:
 # 
 #         print intron.chrx + "\t" + "protein_coding" + "\t" + "intron" + "\t" + str(intron.start) + "\t" + str(intron.end) + "\t" + "." + "\t" + intron.sense + "\t" + "." + "\t" + "gene_id \"" + intron.gene_id + "\"; ID intron_" + str(i) + "_"
 # # # #        
-#print "protein coding genes:\t", len(genes.keys())   
-#print "protein coding genes containg introns:\t%d" % (count)
-#print "average number of introns per gene:\t%.1f" % (sum(num) / float(len(num)))
-#print "average intron length:\t%d" % (median(length))  
-#print "number of introns:" + str(len(introns))  
-#print "standard deviation:", np.std(length)
+if len(num) != 0:
+	print "protein coding genes:\t", len(genes.keys())   
+	print "protein coding genes containg introns:\t%d" % (count)
+	print "number of introns:\t" + str(len(introns))
+	print "average number of introns per gene:\t%.1f" % (sum(num) / float(len(num)))
+	print "median intron length:\t%d" % (median(length))
+	print "average intron length:\t%d" % (sum(length) / len(length)) 
+	print "median absolute deviation:\t" +  str(mad(length)) 
+	print "standard deviation:\t" +  str(np.std(length))
+else:
+	print "protein coding genes:\t", len(genes.keys())   
+	print "protein coding genes containg introns:\t%d" % (count)
+	print "number of introns:\t" + str(len(introns))
+	print "average number of introns per gene:\t%.1f" % 0
+	print "average intron length:\t%d" % 0
+	print "median intron length:\t%d" % 0
+	print "median absolute deviation:\t%.2f" %  0
+	print "standard deviation:\t%.2f" %  0
 
 # for donor, value in donors.items():
 #      print donor + "\t" + str(value / float(len(introns)) )

@@ -212,7 +212,7 @@ done
 
 # classify clusters and assemblies
 rm _*
-for f in `ls WT_vs_EXP5.expr.up.fa`;
+for f in `ls clusters.fa`;
 do	
 db_dir="/media/marco/Elements/EXP5/db/"
 # assemblies
@@ -224,34 +224,34 @@ touch 	_ncrna_out _rrna_out _retro_out _transcripts_out _gene_out _intergenic_ou
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/ncrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null| awk '{if ('$awk_filt')  print $0}' > _ncrna_out
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/rrna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2>  /dev/null | awk '{if ('$awk_filt') print $0}' > _rrna_out
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/retro.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null | awk '{if ('$awk_filt') print $0}' > _retro_out
-blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/transcripts.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _transcripts_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/cdna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _transcripts_out
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/EST.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _est_out
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ('$awk_filt') print $0}' > _gene_out
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db ../guy11.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _intergenic_out
 for g in  _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
 ## print numbers
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}' > "__"$f
+#for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}' > "__"$f
 ## print details	
-#python -c "
-#yes = []
-#for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out','_est_out'):
-  #out = open('_'+file, 'w')
-  #for line in open(file):
-    #items = line.strip().split('\t')
-    #if items[0] not in yes:
-      #if file == '_intergenic_out':
-        #out.write(items[1] + ':' + items[10] + '-' + items[11] + '\n')
-      #else:  
-        #out.write(items[1] + '\n')
-      #yes.append(items[0])
-  #out.close()       
-#" 
-#for k in __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out; do sort $k | uniq -c | sort -o $k; done
-#paste __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out > "___"$f
+python -c "
+yes = []
+for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out','_est_out'):
+  out = open('_'+file, 'w')
+  for line in open(file):
+    items = line.strip().split('\t')
+    if items[0] not in yes:
+      if file == '_intergenic_out':
+        out.write(items[1] + ':' + items[10] + '-' + items[11] + '\n')
+      else:  
+        out.write(items[1] + '\n')
+      yes.append(items[0])
+  out.close()       
+" 
+for k in __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out; do sort $k | uniq -c | sort -o $k; done
+paste __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out > "___"$f
 done 
 ## print numbers
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
-cat $tmp
+#tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
+#cat $tmp
 
 
 #################### 
@@ -393,7 +393,7 @@ python /media/marco/Elements/m-oryzae-polya/fasta_extract.py clusters.fa _rbp_up
 ############# 
 for f in WT rbp35 exp5; do
 for g in _1 _2 _3; do   
-count=$(grep $f$g ../../coverage.txt | cut -f 2)
+count=$(grep $f$g ../coverage.txt | cut -f 2)
 python -c "
 import sys,re
 class siRNA:
@@ -447,10 +447,10 @@ awk '{print ">"$1"\n"$6}' < exp5_siRNA > exp5_siRNA.fa
 awk '{print ">"$1"\n"$6}' < rbp35_siRNA > rbp35_siRNA.fa
 awk '{print ">"$1"\n"$6}' < WT_siRNA > WT_siRNA.fa
 awk '{print ">"$1"\n"$6}' < all_siRNA > all_siRNA.fa
-for f in `cat ../../../transcriptomic_based/single_read/WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_EXP5.siRNA.down.fa &
-for f in `cat ../../../transcriptomic_based/single_read/WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_EXP5.siRNA.up.fa &
-for f in `cat ../../../transcriptomic_based/single_read/WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_RBP35.siRNA.down.fa &
-for f in `cat ../../../transcriptomic_based/single_read/WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_RBP35.siRNA.up.fa 
+for f in `cat ../../transcriptomic_based/single_read/WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_EXP5.siRNA.down.fa &
+for f in `cat ../../transcriptomic_based/single_read/WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_EXP5.siRNA.up.fa &
+for f in `cat ../../transcriptomic_based/single_read/WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_RBP35.siRNA.down.fa &
+for f in `cat ../../transcriptomic_based/single_read/WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g'`; do grep $'\t'$f$ all_siRNA  ;done | awk '{print ">"$1"\n"$6}' > WT_vs_RBP35.siRNA.up.fa 
 
 
 # making the table
