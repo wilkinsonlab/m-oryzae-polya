@@ -57,7 +57,8 @@ for line in gff_file:
             if x.strip().split(spacer)[0] == ID:
                 gene_id = x.strip().split(spacer)[1].replace("\"", "")
         if not genome_seqs.has_key(items[0]):
-            continue      
+			print line
+			continue
         if genes.has_key(gene_id):
             genes[gene_id].exons.append((int(items[3]), int(items[4])))
         else:     
@@ -70,7 +71,7 @@ for line in gff_file:
 
 for gene in  genes.values():
     gene.exons = sorted(gene.exons)
-
+print genes
 introns = []
 for gene_id, gene in genes.items():
     for i, (s, e) in enumerate(gene.exons):
@@ -106,13 +107,13 @@ for gene_id, gene in genes.items():
         num.append(len(gene.exons)-1)
 for intron in introns:           
     length.append(len(intron.seq) ) 
-    donor = str(intron.seq[3:9])
+    donor = str(intron.seq[0:9])
     if donors.has_key(donor):
         donors[donor] += 1
     else:
         donors[donor] = 1   
-    acceptor = str(intron.seq[-3:])
-    #print donor
+    acceptor = str(intron.seq[-12:])
+    #print acceptor
     if acceptors.has_key(acceptor):
         acceptors[acceptor] += 1
     else:
@@ -127,6 +128,7 @@ for intron in introns:
 # 
 #         print intron.chrx + "\t" + "protein_coding" + "\t" + "intron" + "\t" + str(intron.start) + "\t" + str(intron.end) + "\t" + "." + "\t" + intron.sense + "\t" + "." + "\t" + "gene_id \"" + intron.gene_id + "\"; ID intron_" + str(i) + "_"
 ## # # #        
+print "number of introns:\t" + str(len(introns))
 #if len(num) != 0:
 	#print "protein coding genes:\t", len(genes.keys())   
 	#print "protein coding genes containg introns:\t%d" % (count)
@@ -149,13 +151,12 @@ for intron in introns:
 #for donor, value in donors.items():
 #      print donor + "\t" + str(value / float(len(introns)) )
 #for acceptor, value in acceptors.items():
-#          print acceptor + "\t" + str(value / float(len(introns)) )
-# for intron in introns:
-#     print len(intron.seq)
-#          #if len(intron.seq) > 250: continue
-#          print ">" + intron.gene_id
-#          print "N" * (97 - len(intron.seq)) + intron.seq[-97:]
-    
+##          print acceptor + "\t" + str(value / float(len(introns)) )
+#for intron in introns:
+	##if len(intron.seq) > 250: continue
+	#print ">" + intron.gene_id
+	#print "N" * (100 - len(intron.seq)) + intron.seq[-100:-3]
+
 # ratios = []        
 # for gene in genes.values():
 #     if len(gene.introns) == 0: continue
@@ -168,8 +169,8 @@ for intron in introns:
 #     ratios.append(  round(intronic / float(intronic+exonic), 2))   
 # print "ratio:", sum(ratios) / float(len(ratios))
 
-count = .0
-for intron in introns:
-	  if str(intron.seq[3:5]) == "AT" and str(intron.seq[-2:]) == "AC":
-		 count += 1 
-print count / len(introns) 
+#count = .0
+#for intron in introns:
+	  #if str(intron.seq[3:5]) == "AT" and str(intron.seq[-2:]) == "AC":
+		 #count += 1 
+#print count / len(introns) 

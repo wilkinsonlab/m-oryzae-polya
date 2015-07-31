@@ -3,7 +3,7 @@ from Bio import SeqIO
 
 genome_file = sys.argv[1]
 seq_file = open(sys.argv[2], "r")
-length = len(seq_file.readline())
+
 
 seq_file.seek(0)
 fasta_seqs = {}
@@ -12,6 +12,8 @@ T_genome = 0
 C_genome = 0
 G_genome = 0
 N_genome = 0
+
+length = len(seq_file.readline())
 
 for seq_record in SeqIO.parse(genome_file, "fasta"):
     A_genome += str(seq_record.seq).upper().count("A")
@@ -31,6 +33,7 @@ for line in seq_file:
     if 'N' in line: continue 
     for i, x in enumerate(line.strip()):
         #if x == 'N': continue 
+        if x not in ('A','T','C','G'): continue
         count[i][x] += 1
     lines += 1
 

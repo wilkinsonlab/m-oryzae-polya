@@ -20,7 +20,7 @@ f =  open(result_file, "w")
 seqs = []
 for seq in fasta_sequences:
         nuc = seq.id
-	if nuc in extract :
+	if nuc not in extract :
 		seqs.append(seq)
 		if len(seqs) > 10000:
 			SeqIO.write(seqs, f, "fasta")
