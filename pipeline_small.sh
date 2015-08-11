@@ -141,9 +141,9 @@ awk '{print $1"\t"int($5)}' < $tmp > rbp35_1.expr; awk '{print $1"\t"int($6)}' <
 awk '{print $1"\t"int($8)}' < $tmp > WT_1.expr; awk '{print $1"\t"int($9)}' < $tmp > WT_2.expr; awk '{print $1"\t"int($10)}' < $tmp > WT_3.expr;
 Rscript ../../diff.R WT_1.expr WT_2.expr WT_3.expr exp5_1.expr exp5_2.expr exp5_3.expr WT_vs_EXP5.csv
 Rscript ../../diff.R WT_1.expr WT_2.expr WT_3.expr rbp35_1.expr rbp35_2.expr rbp35_3.expr WT_vs_RBP35.csv
-cat WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g' > _exp_down &
-cat WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g' > _exp_up  &
-cat WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g' > _rbp_down &
+cat WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g' > _exp_down 
+cat WT_vs_EXP5.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g' > _exp_up  
+cat WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3<0  ) print $1}' | sed -e 's/"//g' > _rbp_down 
 cat WT_vs_RBP35.csv | awk -F "," 'function isnum(x){return(x==x+0)}  {if(isnum($7) && $7<0.1 && $3>0  ) print $1}' | sed -e 's/"//g' > _rbp_up
 python /media/marco/Elements/m-oryzae-polya/fasta_extract.py all.inch.final _exp_down WT_vs_EXP5.down.fa
 python /media/marco/Elements/m-oryzae-polya/fasta_extract.py all.inch.final _exp_up WT_vs_EXP5.up.fa
@@ -190,29 +190,32 @@ done
 
 # classify siRNA ans single reads
 rm _*
-for f in `ls all_siRNA.fa`;
+for f in `ls W*fa`;
 do
+sed 's/A*$//' $f > "_o_"$f
+f="_o_"$f
 db_dir="/media/marco/Elements/EXP5/db/"
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _ncrna_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/rrna.idx -d $db_dir/rrna.fa   -q _un -u __un -nohead > _rrna_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/retro.idx -d $db_dir/retro.fa   -q __un -u _un -nohead > _retro_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/transcripts.idx -d $db_dir/transcripts.fa   -q _un -u __un -nohead > _transcripts_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _introns_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/genome.idx -d $db_dir/genome.fa  -q _un -u __un -nohead > _intergenic_out
-~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 10 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa   -q __un -u _un -nohead > _est_out
-#for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
-#echo -ne $f"\t" > "_"$f
-#paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __est_out >> "_"$f
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out _introns_out _intergenic_out _est_out; do cut -f 3 $g | sort | uniq -c > "_"$g; done
-echo $f > "_"$f
-paste __ncrna_out __rrna_out __retro_out __transcripts_out __introns_out __intergenic_out __est_out >> "_"$f
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/ncrna.idx -d $db_dir/ncrna.fa -q $f -u _un -nohead > _ncrna_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/rrna.idx -d $db_dir/rrna.fa   -q _un -u __un -nohead > _rrna_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/retro.idx -d $db_dir/retro.fa   -q __un -u _un -nohead > _retro_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/cdna.idx -d $db_dir/cdna.fa   -q _un -u __un -nohead > _transcripts_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/unspliced.idx -d $db_dir/unspliced.fa   -q __un -u _un -nohead > _introns_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/guy11_consensus_MG6.idx -d $db_dir/guy11_consensus_MG6.txt  -q _un -u __un -nohead > _intergenic_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/not_aligning.idx -d $db_dir/not_aligning.fa   -q __un -u _un -nohead > _not_out
+~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa   -q __un -u _un -nohead > _est_out
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
+echo -ne $f"\t" > "_"$f
+paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __est_out >> "_"$f
+#for g in _ncrna_out _rrna_out _retro_out _transcripts_out _introns_out _intergenic_out _not_out _est_out; do cut -f 3 $g | sort | uniq -c > "_"$g; done
+#echo $f > "_"$f
+#paste __ncrna_out __rrna_out __retro_out __transcripts_out __introns_out __intergenic_out __not_out __est_out >> "_"$f
 done 
 
 
 
 # classify clusters and assemblies
 rm _*
-for f in `ls clusters.fa`;
+for f in `ls W*expr*fa`;
 do	
 db_dir="/media/marco/Elements/EXP5/db/"
 # assemblies
@@ -227,14 +230,15 @@ blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/cdna.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _transcripts_out
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/EST.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _est_out
 blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/unspliced.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null |  awk '{if ('$awk_filt') print $0}' > _gene_out
-blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db ../guy11.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _intergenic_out
-for g in  _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db $db_dir/guy11_consensus_MG6.txt -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _intergenic_out
+blastn -dust no  -num_threads 4 -evalue 100 -task  blastn -query $f -db ../rnaseq_notaligning/not_aligning.fa -outfmt "6 qseqid sseqid pident length qlen slen mismatch gapopen qstart qend sstart send evalue bitscore"  -max_target_seqs 1  2> /dev/null  | awk '{if ('$awk_filt') print $0}' > _not_out
+#for g in  _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _not_out _est_out; do sort -k1,1 -k12,12nr -k11,11n $g | sort -u -k1,1 --merge | sort -o $g; done
 ## print numbers
-#for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}' > "__"$f
+#for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _gene_out _intergenic_out _not_out _est_out; do awk -v g=$g '{print g"\t"$0}' < $g ; done |  awk '{if ($2 in arr == 0)  arr[$2]=$0}END{for (k in arr) print arr[k] }' | cut -f 1 | sort | uniq -c | sed -e 's/_out//' -e 's/_//' | awk '{print $2"\t"$1}' > "__"$f
 ## print details	
 python -c "
 yes = []
-for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out','_est_out'):
+for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_out','_intergenic_out','_not_out','_est_out'):
   out = open('_'+file, 'w')
   for line in open(file):
     items = line.strip().split('\t')
@@ -246,8 +250,8 @@ for file in ('_ncrna_out', '_rrna_out', '_retro_out','_transcripts_out','_gene_o
       yes.append(items[0])
   out.close()       
 " 
-for k in __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out; do sort $k | uniq -c | sort -o $k; done
-paste __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __est_out > "___"$f
+for k in __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __not_out __est_out; do sort $k | uniq -c | sort -o $k; done
+paste __ncrna_out __rrna_out __retro_out __transcripts_out  __gene_out __intergenic_out __not_out __est_out > "___"$f
 done 
 ## print numbers
 #tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done
@@ -521,8 +525,8 @@ cor(h,i,method="spearman")
 ### expression map
 
 # align first...data.fa
-~/Downloads/segemehl/segemehl.x -x data.idx -d data.fa
-for f in `ls *.fasta.trimmed.x.collapsed`; do  ~/Downloads/segemehl/segemehl.x -A 100 -D 0 -t 8 -m 18 -M 100000 -E 1000 -i ../maps/EST_unknown/EST_unknown.idx -d ../maps/EST_unknown/EST_unknown.fa -q $f > ../maps/EST_unknown/${f/fasta.trimmed.x.collapsed/sam} ; done
+~/Downloads/segemehl/segemehl.x -x ../maps/ncrna_rrna_retro/ncrna_rrna_retro.idx -d ../maps/ncrna_rrna_retro/ncrna_rrna_retro.fa
+for f in `ls *.fasta.trimmed.x.collapsed.trimA`; do  ~/Downloads/segemehl/segemehl.x -A 100 -D 0 -t 8 -m 18 -M 100000 -E 1000 -i ../maps/ncrna_rrna_retro/ncrna_rrna_retro.idx -d ../maps/ncrna_rrna_retro/ncrna_rrna_retro.fa -q $f > ../maps_a/ncrna_rrna_retro/${f/fasta.trimmed.x.collapsed/sam} ; done
 
 # create pos & neg
 for f in `ls exp5_1.sam exp5_2.sam exp5_3.sam rbp35_1.sam rbp35_2.sam rbp35_3.sam WT_1.sam WT_2.sam WT_3.sam`;  do  
@@ -535,7 +539,7 @@ done; done
 # normalize
 for f in exp5_1 exp5_2 exp5_3 rbp35_1 rbp35_2 rbp35_3 WT_1 WT_2 WT_3 ; 
 do
-  cov=`grep $f ../coverage.txt | cut -f 2`
+  cov=`grep $f /media/marco/Elements/EXP5/transcriptomic_based/coverage_18_trimA.txt | cut -f 2`
   for g in `ls "_"$f*pos`;
   do
     awk -v cov=$cov '{print $1"\t"($2*1000000)/cov}' $g > $g.norm
@@ -547,13 +551,13 @@ do
 done
 
 # plots
-for f in `grep ">" cdna.fa | sed -e 's/>//' -e 's/ .*//'`;
+for f in `grep ">" /media/marco/Elements/EXP5/db/not_aligning.fa | sed -e 's/>//' -e 's/ .*//'`;
 do
 echo $f
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*$f*pos.norm`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -n $tmp > _tmp
-Rscript ../pos.R $f > /dev/null
+Rscript /media/marco/Elements/EXP5/maps/pos.R $f > /dev/null
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls _*$f*neg.norm`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; sort -n $tmp > _tmp
-Rscript ../neg.R $f > /dev/null
+Rscript /media/marco/Elements/EXP5/maps/neg.R $f > /dev/null
 done
 
 ### reads length map

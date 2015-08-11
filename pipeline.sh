@@ -1459,4 +1459,53 @@ sort -k 1,1 _gene_count -o _gene_count; join _gene_count _gene_length | awk '{pr
 rm _o; for f in `cut -f 1 _intron_count`; do grep -m 1 $f  _introns.gtf | sed -e 's/.*gene_id "//' -e 's/"; ID /\t/' >> _o; done; sort -k 1,1 _o -o _o
 reset;join _o _gene_norm | sort -k 2,2 | join - _intron_norm -1 2 -2 1 | awk '{if ($3>0 && $5 > 0.05 && $8 > 0.05)print $1,$6/$3}' | scisort -k 2
 
+# count codon/aa
+rm _*
+for f in `ls rhizopus_oryzae/Rhior3_cds.fa`;
+do 
+
+python -c "
+import sys
+from Bio import SeqIO, Seq
+fasta_file = sys.argv[1]  
+fasta_sequences = SeqIO.parse(open(fasta_file),'fasta')
+count = {}
+aa = {}
+for seq in fasta_sequences:
+  for codon in [str(seq.seq)[i:i+3] for i in range(0,len(seq.seq),3)]:
+    if len(codon) != 3:
+      continue
+    ok = True  
+    for x in codon:
+      if x not in ('A', 'T', 'C', 'G'):
+        ok = False
+    if not ok: continue    
+    if not count.has_key(codon):
+      count[codon] = 1
+    else:
+      count[codon] += 1
+    a = Seq.translate(codon)
+    if not aa.has_key(a):
+      aa[a] = {}
+      aa[a][codon] = 1
+      aa[a]['total'] = 1
+    else:
+      if not aa[a].has_key(codon):
+        aa[a][codon] = 1
+        aa[a]['total'] = 1
+      else:
+        aa[a][codon] += 1 
+        aa[a]['total'] += 1    
+#for codon, val in count.items():
+#  print codon, val     
+for aa, codons in aa.items():
+  for codon, val in codons.items():
+     if codon != 'total': 
+      print aa, codon, val / float(codons['total'])
+  
+" $f | sed 's/ /\t/' > "__"${f/\/*/.info}
+
+done
+	
+	
 	

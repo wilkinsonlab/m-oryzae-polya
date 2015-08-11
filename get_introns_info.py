@@ -71,7 +71,7 @@ for line in gff_file:
 
 for gene in  genes.values():
     gene.exons = sorted(gene.exons)
-print genes
+
 introns = []
 for gene_id, gene in genes.items():
     for i, (s, e) in enumerate(gene.exons):

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# $Id: iprscan_soappy.py 2763 2014-04-10 15:57:38Z hpm $
+# $Id: iprscan5_soappy.py 2760 2014-04-10 15:24:31Z hpm $
 # ======================================================================
 # 
-# Copyright 2008-2013 EMBL - European Bioinformatics Institute
+# Copyright 2008-2014 EMBL - European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 # limitations under the License.
 # 
 # ======================================================================
-# InterProScan (SOAP) service, Python client using SOAPpy.
+# InterProScan 5 (SOAP) service, Python client using SOAPpy.
 #
 # Tested with:
 #   Python 2.5.2 with SOAPpy 0.12.0 (Ubuntu 8.04 LTS)
@@ -25,11 +25,11 @@
 #   Python 2.7.3 with SOAPpy 0.12.0 (Ubuntu 12.04 LTS)
 #
 # See:
-# http://www.ebi.ac.uk/Tools/webservices/services/pfa/iprscan_soap
+# http://www.ebi.ac.uk/Tools/webservices/services/pfa/iprscan5_soap
 # http://www.ebi.ac.uk/Tools/webservices/tutorials/06_programming/python
 # ======================================================================
 # WSDL URL for service
-wsdlUrl = 'http://www.ebi.ac.uk/Tools/services/soap/iprscan?wsdl'
+wsdlUrl = 'http://www.ebi.ac.uk/Tools/services/soap/iprscan5?wsdl'
 
 # Load libraries
 import base64, platform, os, SOAPpy, sys, time
@@ -39,13 +39,6 @@ from optparse import OptionParser
 
 # Suppress all deprecation warnings (not recommended for development)
 warnings.simplefilter('ignore', DeprecationWarning)
-
-print >>sys.stderr, """
-=============================================================================
-NB: the service used by this client was decommissioned on Wednesday 9th April 
-2014. See http://www.ebi.ac.uk/Tools/webservices/ for replacement services.
-=============================================================================
-"""
 
 # Set interval for checking status
 checkInterval = 3
@@ -59,19 +52,21 @@ numOpts = len(sys.argv)
 # Usage message
 usage = "Usage: %prog [options...] [seqFile]"
 description = """Identify protein family, domain and signal signatures in a 
-protein sequence using InterProScan. For more information on InterProScan 
-refer to http://www.ebi.ac.uk/Tools/pfa/iprscan"""
-epilog = """For further information about the InterProScan (SOAP) web service, see 
-http://www.ebi.ac.uk/Tools/webservices/services/pfa/iprscan_soap."""
-version = "$Id: iprscan_soappy.py 2763 2014-04-10 15:57:38Z hpm $"
+protein sequence using InterProScan. For more information on InterProScan 5
+refer to http://www.ebi.ac.uk/interpro/"""
+epilog = """For further information about the InterProScan 5 (SOAP) web service, see 
+http://www.ebi.ac.uk/Tools/webservices/services/pfa/iprscan5_soap."""
+version = "$Id: iprscan5_soappy.py 2760 2014-04-10 15:24:31Z hpm $"
 # Process command-line options
 parser = OptionParser(usage=usage, description=description, epilog=epilog, version=version)
 # Tool specific options
 parser.add_option('--appl', help='signature methods to use, see --paramDetail appl')
-parser.add_option('--crc', action="store_true", help='enable InterProScan Matches look-up (faster)')
-parser.add_option('--nocrc', action="store_true", help='disable InterProScan Matches look-up (slower)')
+parser.add_option('--crc', action="store_true", help='enable InterProScan Matches look-up (ignored)')
+parser.add_option('--nocrc', action="store_true", help='disable InterProScan Matches look-up (ignored)')
 parser.add_option('--goterms', action="store_true", help='enable inclusion of GO terms')
 parser.add_option('--nogoterms', action="store_true", help='disable inclusion of GO terms')
+parser.add_option('--pathways', action="store_true", help='enable inclusion of pathway terms')
+parser.add_option('--nopathways', action="store_true", help='disable inclusion of pathway terms')
 parser.add_option('--sequence', help='input sequence file name')
 # General options
 parser.add_option('--email', help='e-mail address')
@@ -233,7 +228,7 @@ def printGetResultTypes(jobId):
     printDebugMessage('printGetResultTypes', 'End', 1)
 
 # Set the client user-agent.
-clientRevision = '$Revision: 2763 $'
+clientRevision = '$Revision: 2760 $'
 clientVersion = '0'
 if len(clientRevision) > 11:
     clientVersion = clientRevision[11:-2] 
@@ -296,14 +291,18 @@ elif options.email and not options.jobid:
         else: # Argument is a sequence id
             params['sequence'] = options.sequence
     # Booleans need to be represented as 1/0 rather than True/False
-    if options.crc:
-        params['nocrc'] = 0
-    if options.nocrc:
-        params['nocrc'] = 1
+    #if options.crc:
+    #    params['nocrc'] = 0
+    #if options.nocrc:
+    #    params['nocrc'] = 1
     if options.goterms:
         params['goterms'] = 1
     if options.nogoterms:
         params['goterms'] = 0
+    if options.pathways:
+        params['pathways'] = 1
+    if options.nopathways:
+        params['pathways'] = 0
     # Add the other options (if defined)
     if options.appl:
         params['appl'] = {'string':options.appl}
