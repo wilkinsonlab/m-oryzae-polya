@@ -1438,15 +1438,6 @@ rm all_trees.pdf; pdftk *pdf cat output all_trees.pdf
 # get all logos
 for f in `ls _*`; do ~/Downloads/weblogo/seqlogo -f $f -F PNG -o donor_logo/$f -c -a -n -Y ; done
 
-# interpro create domains pictures
-for d in `ls -d */`;  do    cd $d; grep Pfam *txt | sed 's/\.fasta[^\t]*\t/\t/' > ${d/\/}".pfam"  ; cd .. ; done
-for d in `ls -d */`;  do    cd $d; grep SMART *txt | sed 's/\.fasta[^\t]*\t/\t/' > ${d/\/}".smart"  ; cd .. ; done
-for d in `for d in `ls -d */`;  do cd $d ; rm ${d/\/}.list; for f in `ls *fasta`; do echo -ne ${f/.fasta/}"\t" >> ${d/\/}.list;  grep -v ">" $f | tr -d '\n' | wc -c >> ${d/\/}.list; done ; cd ..; donels -d */`;  do    cd $d; grep SMART *txt | sed 's/\.fasta[^\t]*\t/\t/' > ${d/\/}".smart"  ; cd .. ; done
-for d in `ls -d */`;  do name=`grep ${d/\/} ../spliceosome_order.csv | cut -f 2`; cd $d;  python ../../../../m-oryzae-polya/draw_domains.py ${d/\/}".pfam" ../../order.txt ${d/\/}".list"  $name 5  ; cd .. ; done
-for d in `ls -d */`;  do name=`grep ${d/\/} ../spliceosome_order.csv | cut -f 2`; cd $d;  python ../../../../m-oryzae-polya/draw_domains.py ${d/\/}".smart" ../../order.txt ${d/\/}".list"  $name 5  ; cd .. ; done
-for d in `ls -d */`;  do cd $d; convert ${d/\/}".smart.domains.svg"  ${d/\/}".smart.domains.pdf"  ; cd .. ; done
-for d in `ls -d */`;  do cd $d; convert ${d/\/}".pfam.domains.svg"  ${d/\/}".pfam.domains.pdf"  ; cd .. ; done
-
 # alternative splicing
 sudo htseq-count -s reverse -r pos -f bam -t gene -i ID SRR081547.sorted.bam Gaeumannomyces_graminis.Gae_graminis_V2.24.gff3 > _gene_count
 sudo htseq-count -s reverse -r pos -f bam -t intron -i ID SRR081547.sorted.bam _introns.gtf > _intron_count
@@ -1506,6 +1497,11 @@ for aa, codons in aa.items():
 " $f | sed 's/ /\t/' > "__"${f/\/*/.info}
 
 done
-	
-	
+
+# domains
+for f in `find . -iname "*nw"` ; do g=${f/.\//}; nw_labels -I $f > ${g/ete*/IP}/${g/_ete*/.order}; done
+for f in `ls -d ./*_IP`; do cd $f; grep Pfam *tsv -h | sed 's/:/_/g' > ${f/.\//}.Pfam ;  cd ..;done
+for d in `ls -d *_IP/`;  do cd $d ; rm ${d/\/}.list; for f in `ls *fa`; do echo -ne ${f/.fa/}"\t" >> ${d/\/}.list;  grep -v ">" $f | tr -d '\n' | wc -c >> ${d/\/}.list; done ; cd ..; done
+for f in `find . -iname "*Pfam"` ; do echo $f; if [ -s ${f/_IP.Pfam/.order} ]; then echo $f; python /media/marco/Elements/m-oryzae-polya/draw_domains.py $f ${f/_IP.Pfam/.order}  ${f/.Pfam/.list}  `sed -e 's/.*\///' -e 's/_IP.Pfam//' <<< $f`  5  ; fi; done
+
 	
