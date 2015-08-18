@@ -181,21 +181,21 @@ done
 
 
 rm _*
-for f in `ls *.x.collapsed`; do 
+for f in `ls _o`; do 
 db_dir="/media/marco/Elements/EXP5/db/"
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/ncrna -f $f --un _un 2> /dev/null | awk '{if (length($5)> 17) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0} }' | wc -l > "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/rrna  -f _un --un __un 2> /dev/null | awk '{if (length($5)> 17) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/retro -f __un --un _un 2> /dev/null | awk '{if (length($5)> 17) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/cdna  -f _un --un __un 2> /dev/null | awk '{if (length($5)> 17) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/unspliced  -f __un --un _un 2> /dev/null | awk '{if (length($5)> 17) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/guy11_consensus_MG6 -f _un --un __un 2> /dev/null | awk '{if (length($5)> 17) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/not_aligning -f __un --un _un 2> /dev/null | awk '{if (length($5)> 17) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
-bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/est -f _un --un __un 2> /dev/null | awk '{if (length($5)> 17) {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/ncrna -f $f --un _un 2> /dev/null | awk '{ {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0} }' | wc -l > "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/rrna  -f _un --un __un 2> /dev/null | awk '{ {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/retro -f __un --un _un 2> /dev/null | awk '{ {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/cdna  -f _un --un __un 2> /dev/null | awk '{ {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/unspliced  -f __un --un _un 2> /dev/null | awk '{ {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/guy11_consensus_MG6 -f _un --un __un 2> /dev/null | awk '{ {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/not_aligning -f __un --un _un 2> /dev/null | awk '{ {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
+bowtie -k 1 -p 8  -v 0  $db_dir/bowtie/est -f _un --un __un 2> /dev/null | awk '{ {split($1, arr, "-" ); for (i=0;i<arr[2];i++)print $0}}' | wc -l >> "_"$f; 
 done
 
 # classify siRNA ans single reads
 rm _*
-for f in `ls W*fa`;
+for f in `ls _q`;
 do
 sed 's/A*$//' $f > "_o_"$f
 f="_o_"$f
@@ -208,9 +208,9 @@ db_dir="/media/marco/Elements/EXP5/db/"
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/guy11_consensus_MG6.idx -d $db_dir/guy11_consensus_MG6.txt  -q _un -u __un -nohead > _intergenic_out
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/not_aligning.idx -d $db_dir/not_aligning.fa   -q __un -u _un -nohead > _not_out
 ~/Downloads/segemehl/segemehl.x -D 0 -A 100 -m 18 -M 100000 -E 1000 -t 8 -i $db_dir/segemehl/est.idx -d $db_dir/EST.fa   -q __un -u _un -nohead > _est_out
-for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
+for g in _ncrna_out _rrna_out _retro_out _transcripts_out  _introns_out _intergenic_out _not_out  _est_out; do cut -f 1 $g | sort -u | wc -l > "_"$g; done
 echo -ne $f"\t" > "_"$f
-paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __est_out >> "_"$f
+paste __ncrna_out __rrna_out __retro_out __transcripts_out    __introns_out __intergenic_out __not_out  __est_out >> "_"$f
 #for g in _ncrna_out _rrna_out _retro_out _transcripts_out _introns_out _intergenic_out _not_out _est_out; do cut -f 3 $g | sort | uniq -c > "_"$g; done
 #echo $f > "_"$f
 #paste __ncrna_out __rrna_out __retro_out __transcripts_out __introns_out __intergenic_out __not_out __est_out >> "_"$f
