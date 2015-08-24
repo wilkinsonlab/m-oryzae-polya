@@ -1504,6 +1504,9 @@ for f in `ls -d ./*_IP`; do cd $f; grep Pfam *tsv -h | sed 's/:/_/g' > ${f/.\//}
 for d in `ls -d *_IP/`;  do cd $d ; rm ${d/\/}.list; for f in `ls *fa`; do echo -ne ${f/.fa/}"\t" >> ${d/\/}.list;  grep -v ">" $f | tr -d '\n' | wc -c >> ${d/\/}.list; done ; cd ..; done
 for f in `find . -iname "*Pfam"` ; do echo $f; if [ -s ${f/_IP.Pfam/.order} ]; then echo $f; python /media/marco/Elements/m-oryzae-polya/draw_domains.py $f ${f/_IP.Pfam/.order}  ${f/.Pfam/.list}  `sed -e 's/.*\///' -e 's/_IP.Pfam//' <<< $f`  5  ; fi; done
 
+# extract from ensembl
+for f in `ls *fa`; do grep -f ../../list.txt $f -A 1 | sed -e 's/>\(.*_[A-Z][a-z]\+_[a-z]\+\).*/>\1/' -e 's/\-\-//' -e '/^$/d' > _t; mv _t $f; done
+for f in `find . -iname "*.tsv.tsv.txt"` ; do mv $f ${f/tsv.tsv.txt/tsv}; done
 # OMA
 while read a b;  do  wget "http://omabrowser.org/cgi-bin/gateway.pl?f=SearchSeqDb&p1=$b" -O $a.match;  done < _o
 for f in `ls *.match`;  do g=`grep "Entry \w*" -o $f | sed 's/Entry //'`; wget "http://omabrowser.org/cgi-bin/gateway.pl?f=DisplayEntry&p1=$g&p2=orthologs" -O _res; c=`grep gateway.*=fasta -o  _res`; wget "http://omabrowser.org/cgi-bin/$c" -O $f.fa; done
@@ -1512,4 +1515,10 @@ for f in `ls *fa`; do fasta_formatter -i $f -o _t; mv _t $f; done
 for f in `ls *fa`; do egrep -e "ARATH|MUCCI|HUMAN|PHYIT|PHYBL|RHIOR" $f -A 1 | grep -v "\-\-" > $f.ext; done
 for f in `ls *ext`; do sed -e 's/HUMAN[0-9]\+ | \([^|]*\) .*/\1_Homo_sapiens/'  -e 's/ARATH[0-9]\+ | \([^|]*\) .*/\1_Arabidopsis_thaliana/' -e 's/MUCCI[0-9]\+ | \([^|]*\) .*/\1_Mucor_circinelloides/' -e 's/PHYBL[0-9]\+ | \([^|]*\) .*/\1_Phycomyces_blakesleeanus/' -e 's/PHYIT[0-9]\+ | \([^|]*\) .*/\1_Phytophthora_infestans/' -e 's/RHIOR[0-9]\+ | \([^|]*\) .*/\1_Rhizopus_oryzae/' $f > $f.sub; done
 for f in `ls *sub`; do cat $f >> orthologs/${f/match.fa.ext.sub/fa}; done
+# ete
+for f in `ls *fa`; do ete build -a $f -w eggnog41 -o ${f/.fa/_ete}; done
+# interpro
+for f in *.fa; do mkdir ${f/.fa/_IP};  gt splitfasta -splitdesc ${f/.fa/_IP} $f;  done
+for f in `find . -iname "*.fa" ; do python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f  --outfile=$f"_IP.tsv" --outformat=tsv  ; done
+for f in `find . -iname "*.tsv.tsv.txt"` ; do mv $f ${f/tsv.tsv.txt/tsv}; done
 	
