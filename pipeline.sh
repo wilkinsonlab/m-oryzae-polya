@@ -1402,7 +1402,7 @@ for protein in `cat spliceosome.txt`; do
   for species in `cat ensembl_fungi_list.txt`; do
     gene=`grep $protein orthologs/$species".txt" -m 1 | cut -f 2 | grep . `
     if [ "$gene" != "" ]; then  
-      query=`cat ../m-oryzae-polya/query_fasta.xml | sed -e 's/SOURCE/'$species'/' -e 's/GENE/'$gene'/' | tr -d '\n'`
+      query=`cat /media/marco/Elements/m-oryzae-polya/query_fasta.xml | sed -e 's/SOURCE/'$species'/' -e 's/GENE/'$gene'/' | tr -d '\n'`
       wget -O _results_$protein".txt" --post-data "query=$query" "http://fungi.ensembl.org/biomart/martservice" 2> /dev/null > /dev/null
       cat _results_$protein".txt" | sed 's/>.*/>'$species'/' >> fasta/$protein".fa"
     fi
@@ -1505,20 +1505,51 @@ for d in `ls -d *_IP/`;  do cd $d ; rm ${d/\/}.list; for f in `ls *fa`; do echo 
 for f in `find . -iname "*Pfam"` ; do echo $f; if [ -s ${f/_IP.Pfam/.order} ]; then echo $f; python /media/marco/Elements/m-oryzae-polya/draw_domains.py $f ${f/_IP.Pfam/.order}  ${f/.Pfam/.list}  `sed -e 's/.*\///' -e 's/_IP.Pfam//' <<< $f`  5  ; fi; done
 
 # extract from ensembl
-for f in `ls *fa`; do grep -f ../../list.txt $f -A 1 | sed -e 's/>\(.*_[A-Z][a-z]\+_[a-z]\+\).*/>\1/' -e 's/\-\-//' -e '/^$/d' > _t; mv _t $f; done
-for f in `find . -iname "*.tsv.tsv.txt"` ; do mv $f ${f/tsv.tsv.txt/tsv}; done
+for f in `ls *fa`; do grep -f ../../ensembl_list.txt $f -A 1 | sed -e 's/>\(.*_[A-Z][a-z]\+_[a-z]\+\).*/>\1/' -e 's/\-\-//' -e '/^$/d' > "__"$f; done
 # OMA
 while read a b;  do  wget "http://omabrowser.org/cgi-bin/gateway.pl?f=SearchSeqDb&p1=$b" -O $a.match;  done < _o
 for f in `ls *.match`;  do g=`grep "Entry \w*" -o $f | sed 's/Entry //'`; wget "http://omabrowser.org/cgi-bin/gateway.pl?f=DisplayEntry&p1=$g&p2=orthologs" -O _res; c=`grep gateway.*=fasta -o  _res`; wget "http://omabrowser.org/cgi-bin/$c" -O $f.fa; done
-while read a b; do wget "http://omabrowser.org/cgi-bin/gateway.pl?f=DisplayEntry&p1=$b&p2=orthologs" -O _res; c=`grep gateway.*=fasta -o  _res`; wget "http://omabrowser.org/cgi-bin/$c" -O $a.fa; done < _m
+#while read a b; do wget "http://omabrowser.org/cgi-bin/gateway.pl?f=DisplayEntry&p1=$b&p2=orthologs" -O _res; c=`grep gateway.*=fasta -o  _res`; wget "http://omabrowser.org/cgi-bin/$c" -O $a.fa; done < _m
 for f in `ls *fa`; do fasta_formatter -i $f -o _t; mv _t $f; done
 for f in `ls *fa`; do egrep -e "ARATH|MUCCI|HUMAN|PHYIT|PHYBL|RHIOR" $f -A 1 | grep -v "\-\-" > $f.ext; done
 for f in `ls *ext`; do sed -e 's/HUMAN[0-9]\+ | \([^|]*\) .*/\1_Homo_sapiens/'  -e 's/ARATH[0-9]\+ | \([^|]*\) .*/\1_Arabidopsis_thaliana/' -e 's/MUCCI[0-9]\+ | \([^|]*\) .*/\1_Mucor_circinelloides/' -e 's/PHYBL[0-9]\+ | \([^|]*\) .*/\1_Phycomyces_blakesleeanus/' -e 's/PHYIT[0-9]\+ | \([^|]*\) .*/\1_Phytophthora_infestans/' -e 's/RHIOR[0-9]\+ | \([^|]*\) .*/\1_Rhizopus_oryzae/' $f > $f.sub; done
-for f in `ls *sub`; do cat $f >> orthologs/${f/match.fa.ext.sub/fa}; done
+for f in `ls *sub`; do cat $f >> ${f/match.fa.ext.sub/fa}; done
+
+# merge multiple proteins with same name in different files into one
+grep ">" some_file... | sed 's/>//' | sort > _ID
+while read ID ; do echo ">"$ID > "_f_"$ID; grep $ID _x_* -A 1 -h | egrep -v ">|\-\-" >> "_f_"$ID ; fasta_formatter -i "_f_"$ID -o _t; mv _t "_f_"$ID; done < _ID
+
 # ete
 for f in `ls *fa`; do ete build -a $f -w eggnog41 -o ${f/.fa/_ete}; done
+
 # interpro
 for f in *.fa; do mkdir ${f/.fa/_IP};  gt splitfasta -splitdesc ${f/.fa/_IP} $f;  done
-for f in `find . -iname "*.fa" ; do python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f  --outfile=$f"_IP.tsv" --outformat=tsv  ; done
+for f in `find . -iname "*.fa" `; do python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f  --outfile=$f"_IP.tsv" --outformat=tsv  ; done
 for f in `find . -iname "*.tsv.tsv.txt"` ; do mv $f ${f/tsv.tsv.txt/tsv}; done
-	
+
+# make the present/absent table
+for f in `ls orthologs/*fa`;
+do 
+while read sp; do grep $sp $f; done < ../phylogeny_order.txt | sed 's/.*\([A-Z][a-z]*_[a-z]*\)$/\1/' | uniq -c | awk '{print $2"\t"$1}' > "__"`basename $f`	
+done
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto --nocheck-order -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; cat $tmp > _tmp
+while read sp; do grep $sp _tmp; done < ../phylogeny_order.txt  > _j
+heatmap.2(as.matrix(read.table("_j", row.names=1)), dendrogram="col", Rowv=FALSE, trace="none", col=colorRampPalette(c("black",  "yellow"))(n = 10))
+
+# retrieve paralogs
+for p in `ls *.fa`;
+do
+grep ">" $p | sed -e 's/>//' -e 's/_\([A-Z]\)/\t\1/' | while read gene species ; 
+do 
+phantomjs /media/marco/Elements/m-oryzae-polya/save_page.js "http://fungi.ensembl.org/"$species"/Gene/Compara_Paralog?db=core;g="$gene > _page
+grep "Alignment (cDNA)" _page  | grep "g1=[^;]*" -o | sort -u | sed 's/g1=//' > _paralogs
+for f in `cat _paralogs`; 
+do
+phantomjs /media/marco/Elements/m-oryzae-polya/save_page.js "http://fungi.ensembl.org/"$species"/Transcript/Sequence_Protein?db=core;g="$f > _cdna
+grep query_sequence.*form _cdna -o | sed -e 's/query_sequence\" value=\"//' -e 's/\"><\/form//' > _f
+echo ">"$f"_"$species >> $p
+cat _f >> $p
+done
+done
+done
+
