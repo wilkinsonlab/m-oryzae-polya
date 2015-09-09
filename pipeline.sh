@@ -1534,7 +1534,12 @@ while read sp; do grep $sp $f; done < ../phylogeny_order.txt | sed 's/.*\([A-Z][
 done
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto --nocheck-order -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; cat $tmp > _tmp
 while read sp; do grep $sp _tmp; done < ../phylogeny_order.txt  > _j
-heatmap.2(as.matrix(read.table("_j", row.names=1)), dendrogram="col", Rowv=FALSE, trace="none", col=colorRampPalette(c("black",  "yellow"))(n = 10))
+R
+library("gplots")
+png("heatmap.png", width=1024, height=768,antialias="default")
+heatmap.2(as.matrix(read.table("_j", row.names=1)), dendrogram="col", Rowv=FALSE, trace="none", col=c("#000000", "#d71d1d", colorRampPalette(c("gray","blue"))(n = 28)),margins=c(8,20),cexRow=1,cexCol=1)
+
+dev.off()
 
 # retrieve paralogs
 for p in `ls *.fa`;
