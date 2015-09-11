@@ -128,7 +128,7 @@ for intron in introns:
 # 
 #         print intron.chrx + "\t" + "protein_coding" + "\t" + "intron" + "\t" + str(intron.start) + "\t" + str(intron.end) + "\t" + "." + "\t" + intron.sense + "\t" + "." + "\t" + "gene_id \"" + intron.gene_id + "\"; ID intron_" + str(i) + "_"
 ## # # #        
-print "number of introns:\t" + str(len(introns))
+#print "number of introns:\t" + str(len(introns))
 #if len(num) != 0:
 	#print "protein coding genes:\t", len(genes.keys())   
 	#print "protein coding genes containg introns:\t%d" % (count)
@@ -152,10 +152,14 @@ print "number of introns:\t" + str(len(introns))
 #      print donor + "\t" + str(value / float(len(introns)) )
 #for acceptor, value in acceptors.items():
 ##          print acceptor + "\t" + str(value / float(len(introns)) )
-#for intron in introns:
+i=0
+for intron in introns:
 	##if len(intron.seq) > 250: continue
-	#print ">" + intron.gene_id
-	#print "N" * (100 - len(intron.seq)) + intron.seq[-100:-3]
+	print ">s_" + str(i)
+	print "N" * (50 - len(intron.seq)) + intron.seq[-50:-3]
+        i+=1
+	if i > 10000: break
+         
 
 # ratios = []        
 # for gene in genes.values():
