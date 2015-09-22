@@ -1541,6 +1541,25 @@ heatmap.2(as.matrix(read.table("_j", row.names=1)), dendrogram="col", Rowv=FALSE
 
 dev.off()
 
+# replace names with official ensembl
+sed -i 's/:pep//' *fa
+for g in `ls *fa`; do rm "__"$g; for f in `grep ">" $g | sed -e 's/>//' -e 's/_[A-Z][a-z]*_[a-z]*$//'`;  do  echo -ne $f"\t" >> "__"$g; wget "http://fungi.ensembl.org/Multi/Search/Results?species=all;idx=;q="$f -O _res;  sed 's/<\/p>/\n/g' _res |  grep "Gene ID" | egrep ">[A-Za-z0-9\._\-]+<"  -o | sed 's/[><]//g' >> "__"$g; echo "" >> "__"$g;  done; done
+for f in `ls __*`; do cat $f | while read a b; do if [ "$b" != "" ]; then sed 's/'$a'/'$b'/' -i ${f/__/} ; fi; done; done
+for f in `ls *.fa`;do python -c "
+import sys
+from Bio import SeqIO
+extract = set()
+fasta_sequences = SeqIO.parse(sys.argv[1],'fasta')
+f =  open('_x_'+sys.argv[1], 'w')
+for seq in fasta_sequences:
+  nuc = seq.id
+  if nuc not in extract :
+      SeqIO.write(seq, f, 'fasta')
+      extract.add(nuc)
+" $f; done
+for f in `ls *fa`; do fasta_formatter -i $f -o _t; mv _t $f; done
+
+
 # retrieve paralogs
 for p in `ls *.fa`;
 do
