@@ -1515,9 +1515,16 @@ for f in `ls *fa`; do egrep -e "ARATH|MUCCI|HUMAN|PHYIT|PHYBL|RHIOR" $f -A 1 | g
 for f in `ls *ext`; do sed -e 's/HUMAN[0-9]\+ | \([^|]*\) .*/\1_Homo_sapiens/'  -e 's/ARATH[0-9]\+ | \([^|]*\) .*/\1_Arabidopsis_thaliana/' -e 's/MUCCI[0-9]\+ | \([^|]*\) .*/\1_Mucor_circinelloides/' -e 's/PHYBL[0-9]\+ | \([^|]*\) .*/\1_Phycomyces_blakesleeanus/' -e 's/PHYIT[0-9]\+ | \([^|]*\) .*/\1_Phytophthora_infestans/' -e 's/RHIOR[0-9]\+ | \([^|]*\) .*/\1_Rhizopus_oryzae/' $f > $f.sub; done
 for f in `ls *sub`; do cat $f >> ${f/match.fa.ext.sub/fa}; done
 
-# merge multiple proteins with same name in different files into one
-grep ">" some_file... | sed 's/>//' | sort > _ID
-while read ID ; do echo ">"$ID > "_f_"$ID; grep $ID _x_* -A 1 -h | egrep -v ">|\-\-" >> "_f_"$ID ; fasta_formatter -i "_f_"$ID -o _t; mv _t "_f_"$ID; done < _ID
+
+# create a common_proteins tree
+# select some from here and out them  in _o
+for f in `ls orthologs/*fa`; do echo -ne $f" "; grep ">" $f | sed 's/.*\([A-Z][a-z]*_[a-z]*\)$/\1/' | sort -u | wc -l; done | sort -nk 2
+for f in `cat _o` ; do cp $f .; done
+rename 's/^/_x_/' *fa
+# _ID contains species list
+while read ID ; do echo ">"$ID > "_f_"$ID; grep -i -m 1 $ID _x_* -A 1 -h | egrep -v ">|\-\-" >> "_f_"$ID ; fasta_formatter -i "_f_"$ID -o _t; mv _t "_f_"$ID; done < _ID
+cat _f* > common_proteins.fa
+
 
 # ete
 for f in `ls *fa`; do ete build -a $f -w eggnog41 -o ${f/.fa/_ete}; done
