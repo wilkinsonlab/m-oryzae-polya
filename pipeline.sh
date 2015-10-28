@@ -1584,3 +1584,6 @@ done
 done
 done
 
+# extract promoters
+for d in `ls -d */ | grep ^[a-z]`; do awk '{if($3=="start_codon")print $0}' $d/*[0-9].gtf |  bedtools flank -i - -g $d/*genome.fa.fai -l 1000 -r 0 -s | awk '{if($4<$5) print $0}' | bedtools getfasta -fi $d/*genome.fa -bed - -s -fo "__"${d/\//}.info; done
+for d in `ls -d  mucor_circinelloides/ phycomyces_blakesleeanus/ rhizopus_oryzae/`; do awk '{if($3=="start_codon")print $0}' $d/*[0-9].gff3 |  bedtools flank -i - -g $d/*genome.fa.fai -l 1000 -r 0 -s | awk '{if($4<$5) print $0}' | bedtools getfasta -fi $d/*genome.fa -bed - -s -fo "__"${d/\//}.info; done
