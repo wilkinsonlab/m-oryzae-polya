@@ -1537,10 +1537,11 @@ for f in `find . -iname "*.tsv.tsv.txt"` ; do mv $f ${f/tsv.tsv.txt/tsv}; done
 # make the present/absent table
 for f in `ls orthologs/*fa`;
 do 
-while read sp; do grep $sp $f; done < ../phylogeny_order.txt | sed 's/.*\([A-Z][a-z]*_[a-z]*\)$/\1/' | uniq -c | awk '{print $2"\t"$1}' > "__"`basename $f`	
+while read sp; do grep $sp $f; done < ../house_keeping_order.txt | sed 's/.*\([A-Z][a-z]*_[a-z]*\)$/\1/' | uniq -c | awk '{print $2"\t"$1}' > "__"`basename $f`	
 done
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto --nocheck-order -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; cat $tmp > _tmp
-while read sp; do grep $sp _tmp; done < ../phylogeny_order.txt  > _j
+while read sp; do grep $sp _tmp; done < ../house_keeping_order.txt  > _j
+
 R
 library("gplots")
 png("heatmap.png", width=1024, height=768,antialias="default")
