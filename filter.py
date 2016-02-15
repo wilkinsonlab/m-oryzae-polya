@@ -54,15 +54,15 @@ for read in infile.fetch():
         else:
             fake += 1
             #internals.write(read)
-            
+tempfile.close()
+infile.close()
+
+
 pysam.sort(tempname, outfile)
 pysam.index(outfile + ".bam")
 os.remove(tempname)
  
 print"Total reads: " + str(len(total_reads)), "Mapped reads: " + str(len(mapped_reads)), "Total mappings: " + str(total), "Final mappings: " + str(mapped), "low quality mappings: " + str(low_quality), "AT_high mappings: " +  str(AT_high), "fakes alignment: " +  str(fake) 
 
-
-tempfile.close()
-infile.close()
 
 

@@ -1384,10 +1384,10 @@ Rscript ../../m-oryzae-polya/average_table.R
 for f in `ls -d */`; do python ../../m-oryzae-polya/polyA_nucleotide.py $f/*genome.fa $f/*polyA -1 0 print $f/"_"cutsite; done
 	count=0; for f in `ls -d */`; do if [ -e $f/"_cutsite" ]; then total=`grep -c ">" $f/"_cutsite"`; echo $f > _TA/_sequence$count ; for m in `cat motifs`; do grep -v ">" $f/"_cutsite" | grep -c $m; done | awk -v tot=$total '{print $1/tot}' >> _TA/_sequence$count;echo $total;  count=$((count + 1)); fi; done
 # compara get orthologs from biomart
-source=moryzae
-dest=hsapiens
+source=oindica
+dest=osativa
 genes=`tr '\n' ',' < polyA.apa | sed 's/,$//'`
-query=`cat ../query.xml | sed -e 's/SOURCE/'$source'/' -e 's/DEST/'$dest'/' -e 's/VALUE/'$genes'/' | tr -d '\n'`
+query=`cat ../query_ortho.xml | sed -e 's/SOURCE/'$source'/' -e 's/DEST/'$dest'/' -e 's/VALUE/'$genes'/' | tr -d '\n'`
 wget -O _results.txt --post-data "query=$query" "http://fungi.ensembl.org/biomart/martservice" 2> /dev/null > /dev/null
 cut -f 2 _results.txt | grep . | sort | uniq > polyA.apa_orthologs_$dest
 rm _results.txt
@@ -1505,15 +1505,16 @@ for d in `ls -d *_IP/`;  do cd $d ; rm ${d/\/}.list; for f in `ls *fa`; do echo 
 for f in `find . -iname "*Pfam"` ; do echo $f; if [ -s ${f/_IP.Pfam/.order} ]; then echo $f; python /media/marco/Elements/m-oryzae-polya/draw_domains.py $f ${f/_IP.Pfam/.order}  ${f/.Pfam/.list}  `sed -e 's/.*\///' -e 's/_IP.Pfam//' <<< $f`  5  ; fi; done
 
 # extract from ensembl
-for f in `ls *fa`; do grep -f ../../ensembl_list.txt $f -A 1 | sed -e 's/>\(.*_[A-Z][a-z]\+_[a-z]\+\).*/>\1/' -e 's/\-\-//' -e '/^$/d' > "__"$f; done
-# OMA
+for f in `ls *fa`; do fasta_formatter -i $f -o _t; mv _t $f; done
+for f in `ls *ensembl.fa`; do grep -f ../../ensembl_list.txt $f -A 1 | sed -e 's/>\(.*_[A-Z][a-z]\+_[a-z]\+\).*/>\1/' -e 's/\-\-//' -e '/^$/d' > "__"$f; done
+# OMA _o is a file with "name fastasequence" for each line
 while read a b;  do  wget "http://omabrowser.org/cgi-bin/gateway.pl?f=SearchSeqDb&p1=$b" -O $a.match;  done < _o
 for f in `ls *.match`;  do g=`grep "Entry \w*" -o $f | sed 's/Entry //'`; wget "http://omabrowser.org/cgi-bin/gateway.pl?f=DisplayEntry&p1=$g&p2=orthologs" -O _res; c=`grep gateway.*=fasta -o  _res`; wget "http://omabrowser.org/cgi-bin/$c" -O $f.fa; done
 #while read a b; do wget "http://omabrowser.org/cgi-bin/gateway.pl?f=DisplayEntry&p1=$b&p2=orthologs" -O _res; c=`grep gateway.*=fasta -o  _res`; wget "http://omabrowser.org/cgi-bin/$c" -O $a.fa; done < _m
 for f in `ls *fa`; do fasta_formatter -i $f -o _t; mv _t $f; done
-for f in `ls *fa`; do egrep -e "ARATH|MUCCI|HUMAN|PHYIT|PHYBL|RHIOR" $f -A 1 | grep -v "\-\-" > $f.ext; done
+for f in `ls *match.fa`; do egrep -e "ARATH|MUCCI|HUMAN|PHYIT|PHYBL|RHIOR" $f -A 1 | grep -v "\-\-" > $f.ext; done
 for f in `ls *ext`; do sed -e 's/HUMAN[0-9]\+ | \([^|]*\) .*/\1_Homo_sapiens/'  -e 's/ARATH[0-9]\+ | \([^|]*\) .*/\1_Arabidopsis_thaliana/' -e 's/MUCCI[0-9]\+ | \([^|]*\) .*/\1_Mucor_circinelloides/' -e 's/PHYBL[0-9]\+ | \([^|]*\) .*/\1_Phycomyces_blakesleeanus/' -e 's/PHYIT[0-9]\+ | \([^|]*\) .*/\1_Phytophthora_infestans/' -e 's/RHIOR[0-9]\+ | \([^|]*\) .*/\1_Rhizopus_oryzae/' $f > $f.sub; done
-for f in `ls *sub`; do cat $f >> ${f/match.fa.ext.sub/fa}; done
+for f in `ls *match.fa.ext.sub`; do cat $f >> "__"${f/match.fa.ext.sub/ensembl.fa}; done
 
 
 # create a common_proteins tree
@@ -1530,8 +1531,8 @@ cat _f* > common_proteins.fa
 for f in `ls *fa`; do ete build -a $f -w eggnog41 -o ${f/.fa/_ete}; done
 
 # interpro
-for f in *.fa; do mkdir ${f/.fa/_IP};  gt splitfasta -splitdesc ${f/.fa/_IP} $f;  done
-for f in `find . -iname "*.fa" `; do python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f  --outfile=$f"_IP.tsv" --outformat=tsv  ; done
+for f in *.fa; do mkdir ${f/.fa/_IP};  gt sequniq $f | gt splitfasta -splitdesc ${f/.fa/_IP} ;  done
+for f in `find . -iname "*_IP" `; do for d in `ls $f`; do python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f"/"$d  --outfile=$f"/"$d"_IP.tsv" --outformat=tsv; done  done
 for f in `find . -iname "*.tsv.tsv.txt"` ; do mv $f ${f/tsv.tsv.txt/tsv}; done
 
 # make the present/absent table
@@ -1583,6 +1584,7 @@ echo ">"$f"_"$species >> $p
 cat _f >> $p
 done
 done
+echo $p >> _done
 done
 
 # extract promoters

@@ -55,7 +55,7 @@ for line in gff_file:
             genes_sense[chrx].append((transcript, start, end))
         elif sense == '-':
             genes_antisense[chrx].append((transcript, start, end))
-       
+
 def goo(sorted_list, i, sense):
     (transcript, start, end) = sorted_list[i]
     if sense == '+':
@@ -92,6 +92,7 @@ for chrx, v in genes_sense.items():
     goo(sorted_list_sense, -1, '+')
 
 for chrx, v in genes_antisense.items():
+    break
     sorted_list_antisense = sorted(v, key=lambda x: x[1])
     for i in range(1, len(sorted_list_antisense) - 1):
         goo(sorted_list_antisense, i, '-')
