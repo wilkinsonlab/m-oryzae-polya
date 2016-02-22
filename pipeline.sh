@@ -1384,10 +1384,10 @@ Rscript ../../m-oryzae-polya/average_table.R
 for f in `ls -d */`; do python ../../m-oryzae-polya/polyA_nucleotide.py $f/*genome.fa $f/*polyA -1 0 print $f/"_"cutsite; done
 	count=0; for f in `ls -d */`; do if [ -e $f/"_cutsite" ]; then total=`grep -c ">" $f/"_cutsite"`; echo $f > _TA/_sequence$count ; for m in `cat motifs`; do grep -v ">" $f/"_cutsite" | grep -c $m; done | awk -v tot=$total '{print $1/tot}' >> _TA/_sequence$count;echo $total;  count=$((count + 1)); fi; done
 # compara get orthologs from biomart
-source=oindica
-dest=osativa
+source=moryzae
+dest=hsapiens
 genes=`tr '\n' ',' < polyA.apa | sed 's/,$//'`
-query=`cat ../query_ortho.xml | sed -e 's/SOURCE/'$source'/' -e 's/DEST/'$dest'/' -e 's/VALUE/'$genes'/' | tr -d '\n'`
+query=`cat ../query.xml | sed -e 's/SOURCE/'$source'/' -e 's/DEST/'$dest'/' -e 's/VALUE/'$genes'/' | tr -d '\n'`
 wget -O _results.txt --post-data "query=$query" "http://fungi.ensembl.org/biomart/martservice" 2> /dev/null > /dev/null
 cut -f 2 _results.txt | grep . | sort | uniq > polyA.apa_orthologs_$dest
 rm _results.txt
@@ -1435,20 +1435,6 @@ for f in `find . -iname "*tree.txt"`; do while read a b; do sed -i '0,/'$a'/s//'
 for f in `ls *_tree.txt`; do ~/Downloads/newick-utils-1.6/src/nw_display -i 'visibility:hidden' -b 'visibility:hidden' $f -s -S -w 900 | convert - ${f/txt/pdf}; done
 rm all_trees.pdf; pdftk *pdf cat output all_trees.pdf
 
-# get all logos
-for f in `ls _*`; do ~/Downloads/weblogo/seqlogo -f $f -F PNG -o donor_logo/$f -c -a -n -Y ; done
-
-# alternative splicing
-sudo htseq-count -s reverse -r pos -f bam -t gene -i ID SRR081547.sorted.bam Gaeumannomyces_graminis.Gae_graminis_V2.24.gff3 > _gene_count
-sudo htseq-count -s reverse -r pos -f bam -t intron -i ID SRR081547.sorted.bam _introns.gtf > _intron_count
-awk -F $'\t' 'function abs(x){return ((x < 0.0) ? -x : x)}{if ($3 == "gene") print $9"\t"abs($4-$5)}' < Gaeumannomyces_graminis.Gae_graminis_V2.24.gff3   | sed 's/ID=gene:\(GGTG_.....\).*\t/\1\t/' > _gene_length
-awk -F $'\t' 'function abs(x){return ((x < 0.0) ? -x : x)}{if ($3 == "intron") print $9"\t"abs($4-$5)}' < _introns.gtf  | sed 's/.*ID //' > _intron_length
-sort -k 1,1 _gene_length -o _gene_length ; sort -k 1,1 _intron_length -o _intron_length
-sed -i 's/gene://' _gene_count
-sort -k 1,1 _intron_count -o _intron_count; join _intron_count _intron_length | awk '{print $1,$2,$3,$2/$3}' > _intron_norm
-sort -k 1,1 _gene_count -o _gene_count; join _gene_count _gene_length | awk '{print $1,$2,$3,$2/$3}' > _gene_norm
-rm _o; for f in `cut -f 1 _intron_count`; do grep -m 1 $f  _introns.gtf | sed -e 's/.*gene_id "//' -e 's/"; ID /\t/' >> _o; done; sort -k 1,1 _o -o _o
-reset;join _o _gene_norm | sort -k 2,2 | join - _intron_norm -1 2 -2 1 | awk '{if ($3>0 && $5 > 0.05 && $8 > 0.05)print $1,$6/$3}' | scisort -k 2
 
 # count codon/aa
 rm _*
@@ -1498,15 +1484,22 @@ for aa, codons in aa.items():
 
 done
 
-# domains
-for f in `find . -iname "*nw"` ; do g=${f/.\//}; nw_labels -I $f > ${g/ete*/IP}/${g/_ete*/.order}; done
-for f in `ls -d ./*_IP`; do cd $f; grep Pfam *tsv -h | sed 's/:/_/g' > ${f/.\//}.Pfam ;  cd ..;done
-for d in `ls -d *_IP/`;  do cd $d ; rm ${d/\/}.list; for f in `ls *fa`; do echo -ne ${f/.fa/}"\t" >> ${d/\/}.list;  grep -v ">" $f | tr -d '\n' | wc -c >> ${d/\/}.list; done ; cd ..; done
-for f in `find . -iname "*Pfam"` ; do echo $f; if [ -s ${f/_IP.Pfam/.order} ]; then echo $f; python /media/marco/Elements/m-oryzae-polya/draw_domains.py $f ${f/_IP.Pfam/.order}  ${f/.Pfam/.list}  `sed -e 's/.*\///' -e 's/_IP.Pfam//' <<< $f`  5  ; fi; done
 
-# extract from ensembl
-for f in `ls *fa`; do fasta_formatter -i $f -o _t; mv _t $f; done
-for f in `ls *ensembl.fa`; do grep -f ../../ensembl_list.txt $f -A 1 | sed -e 's/>\(.*_[A-Z][a-z]\+_[a-z]\+\).*/>\1/' -e 's/\-\-//' -e '/^$/d' > "__"$f; done
+
+# retrieve orthologues from ensembl REST
+for f in `cut -f 1 ../genes.txt `; do echo $f; curl -H 'Content-type:text/xml' 'http://rest.ensemblgenomes.org/homology/id/'$f'?compara=fungi;aligned=0;cigar_line=0;' -o _O/$f.xml; done
+
+for z in `ls *xml`;do  
+grep "target id.*taxon_id" $z -o | sed -e 's/target id="//' -e 's/" perc_id.*seq="/\t/' -e 's/" species="/\t/' -e 's/" taxon_id//' | while read id seq sp; do  
+echo -e ">$id""_""$sp\n$seq" ; done > _t;  for f in `sed 's/\([A-Z][a-z]*_[a-z]*\).*/\1/' ../../../ensembl_rest_list.txt` ;do  
+grep -e ">.*_"$f$   _t -A 1 | sed '/\-\-/d';  
+done > ${z/xml/fa}  ;  
+done
+for z in `ls *.xml`;do  
+grep -m 1 "source id.*taxon_id" $z  -o | sed -e 's/source id="//' -e 's/" perc_id.*seq="/\t/' -e 's/" species="/\t/' -e 's/" taxon_id//' | while read id seq sp; do  
+echo -e ">$id""_""$sp\n$seq" ; done > _t;  for f in `sed 's/\([A-Z][a-z]*_[a-z]*\).*/\1/' ../../../ensembl_rest_list.txt` ;do  grep -e ">.*_"$f$   _t -A 1 | sed '/\-\-/d';  done >> ${z/xml/fa}  ;  done
+
+
 # OMA _o is a file with "name fastasequence" for each line
 while read a b;  do  wget "http://omabrowser.org/cgi-bin/gateway.pl?f=SearchSeqDb&p1=$b" -O $a.match;  done < _o
 for f in `ls *.match`;  do g=`grep "Entry \w*" -o $f | sed 's/Entry //'`; wget "http://omabrowser.org/cgi-bin/gateway.pl?f=DisplayEntry&p1=$g&p2=orthologs" -O _res; c=`grep gateway.*=fasta -o  _res`; wget "http://omabrowser.org/cgi-bin/$c" -O $f.fa; done
@@ -1515,6 +1508,42 @@ for f in `ls *fa`; do fasta_formatter -i $f -o _t; mv _t $f; done
 for f in `ls *match.fa`; do egrep -e "ARATH|MUCCI|HUMAN|PHYIT|PHYBL|RHIOR" $f -A 1 | grep -v "\-\-" > $f.ext; done
 for f in `ls *ext`; do sed -e 's/HUMAN[0-9]\+ | \([^|]*\) .*/\1_Homo_sapiens/'  -e 's/ARATH[0-9]\+ | \([^|]*\) .*/\1_Arabidopsis_thaliana/' -e 's/MUCCI[0-9]\+ | \([^|]*\) .*/\1_Mucor_circinelloides/' -e 's/PHYBL[0-9]\+ | \([^|]*\) .*/\1_Phycomyces_blakesleeanus/' -e 's/PHYIT[0-9]\+ | \([^|]*\) .*/\1_Phytophthora_infestans/' -e 's/RHIOR[0-9]\+ | \([^|]*\) .*/\1_Rhizopus_oryzae/' $f > $f.sub; done
 for f in `ls *match.fa.ext.sub`; do cat $f >> "__"${f/match.fa.ext.sub/ensembl.fa}; done
+
+
+
+# ete
+for f in `ls *fa`; do ete build -a $f -w eggnog41 -o ${f/.fa/_ete} --cpu 4 ; done
+
+# interpro
+for f in *.fa; do mkdir ${f/.fa/_IP};  gt sequniq $f | gt splitfasta -splitdesc ${f/.fa/_IP} -;  done
+find . -regex ".*\-$" -exec rename 's/\-$//' {} \;
+for f in `find . -iname "*_IP" `; do for d in `ls $f`; do python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f"/"$d  --outfile=$f"/"$d"_IP.tsv" --outformat=tsv; done  done
+for f in `find . -iname "*.tsv.tsv.txt"` ; do mv $f ${f/tsv.tsv.txt/tsv}; done
+
+# domains
+for f in `find . -iname "*nw"` ; do g=${f/.\//}; nw_labels -I $f > ${g/ete*/IP}/${g/_ete*/.order}; done
+for f in `ls -d ./*_IP`; do cd $f; grep Pfam *tsv -h | sed 's/:/_/g' > ${f/.\//}.Pfam ;  cd ..;done
+for d in `ls -d *_IP/`;  do cd $d ; rm ${d/\/}.list; for f in `ls *fa`; do echo -ne ${f/.fa/}"\t" >> ${d/\/}.list;  grep -v ">" $f | tr -d '\n' | wc -c >> ${d/\/}.list; done ; cd ..; done
+for f in `find . -iname "*Pfam"` ; do echo $f; if [ -s ${f/_IP.Pfam/.order} ]; then echo $f; python /media/marco/Elements/m-oryzae-polya/draw_domains.py $f ${f/_IP.Pfam/.order}  ${f/.Pfam/.list}  `sed -e 's/.*\///' -e 's/_IP.Pfam//' <<< $f`  5  ; fi; done
+
+# make the present/absent table
+for f in `ls orthologs/*fa`;
+do 
+while read sp; do grep $sp $f; done < ../house_keeping_order.txt | sed 's/.*\([A-Z][a-z]*_[a-z]*\)$/\1/' | uniq -c | awk '{print $2"\t"$1}' > "__"`basename $f`	
+done
+tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto --nocheck-order -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; cat $tmp > _tmp
+while read sp; do grep $sp _tmp; done < ../house_keeping_order.txt  > _j
+
+R
+library("gplots")
+
+j=as.matrix(read.table("_j", row.names=1), sep="\t")
+genes=as.matrix(read.csv("genes.txt",  sep="\t", header=F))
+colnames(j)=genes[,2]; 
+library("pheatmap")
+png("heatmap.png", width=1024, height=768,antialias="default")
+pheatmap(j, cluster_rows=F, color=c("#000000", "#d71d1d", colorRampPalette(c("gray","blue"))(n = max(j))))
+dev.off()
 
 
 # create a common_proteins tree
@@ -1527,28 +1556,6 @@ while read ID ; do echo ">"$ID > "_f_"$ID; grep -i -m 1 $ID _x_* -A 1 -h | egrep
 cat _f* > common_proteins.fa
 
 
-# ete
-for f in `ls *fa`; do ete build -a $f -w eggnog41 -o ${f/.fa/_ete}; done
-
-# interpro
-for f in *.fa; do mkdir ${f/.fa/_IP};  gt sequniq $f | gt splitfasta -splitdesc ${f/.fa/_IP} ;  done
-for f in `find . -iname "*_IP" `; do for d in `ls $f`; do python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f"/"$d  --outfile=$f"/"$d"_IP.tsv" --outformat=tsv; done  done
-for f in `find . -iname "*.tsv.tsv.txt"` ; do mv $f ${f/tsv.tsv.txt/tsv}; done
-
-# make the present/absent table
-for f in `ls orthologs/*fa`;
-do 
-while read sp; do grep $sp $f; done < ../house_keeping_order.txt | sed 's/.*\([A-Z][a-z]*_[a-z]*\)$/\1/' | uniq -c | awk '{print $2"\t"$1}' > "__"`basename $f`	
-done
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto --nocheck-order -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; cat $tmp > _tmp
-while read sp; do grep $sp _tmp; done < ../house_keeping_order.txt  > _j
-
-R
-library("gplots")
-png("heatmap.png", width=1024, height=768,antialias="default")
-heatmap.2(as.matrix(read.table("_j", row.names=1)), dendrogram="col", Rowv=FALSE, trace="none", col=c("#000000", "#d71d1d", colorRampPalette(c("gray","blue"))(n = 28)),margins=c(8,20),cexRow=1,cexCol=1)
-
-dev.off()
 
 # replace names with official ensembl
 sed -i 's/:pep//' *fa
@@ -1569,23 +1576,6 @@ for seq in fasta_sequences:
 for f in `ls *fa`; do fasta_formatter -i $f -o _t; mv _t $f; done
 
 
-# retrieve paralogs
-for p in `ls *.fa`;
-do
-grep ">" $p | sed -e 's/>//' -e 's/_\([A-Z]\)/\t\1/' | while read gene species ; 
-do 
-phantomjs /media/marco/Elements/m-oryzae-polya/save_page.js "http://fungi.ensembl.org/"$species"/Gene/Compara_Paralog?db=core;g="$gene > _page
-grep "Alignment (cDNA)" _page  | grep "g1=[^;]*" -o | sort -u | sed 's/g1=//' > _paralogs
-for f in `cat _paralogs`; 
-do
-phantomjs /media/marco/Elements/m-oryzae-polya/save_page.js "http://fungi.ensembl.org/"$species"/Transcript/Sequence_Protein?db=core;g="$f > _cdna
-grep query_sequence.*form _cdna -o | sed -e 's/query_sequence\" value=\"//' -e 's/\"><\/form//' > _f
-echo ">"$f"_"$species >> $p
-cat _f >> $p
-done
-done
-echo $p >> _done
-done
 
 # extract promoters
 for d in `ls -d */ | grep ^[a-z]`; do awk '{if($3=="start_codon")print $0}' $d/*[0-9].gtf |  bedtools flank -i - -g $d/*genome.fa.fai -l 1000 -r 0 -s | awk '{if($4<$5) print $0}' | bedtools getfasta -fi $d/*genome.fa -bed - -s -fo "__"${d/\//}.info; done

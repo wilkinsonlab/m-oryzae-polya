@@ -6,5 +6,5 @@ query<-scan(args[2], what="character")
 #order<-args[4]
 out<-args[3]
 #res<-gprofiler(query, organism=species, custom_bg=back, ordered_query=order,significant=F)
-res<-gprofiler(query, organism=species)
+res<-gprofiler(query, organism=species, significant=F)
 write.table(res, file=out, sep="\t")
