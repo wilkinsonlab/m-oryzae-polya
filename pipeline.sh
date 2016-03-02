@@ -445,7 +445,7 @@ python -c "
 import re, sys
 from Bio import SeqIO
 f = open(sys.argv[1], 'r')
-s = sys.argv[2]
+s = sys.argv[2].upper()
 s = s.replace('R', '[GA]').replace('Y', '[TC]').replace('S', '[GC]').replace('W', '[TA]').replace('K', '[GT]').replace('M', '[AC]').replace('D', '[GTA]').replace('H', '[TAC]').replace('B', '[GTC]').replace('V', '[GAC]').replace('N', '[ATGC]')
 print s
 d = [0 for x in range(int(sys.argv[3]))]
@@ -456,7 +456,7 @@ for record in SeqIO.parse(f, 'fasta'):
   c += 1		
 for v in d:
   print v / c * 100		
-" 
+" magnaporthe_oryzae/neuro2.polyAsites.fasta UGUA 100
 
 
 
@@ -1500,6 +1500,42 @@ grep -m 1 "source id.*taxon_id" $z  -o | sed -e 's/source id="//' -e 's/" perc_i
 echo -e ">$id""_""$sp\n$seq" ; done > _t;  for f in `sed 's/\([A-Z][a-z]*_[a-z]*\).*/\1/' ../../../ensembl_rest_list.txt` ;do  grep -e ">.*_"$f$   _t -A 1 | sed '/\-\-/d';  done >> ${z/xml/fa}  ;  done
 
 
+#BEST WAY
+for z in `ls ../*fa | sed -e 's/.fa//' -e 's/\.\.\///' `; 
+do 
+echo $z
+grep $z ~/Downloads/Compara.newick_trees.30.emf  | grep -v SEQ | nw_labels -I - | sed 's/pep$//' > _leaves
+
+n=50;l=`wc -l _leaves | cut -f 1 -d " "`; l=$(($l+$n));
+for f in `seq $n $n $l`; 
+do 
+h=`head -n $f _leaves | tail -n $n | tr '\n' ',' | sed -e 's/,$/"/' -e 's/^/"/' -e 's/,/","/g'`; 
+curl 'http://rest.ensemblgenomes.org/lookup/id' -H 'Content-type:application/json' -H 'Accept:application/json' -X POST -d '{ "ids" : [ '$h' ] }' 2>/dev/null > _response;  
+tr '}' '\n' < _response | while read line; 
+do  
+sp=`grep -o "\"species\":\"[^\"]*" <<< $line | sed 's/"species":"//'`; id=`grep -o "\"id\":\"[^\"]*" <<< $line | sed 's/"id":"//'`; echo $sp $id; 
+done;
+done | sort -u > _temp
+
+for f in `cat /media/marco/Elements/evolution/ensembl_rest_list.txt `; 
+do 
+grep -i "^$f " _temp ; 
+done | sort -u   > _seqs
+
+g=`cut -f 2 _seqs -d " " | tr '\n' ',' | sed -e 's/,$/"/' -e 's/^/"/' -e 's/,/","/g'`
+curl 'http://rest.ensemblgenomes.org/sequence/id?type=protein' -H 'Content-type:application/json' -H 'Accept:text/x-fasta' -X POST -d '{ "ids" : [ '$g' ] }' > _fasta
+cat _seqs | while read sp id; 
+do 
+sed 's/'$id'.*/'$id'_'$sp'/' -i _fasta ; 
+done
+
+fasta_formatter < _fasta > $z.fa
+done
+
+
+
+
+
 # OMA _o is a file with "name fastasequence" for each line
 while read a b;  do  wget "http://omabrowser.org/cgi-bin/gateway.pl?f=SearchSeqDb&p1=$b" -O $a.match;  done < _o
 for f in `ls *.match`;  do g=`grep "Entry \w*" -o $f | sed 's/Entry //'`; wget "http://omabrowser.org/cgi-bin/gateway.pl?f=DisplayEntry&p1=$g&p2=orthologs" -O _res; c=`grep gateway.*=fasta -o  _res`; wget "http://omabrowser.org/cgi-bin/$c" -O $f.fa; done
@@ -1511,39 +1547,44 @@ for f in `ls *match.fa.ext.sub`; do cat $f >> "__"${f/match.fa.ext.sub/ensembl.f
 
 
 
+
 # ete
 for f in `ls *fa`; do ete build -a $f -w eggnog41 -o ${f/.fa/_ete} --cpu 4 ; done
 
 # interpro
 for f in *.fa; do mkdir ${f/.fa/_IP};  gt sequniq $f | gt splitfasta -splitdesc ${f/.fa/_IP} -;  done
-find . -regex ".*\-$" -exec rename 's/\-$//' {} \;
-for f in `find . -iname "*_IP" `; do for d in `ls $f`; do python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f"/"$d  --outfile=$f"/"$d"_IP.tsv" --outformat=tsv; done  done
+find . -regex ".*\-$" -exec rename 's/\-$/.fa/' {} \;
+for f in `find . -iname "*_IP" `; do for d in `ls $f | grep -v ".*.txt"`; do if [ ! -e $f"/"$d"_IP.tsv.tsv.txt" ]; then if [ ! -e $f"/"$d"_IP.tsv" ]; then python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f"/"$d  --outfile=$f"/"$d"_IP.tsv" --outformat=tsv; else echo $f"/"$d"_IP.tsv exists"; fi; fi & done; wait;  done
 for f in `find . -iname "*.tsv.tsv.txt"` ; do mv $f ${f/tsv.tsv.txt/tsv}; done
 
 # domains
 for f in `find . -iname "*nw"` ; do g=${f/.\//}; nw_labels -I $f > ${g/ete*/IP}/${g/_ete*/.order}; done
 for f in `ls -d ./*_IP`; do cd $f; grep Pfam *tsv -h | sed 's/:/_/g' > ${f/.\//}.Pfam ;  cd ..;done
+for f in `ls -d ./*_IP`; do cd $f; grep SMART *tsv -h | sed 's/:/_/g' > ${f/.\//}.SMART ;  cd ..;done
 for d in `ls -d *_IP/`;  do cd $d ; rm ${d/\/}.list; for f in `ls *fa`; do echo -ne ${f/.fa/}"\t" >> ${d/\/}.list;  grep -v ">" $f | tr -d '\n' | wc -c >> ${d/\/}.list; done ; cd ..; done
-for f in `find . -iname "*Pfam"` ; do echo $f; if [ -s ${f/_IP.Pfam/.order} ]; then echo $f; python /media/marco/Elements/m-oryzae-polya/draw_domains.py $f ${f/_IP.Pfam/.order}  ${f/.Pfam/.list}  `sed -e 's/.*\///' -e 's/_IP.Pfam//' <<< $f`  5  ; fi; done
+#for d in `ls -d *_IP/`;  do cd $d ; rm ${d/\/}.list; for f in `ls *tsv`; do echo -ne ${f/_IP.tsv/}"\t" >> ${d/\/}.list;  head -n 1 $f | cut -f 3 >> ${d/\/}.list; done ; cd ..; done
+for f in `find . -name "*Pfam"` ; do if [ -s ${f/_IP.Pfam/.order} ]; then echo $f; python /media/marco/Elements/m-oryzae-polya/draw_domains.py $f ${f/_IP.Pfam/.order}  ${f/.Pfam/.list}  `sed -e 's/.*\///' -e 's/_IP.Pfam//' <<< $f`  4; convert -density 300 -size 800x600 -flatten   $f.domains.svg $f.domains.png ; fi; done
+for f in `find . -name "*SMART"` ; do if [ -s ${f/_IP.SMART/.order} ]; then echo $f; python /media/marco/Elements/m-oryzae-polya/draw_domains.py $f ${f/_IP.SMART/.order}  ${f/.SMART/.list}  `sed -e 's/.*\///' -e 's/_IP.SMART//' <<< $f`  4; convert -density 300 -size 800x600 -flatten   $f.domains.svg $f.domains.png ; fi; done
+
 
 # make the present/absent table
-for f in `ls orthologs/*fa`;
+rm -f _*
+for f in `ls *fa`;
 do 
-while read sp; do grep $sp $f; done < ../house_keeping_order.txt | sed 's/.*\([A-Z][a-z]*_[a-z]*\)$/\1/' | uniq -c | awk '{print $2"\t"$1}' > "__"`basename $f`	
+while read sp; do grep -oi $sp $f; done < ../../../house_keeping_order.txt |  uniq -c | awk '{print $2"\t"$1}' > "__"`basename $f`	
 done
 tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto --nocheck-order -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; cat $tmp > _tmp
-while read sp; do grep $sp _tmp; done < ../house_keeping_order.txt  > _j
+while read sp; do grep -i $sp _tmp; done < ../../../house_keeping_order.txt  > _j
 
 R
-library("gplots")
-
+library("pheatmap")
 j=as.matrix(read.table("_j", row.names=1), sep="\t")
-genes=as.matrix(read.csv("genes.txt",  sep="\t", header=F))
+genes=as.matrix(read.csv("../../genes.txt",  sep="\t", header=F))
 colnames(j)=genes[,2]; 
 library("pheatmap")
-png("heatmap.png", width=1024, height=768,antialias="default")
-pheatmap(j, cluster_rows=F, color=c("#000000", "#d71d1d", colorRampPalette(c("gray","blue"))(n = max(j))))
-dev.off()
+#png("heatmap.png", width=1024, height=768,antialias="default")
+pheatmap(as.matrix(j), cluster_rows=F, color=c("#000000", "#d71d1d", colorRampPalette(c("gray","navy"))(n = 10)), breaks=c(0,0.5,seq(1,10, length.out=11)))
+#dev.off()
 
 
 # create a common_proteins tree
