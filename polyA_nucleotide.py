@@ -49,13 +49,33 @@ for line in polyA_file:
         gene = ""
 
     # if value < 10: continue
-
-    if sense == '+':
-        stream = fasta_seqs[chrx].seq[pos - end - 1: pos - start].reverse_complement()
+    left = ""; right = ""
+    if sense == '+':  
+        if pos - end - 1 < 0:
+           begin = 0
+           left = "N" * abs(pos - end - 1)
+        else:
+           begin =  pos - end - 1
+        if   pos - start > len(fasta_seqs[chrx]) - 1:
+           finish = len(fasta_seqs[chrx]) - 1
+           right = "N" * (pos - start - len(fasta_seqs[chrx]) - 1)
+        else:
+           finish = pos - start 
+        stream = fasta_seqs[chrx].seq[begin:finish].reverse_complement()
     else:
-        stream = fasta_seqs[chrx].seq[pos + start - 1: pos + end]
+        if pos + start - 1 < 0:
+           begin = 0
+           left = "N" * abs(pos + start - 1)
+        else:
+           begin =  pos + start - 1
+        if pos + end > len(fasta_seqs[chrx]) - 1:
+           finish = len(fasta_seqs[chrx]) 
+           right = "N" * (pos + end - len(fasta_seqs[chrx]))
+        else:
+           finish = pos + end 
+        stream = fasta_seqs[chrx].seq[begin:finish]
 
-    stream = str(stream)
+    stream = left + str(stream) + right
 
     if opt == "view":
         i = 0

@@ -430,35 +430,39 @@ cut -f 9 fimo_out/fimo.txt | sort | uniq > _t
 for i in `cat _t`; do echo -ne $i" "; grep $i Rozella_allomycis.introns.3prime.fa -c | awk -v num=`grep -c ">" Rozella_allomycis.introns.3prime.fa` '{print $1/num*100}'; done	
 	
 # RNA structure base probabilities
-file=_k.fa
+file=_mucorales.fa
 mkdir "_"$file".out"
 cd "_"$file".out"
 RNAfold -p -d2 --noLP < ../$file > /dev/null
 for f in `ls *_dp.ps`; do grep -E "[0-9].[ul]box" $f | awk '{if (arr[$1] == 0) arr[$1] = $3 ; else {if ($3 > arr[$1]) arr[$1]=$3}; if (arr[$2] == 0) arr[$2] = $3; else {if ($3>arr[$2]) arr[$2]=$3}; count[$1]++; count[$2]++} END {for (k in arr) print k, arr[k]}' | sort -n > "_"$f; done
 cat _*_dp.ps | awk '{arr[$1]+=$2; count[$1]++;}END{for (k in arr) print k, arr[k]/count[k]}' | sort -n | cut -f 2 -d " "
 cd ..
+
 rm -rf "_"$file".out"
 
 	
 # motif scan 
+for f in _microsporidia _mucorales _pezizo _yeasts _basidio
+do
+echo $f
 python -c "
 import re, sys
 from Bio import SeqIO
 f = open(sys.argv[1], 'r')
 s = sys.argv[2].upper()
 s = s.replace('R', '[GA]').replace('Y', '[TC]').replace('S', '[GC]').replace('W', '[TA]').replace('K', '[GT]').replace('M', '[AC]').replace('D', '[GTA]').replace('H', '[TAC]').replace('B', '[GTC]').replace('V', '[GAC]').replace('N', '[ATGC]')
-print s
+print sys.argv[1]
 d = [0 for x in range(int(sys.argv[3]))]
 c = 0.0
 for record in SeqIO.parse(f, 'fasta'):
-  for m in re.finditer(s, str(record.seq)):
+  for m in re.finditer(s, str(record.seq).upper()):
     d[m.start(0)] += 1
   c += 1		
 for v in d:
   print v / c * 100		
-" magnaporthe_oryzae/neuro2.polyAsites.fasta UGUA 100
+" $f YYYYYY 400 > "_x_"$f
 
-
+done 
 
 
 # extract 3'UTR sequences
@@ -1502,6 +1506,7 @@ echo -e ">$id""_""$sp\n$seq" ; done > _t;  for f in `sed 's/\([A-Z][a-z]*_[a-z]*
 
 #BEST WAY
 for z in `ls ../*fa | sed -e 's/.fa//' -e 's/\.\.\///' `; 
+for z in YEL026W;
 do 
 echo $z
 grep $z ~/Downloads/Compara.newick_trees.30.emf  | grep -v SEQ | nw_labels -I - | sed 's/pep$//' > _leaves
@@ -1534,14 +1539,12 @@ done
 
 
 
-
-
 # OMA _o is a file with "name fastasequence" for each line
 while read a b;  do  wget "http://omabrowser.org/cgi-bin/gateway.pl?f=SearchSeqDb&p1=$b" -O $a.match;  done < _o
 for f in `ls *.match`;  do g=`grep "Entry \w*" -o $f | sed 's/Entry //'`; wget "http://omabrowser.org/cgi-bin/gateway.pl?f=DisplayEntry&p1=$g&p2=orthologs" -O _res; c=`grep gateway.*=fasta -o  _res`; wget "http://omabrowser.org/cgi-bin/$c" -O $f.fa; done
 #while read a b; do wget "http://omabrowser.org/cgi-bin/gateway.pl?f=DisplayEntry&p1=$b&p2=orthologs" -O _res; c=`grep gateway.*=fasta -o  _res`; wget "http://omabrowser.org/cgi-bin/$c" -O $a.fa; done < _m
 for f in `ls *fa`; do fasta_formatter -i $f -o _t; mv _t $f; done
-for f in `ls *match.fa`; do egrep -e "ARATH|MUCCI|HUMAN|PHYIT|PHYBL|RHIOR" $f -A 1 | grep -v "\-\-" > $f.ext; done
+for f in `ls *match.fa`; do egrep -e ">.*(ARATH|MUCCI|HUMAN|PHYIT|PHYBL|RHIOR)" $f -A 1 | grep -v "\-\-" > $f.ext; done
 for f in `ls *ext`; do sed -e 's/HUMAN[0-9]\+ | \([^|]*\) .*/\1_Homo_sapiens/'  -e 's/ARATH[0-9]\+ | \([^|]*\) .*/\1_Arabidopsis_thaliana/' -e 's/MUCCI[0-9]\+ | \([^|]*\) .*/\1_Mucor_circinelloides/' -e 's/PHYBL[0-9]\+ | \([^|]*\) .*/\1_Phycomyces_blakesleeanus/' -e 's/PHYIT[0-9]\+ | \([^|]*\) .*/\1_Phytophthora_infestans/' -e 's/RHIOR[0-9]\+ | \([^|]*\) .*/\1_Rhizopus_oryzae/' $f > $f.sub; done
 for f in `ls *match.fa.ext.sub`; do cat $f >> "__"${f/match.fa.ext.sub/ensembl.fa}; done
 
@@ -1553,8 +1556,8 @@ for f in `ls *fa`; do ete build -a $f -w eggnog41 -o ${f/.fa/_ete} --cpu 4 ; don
 
 # interpro
 for f in *.fa; do mkdir ${f/.fa/_IP};  gt sequniq $f | gt splitfasta -splitdesc ${f/.fa/_IP} -;  done
-find . -regex ".*\-$" -exec rename 's/\-$/.fa/' {} \;
-for f in `find . -iname "*_IP" `; do for d in `ls $f | grep -v ".*.txt"`; do if [ ! -e $f"/"$d"_IP.tsv.tsv.txt" ]; then if [ ! -e $f"/"$d"_IP.tsv" ]; then python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f"/"$d  --outfile=$f"/"$d"_IP.tsv" --outformat=tsv; else echo $f"/"$d"_IP.tsv exists"; fi; fi & done; wait;  done
+find . -regex ".*\-$" -exec rename -f 's/\-$/.fa/' {} \;
+for f in `find . -iname "*_IP" `; do for d in `ls $f/*fa`; do if [ ! -e $d"_IP.tsv.tsv.txt" ]; then if [ ! -e $d"_IP.tsv" ]; then python /media/marco/Elements/m-oryzae-polya/iprscan_soappy.py --email=marco.marconi@gmail.com --title=marco --sequence=$f"/"$d  --outfile=$d"_IP.tsv" --outformat=tsv; else echo $d"_IP.tsv exists"; fi; fi & done; wait;  done
 for f in `find . -iname "*.tsv.tsv.txt"` ; do mv $f ${f/tsv.tsv.txt/tsv}; done
 
 # domains
@@ -1567,24 +1570,79 @@ for f in `find . -name "*Pfam"` ; do if [ -s ${f/_IP.Pfam/.order} ]; then echo $
 for f in `find . -name "*SMART"` ; do if [ -s ${f/_IP.SMART/.order} ]; then echo $f; python /media/marco/Elements/m-oryzae-polya/draw_domains.py $f ${f/_IP.SMART/.order}  ${f/.SMART/.list}  `sed -e 's/.*\///' -e 's/_IP.SMART//' <<< $f`  4; convert -density 300 -size 800x600 -flatten   $f.domains.svg $f.domains.png ; fi; done
 
 
-# make the present/absent table
-rm -f _*
-for f in `ls *fa`;
-do 
-while read sp; do grep -oi $sp $f; done < ../../../house_keeping_order.txt |  uniq -c | awk '{print $2"\t"$1}' > "__"`basename $f`	
-done
-tmp=$(mktemp);tmp2=$(mktemp);for file in `ls __*`; do sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto --nocheck-order -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; cat $tmp > _tmp
-while read sp; do grep -i $sp _tmp; done < ../../../house_keeping_order.txt  > _j
+### make the present/absent table
+# split genes by domains
+awk -F "\t" '{if($2=="")curr=$1;else arr[curr]=$1"@"arr[curr]}END{for (k in arr)print k,arr[k]}' ../genes.txt | sed 's/@$//' |  while read fp list; do tr '@' '\n' <<< $list > "_d_"$fp  ;done
 
-R
+# __* are files for each complex, containing list of genes
+for z in `ls _d_* `
+do
+for f in `cat $z`;
+do 
+f=$f.fa
+while read sp; do grep -oi $sp $f; done < ../../house_keeping_order.txt |  uniq -c | awk '{print tolower($2)"\t"$1}' > "__"`basename $f`	
+done
+tmp=$(mktemp);tmp2=$(mktemp);for file in `cat $z`; do file="__"$file.fa; sort -k 1,1 $file -o $file ;    if [ -s "$tmp" ];     then      join  -a 1 -a 2 -e 0 -o auto  -t $'\t' "$tmp" "$file" > "$tmp2";     else         cp "$file" "$tmp2";     fi;     cp "$tmp2" "$tmp"; done ; cat $tmp > _tmp
+awk '{print tolower($0)"\t"0}' ../../house_keeping_order.txt | sort | join  -a 1 -a 2 -e 0 -o auto  -t $'\t' - _tmp | cut -f 1,3-1000 > __tmp
+while read sp; do grep -i $sp __tmp; done < ../../house_keeping_order.txt  > _table
+for n in `cat $z`; do grep $n ../genes.txt; done | sed 's/\t/_/' > __genes
+tr '\n' '\t' < __genes | awk '{print "\t"$0}' | cat - _table  > ${z/_d_/heatmap.}
+done
+
+rm -f heatmap.*png
+for z in `ls heatmap.*`
+do 
+echo $z | sed 's/heatmap.//' > __main
+cat $z > __temp
+Rscript _script.R 
+mv __test.png $z.png
+done
+
+# _script.R
 library("pheatmap")
-j=as.matrix(read.table("_j", row.names=1), sep="\t")
-genes=as.matrix(read.csv("../../genes.txt",  sep="\t", header=F))
-colnames(j)=genes[,2]; 
+j=as.matrix(read.table("__temp", row.names=1), sep="\t")
+main = scan("__main", what="character")
+#genes=scan("__genes", what="character")
+#colnames(j)=genes; 
+png("__test.png", width=ncol(j)*40+400,height=768,antialias="default")
+pheatmap(j, main=main, cluster_cols=F,cluster_rows=F, color=c("#000000", "#d71d1d", colorRampPalette(c("gray","navy"))(n = 10)), breaks=c(0,0.5,seq(1,10, length.out=11)), cellwidth=40, gaps_row=c(3,7,8,11,12,20,21,26))
+dev.off()
+###
+
+
+
+# make absent present table for domains
+rm -f __d*png
+for q in `ls _d_* `;
+do
+for z in `cat $q`;
+do
+rm -f _p_*
+# l=`cat $z | sed 's/$/_IP/' | tr '\n' ' '`
+# for f in `find $l -name "*Pfam" -exec cut -f 5 {} \; | sort -u `; do  if grep -q $f ~/Downloads/Pfam/Pfam-A.hmm.dat;  then echo $f "exists"; for g in `ls ../../data/Pep/*Pfam`;  do  grep $f $g | cut -f 1 -d " " | sort -u | wc -l >> "_p_"$f ; done;  else echo $f "not exists"; fi; done
+for f in `cut -f 5 $z"_IP"/$z"_IP".Pfam | sort -u `; do  if grep -q $f ~/Downloads/Pfam/Pfam-A.hmm.dat;  then echo $f "exists"; for g in `ls ../../data/Pep/*Pfam`;  do  grep $f $g | cut -f 1 -d " " | sort -u | wc -l >> "_p_"$f ; done;  else echo $f "not exists"; fi; done
+cat ../../house_keeping_order.txt | sort > _l
+paste _p_PF* | paste _l - > _p
+for f in `cat ../../house_keeping_order.txt`; do grep $f _p; done  > __p
+for f in `ls _p_PF* -1 | sed 's/_p_//' `; do grep $f ~/Downloads/Pfam/Pfam-A.hmm.dat -B 1 ; done | grep -v "GF AC" | sed 's/#=GF ID   //' > _desc; ls _p_PF* -1 | sed 's/_p_//' | paste - _desc -d " " | tr '\n' '\t' | sed 's/\t$//' | awk '{print "\t"$0}' | cat - __p   > ___p
+echo $z > __main
+Rscript __script.R
+mv __test.png "_"$q"_"$z.png
+done 
+done
+
+# __script.R
 library("pheatmap")
-#png("heatmap.png", width=1024, height=768,antialias="default")
-pheatmap(as.matrix(j), cluster_rows=F, color=c("#000000", "#d71d1d", colorRampPalette(c("gray","navy"))(n = 10)), breaks=c(0,0.5,seq(1,10, length.out=11)))
-#dev.off()
+j=as.matrix(read.csv("___p", row.names=1, sep="\t"))
+main = scan("__main", what="character")
+library("pheatmap")
+png("__test.png", width=ncol(j)*40+200, height=768,antialias="default")
+z=j;z[z>10]=10
+pheatmap(z, main=main.legend=F,cluster_rows=F, cluster_cols=F, color=c("#000000", "#d71d1d", colorRampPalette(c("gray","navy"))(n = 10)), breaks=c(0,0.5,seq(1,10, length.out=11)), cellwidth=40,gaps_row=c(3,7,8,11,12,20,21,26))
+dev.off()
+
+# extract sequences containing selected domains (to generate trees and see if they are homologs), domains with max 3 copies in the proteome
+for pf in `find . -name "*Pfam" -exec cut -f 5 {} \; | sort -u`; do grep -c $pf ../../data/Pep/*Pfam | egrep -v  "Arabi|Homo|Phyto" | awk -v pf=$pf -F ":" '{if($2>max)max=$2}END{if(max<=3 && max>0) print pf}'; done > _t; for f in `cat _t`; do  grep $f ../../data/Pep/*Pfam | cut -f 1 -d " " | sed 's/.Pfam:/\t/' |  while read file seq; do base=`basename $file | sed 's/\..*//'`; grep ">"$seq$ $file -A 1 -m 1 | sed 's/'$seq'/'$base'_'$seq'/'; done > "_fasta_"$f; done
 
 
 # create a common_proteins tree
@@ -1593,7 +1651,7 @@ for f in `ls orthologs/*fa`; do echo -ne $f" "; grep ">" $f | sed 's/.*\([A-Z][a
 for f in `cat _o` ; do cp $f .; done
 rename 's/^/_x_/' *fa
 # _ID contains species list
-while read ID ; do echo ">"$ID > "_f_"$ID; grep -i -m 1 $ID _x_* -A 1 -h | egrep -v ">|\-\-" >> "_f_"$ID ; fasta_formatter -i "_f_"$ID -o _t; mv _t "_f_"$ID; done < _ID
+while read ID ; do echo ">"$ID > "_f_"$ID; grep -i -m 1 $ID _x_* -A 1 -h | egrep -v ">|\-\-" >> "_f_"$ID ; fasta_formatter -i "_f_"$ID -o _t; mv _t "_f_"$ID; done < ../house_keeping_order.txt
 cat _f* > common_proteins.fa
 
 
