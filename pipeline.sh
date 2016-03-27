@@ -1506,7 +1506,7 @@ echo -e ">$id""_""$sp\n$seq" ; done > _t;  for f in `sed 's/\([A-Z][a-z]*_[a-z]*
 
 #BEST WAY
 for z in `ls ../*fa | sed -e 's/.fa//' -e 's/\.\.\///' `; 
-for z in YEL026W;
+for z in YKL074C YLR424W YGR013W YDR240C;
 do 
 echo $z
 grep $z ~/Downloads/Compara.newick_trees.30.emf  | grep -v SEQ | nw_labels -I - | sed 's/pep$//' > _leaves
@@ -1572,6 +1572,7 @@ for f in `find . -name "*SMART"` ; do if [ -s ${f/_IP.SMART/.order} ]; then echo
 
 ### make the present/absent table
 # split genes by domains
+rm -f _d_*
 awk -F "\t" '{if($2=="")curr=$1;else arr[curr]=$1"@"arr[curr]}END{for (k in arr)print k,arr[k]}' ../genes.txt | sed 's/@$//' |  while read fp list; do tr '@' '\n' <<< $list > "_d_"$fp  ;done
 
 # __* are files for each complex, containing list of genes
@@ -1586,13 +1587,13 @@ tmp=$(mktemp);tmp2=$(mktemp);for file in `cat $z`; do file="__"$file.fa; sort -k
 awk '{print tolower($0)"\t"0}' ../../house_keeping_order.txt | sort | join  -a 1 -a 2 -e 0 -o auto  -t $'\t' - _tmp | cut -f 1,3-1000 > __tmp
 while read sp; do grep -i $sp __tmp; done < ../../house_keeping_order.txt  > _table
 for n in `cat $z`; do grep $n ../genes.txt; done | sed 's/\t/_/' > __genes
-tr '\n' '\t' < __genes | awk '{print "\t"$0}' | cat - _table  > ${z/_d_/heatmap.}
+tr '\n' '\t' < __genes | awk '{print "\t"$0}' | cat - _table  > ${z/_d_/heatmap.orthologs.}
 done
 
-rm -f heatmap.*png
-for z in `ls heatmap.*`
+rm -f heatmap.orthologs.*png
+for z in `ls heatmap.orthologs.*`
 do 
-echo $z | sed 's/heatmap.//' > __main
+echo $z | sed 's/heatmap.orthologs.//' > __main
 cat $z > __temp
 Rscript _script.R 
 mv __test.png $z.png
@@ -1624,7 +1625,8 @@ for f in `cut -f 5 $z"_IP"/$z"_IP".Pfam | sort -u `; do  if grep -q $f ~/Downloa
 cat ../../house_keeping_order.txt | sort > _l
 paste _p_PF* | paste _l - > _p
 for f in `cat ../../house_keeping_order.txt`; do grep $f _p; done  > __p
-for f in `ls _p_PF* -1 | sed 's/_p_//' `; do grep $f ~/Downloads/Pfam/Pfam-A.hmm.dat -B 1 ; done | grep -v "GF AC" | sed 's/#=GF ID   //' > _desc; ls _p_PF* -1 | sed 's/_p_//' | paste - _desc -d " " | tr '\n' '\t' | sed 's/\t$//' | awk '{print "\t"$0}' | cat - __p   > ___p
+for f in `ls _p_PF* -1 | sed 's/_p_//' `; do grep $f ~/Downloads/Pfam/Pfam-A.hmm.dat -B 1 ; done | grep -v "GF AC" | sed 's/#=GF ID   //' > _desc; ls _p_PF* -1 | sed 's/_p_//' | paste - _desc -d " " | tr '\n' '\t' | sed -e 's/\t$//' -e 's/ /\./g' | awk '{print "\t"$0}' | cat - __p   > ${q/_d_/heatmap.domains.}
+cat ${q/_d_/heatmap.domains.} > _temp
 echo $z > __main
 Rscript __script.R
 mv __test.png "_"$q"_"$z.png
@@ -1633,13 +1635,21 @@ done
 
 # __script.R
 library("pheatmap")
-j=as.matrix(read.csv("___p", row.names=1, sep="\t"))
+j=as.matrix(read.csv("_temp", row.names=1, sep="\t"))
 main = scan("__main", what="character")
 library("pheatmap")
 png("__test.png", width=ncol(j)*40+200, height=768,antialias="default")
 z=j;z[z>10]=10
-pheatmap(z, main=main.legend=F,cluster_rows=F, cluster_cols=F, color=c("#000000", "#d71d1d", colorRampPalette(c("gray","navy"))(n = 10)), breaks=c(0,0.5,seq(1,10, length.out=11)), cellwidth=40,gaps_row=c(3,7,8,11,12,20,21,26))
+pheatmap(z, main=main,legend=F,cluster_rows=F, cluster_cols=F, color=c("#000000", "#d71d1d", colorRampPalette(c("gray","navy"))(n = 10)), breaks=c(0,0.5,seq(1,10, length.out=11)), cellwidth=40,gaps_row=c(3,7,8,11,12,20,21,26))
 dev.off()
+
+library("pheatmap")
+q=sapply(list.files(".", "^heatmap.orthologs.*[^(png)]$"), function(x){ z=read.table(x); z[is.na(z)]=0;rowSums(z>0) })
+q[is.nan(q)] = 0
+q=apply(q, 2, function(x){x/max(x)})
+colnames(q) = gsub(pattern="heatmap.orthologs.", replacement="", x=colnames(q))
+pheatmap(q*100, cluster_rows=F, cluster_cols=T, show_rownames=F,color=colorRampPalette(c("white","navy"))(n = 20), gaps_row=c(3,7,8,11,12,20,21,26), treeheight_col=0)
+
 
 # extract sequences containing selected domains (to generate trees and see if they are homologs), domains with max 3 copies in the proteome
 for pf in `find . -name "*Pfam" -exec cut -f 5 {} \; | sort -u`; do grep -c $pf ../../data/Pep/*Pfam | egrep -v  "Arabi|Homo|Phyto" | awk -v pf=$pf -F ":" '{if($2>max)max=$2}END{if(max<=3 && max>0) print pf}'; done > _t; for f in `cat _t`; do  grep $f ../../data/Pep/*Pfam | cut -f 1 -d " " | sed 's/.Pfam:/\t/' |  while read file seq; do base=`basename $file | sed 's/\..*//'`; grep ">"$seq$ $file -A 1 -m 1 | sed 's/'$seq'/'$base'_'$seq'/'; done > "_fasta_"$f; done
